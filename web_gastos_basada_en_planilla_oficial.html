@@ -400,28 +400,70 @@
     /* ── Login overlay ── */
     #loginOverlay {
       position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
-      background:
-        linear-gradient(160deg, rgba(10,15,20,.98) 0%, rgba(15,10,25,.98) 100%);
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(45,212,191,.13), transparent 70%),
+        linear-gradient(160deg, #080d12 0%, #0d0a18 100%);
       padding:24px;
     }
     .login-box {
-      width:min(420px,100%); text-align:center; padding:48px 40px;
-      background:linear-gradient(180deg, rgba(18,27,36,.96), rgba(14,21,29,.98));
-      border:1px solid rgba(45,212,191,.22); border-radius:14px;
-      box-shadow:0 32px 90px rgba(0,0,0,.6);
+      width:min(440px,100%); text-align:center; padding:52px 44px 40px;
+      background:linear-gradient(180deg, rgba(20,30,42,.97) 0%, rgba(12,17,26,.99) 100%);
+      border:1px solid rgba(45,212,191,.2); border-radius:20px;
+      box-shadow:0 0 0 1px rgba(45,212,191,.06), 0 40px 100px rgba(0,0,0,.7);
+      position:relative; overflow:hidden;
     }
-    .login-logo { font-size:48px; line-height:1; margin-bottom:16px; }
-    .login-box h2 { margin:0 0 8px; font-size:26px; color:var(--text); }
-    .login-box p { color:var(--muted); font-size:14px; margin:0 0 32px; line-height:1.55; }
-    #googleSignInBtn { display:inline-flex; justify-content:center; }
-    .login-note { margin-top:20px; font-size:12px; color:var(--muted); }
+    .login-box::before {
+      content:''; position:absolute; inset:0 0 auto; height:2px;
+      background:linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+      border-radius:20px 20px 0 0;
+    }
+    .login-icon-wrap {
+      width:72px; height:72px; margin:0 auto 24px; border-radius:18px;
+      background:linear-gradient(135deg, rgba(45,212,191,.18), rgba(245,158,11,.12));
+      border:1px solid rgba(45,212,191,.25); display:grid; place-items:center;
+      font-size:36px; box-shadow:0 8px 32px rgba(45,212,191,.15);
+    }
+    .login-box h2 {
+      margin:0 0 10px; font-size:28px; color:var(--text); letter-spacing:-.5px;
+      background:linear-gradient(135deg, #edf7f6, var(--accent-strong));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .login-subtitle { color:var(--muted); font-size:14.5px; margin:0 0 36px; line-height:1.6; }
+    .login-divider {
+      display:flex; align-items:center; gap:12px; margin:28px 0;
+      color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+    }
+    .login-divider::before, .login-divider::after {
+      content:''; flex:1; height:1px; background:var(--line);
+    }
+    #googleSignInBtn { display:flex; justify-content:center; }
+    .login-footer {
+      margin-top:28px; display:flex; align-items:center; justify-content:center; gap:7px;
+      color:var(--muted); font-size:12px;
+    }
+    .login-footer .dot { width:5px; height:5px; border-radius:99px; background:var(--accent); opacity:.7; }
+    .login-badge {
+      display:inline-flex; align-items:center; gap:6px; padding:5px 12px;
+      border-radius:999px; background:rgba(45,212,191,.08); border:1px solid rgba(45,212,191,.2);
+      color:var(--accent-strong); font-size:12px; font-weight:700; margin-bottom:28px;
+    }
     /* ── User chip in header ── */
     .user-chip {
-      display:flex; align-items:center; gap:8px; padding:6px 8px;
-      border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.04);
+      display:flex; align-items:center; gap:8px; padding:6px 10px;
+      border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,.04);
     }
-    .user-avatar { width:28px; height:28px; border-radius:50%; flex:0 0 auto; }
-    .user-name { font-size:13px; font-weight:700; color:var(--muted-strong); max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .user-avatar { width:30px; height:30px; border-radius:50%; flex:0 0 auto; border:2px solid rgba(45,212,191,.3); }
+    .user-info { display:flex; flex-direction:column; gap:1px; min-width:0; }
+    .user-name { font-size:13px; font-weight:800; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:130px; }
+    .user-email { font-size:11px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:130px; }
+    .user-actions { display:flex; gap:6px; }
+    .btn-user-action {
+      font-size:11px; font-weight:700; padding:4px 9px; border-radius:6px; cursor:pointer;
+      border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--muted-strong);
+      transition:background .15s;
+    }
+    .btn-user-action:hover { background:rgba(255,255,255,.1); }
+    .btn-user-action.danger { border-color:rgba(251,113,133,.3); color:#fda4af; background:rgba(251,113,133,.07); }
+    .btn-user-action.danger:hover { background:rgba(251,113,133,.15); }
   </style>
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async></script>
@@ -431,11 +473,16 @@
 <!-- ── Login overlay ── -->
 <div id="loginOverlay">
   <div class="login-box">
-    <div class="login-logo">📊</div>
+    <div class="login-icon-wrap">📊</div>
     <h2>Control de Gastos</h2>
-    <p>Iniciá sesión con tu cuenta de Google para acceder a tus gastos mensuales.</p>
+    <p class="login-subtitle">Tu planilla familiar de servicios e internet.<br>Iniciá sesión para acceder.</p>
+    <div class="login-badge">🔒 Acceso privado</div>
     <div id="googleSignInBtn"></div>
-    <p class="login-note">Solo vos podés ver esta información.</p>
+    <div class="login-footer">
+      <span class="dot"></span>
+      <span>Solo cuentas autorizadas pueden ingresar</span>
+      <span class="dot"></span>
+    </div>
   </div>
 </div>
 
@@ -1500,6 +1547,11 @@ const ALLOWED_EMAILS = ['ale21rock@gmail.com'];
 function getStoredUser() {
   try { return JSON.parse(localStorage.getItem('gastos_google_user') || 'null'); } catch { return null; }
 }
+function doLogout() {
+  localStorage.removeItem('gastos_google_user');
+  if (typeof google !== 'undefined') google.accounts.id.disableAutoSelect();
+  location.reload();
+}
 function showApp(user) {
   document.getElementById('loginOverlay').style.display = 'none';
   document.getElementById('appContent').style.display = '';
@@ -1507,13 +1559,27 @@ function showApp(user) {
   if (user) {
     chip.innerHTML = `
       <img src="${user.picture}" alt="" class="user-avatar" referrerpolicy="no-referrer">
-      <span class="user-name">${user.name}</span>
-      <button class="secondary" id="logoutBtn" style="padding:5px 10px;font-size:12px;margin-left:4px;">Salir</button>
+      <div class="user-info">
+        <span class="user-name">${user.name}</span>
+        <span class="user-email">${user.email}</span>
+      </div>
+      <div class="user-actions">
+        <button class="btn-user-action" id="switchAccountBtn" title="Cambiar cuenta">↺ Cambiar</button>
+        <button class="btn-user-action danger" id="logoutBtn" title="Cerrar sesión">Salir</button>
+      </div>
     `;
-    document.getElementById('logoutBtn').addEventListener('click', () => {
+    document.getElementById('logoutBtn').addEventListener('click', doLogout);
+    document.getElementById('switchAccountBtn').addEventListener('click', () => {
       localStorage.removeItem('gastos_google_user');
       if (typeof google !== 'undefined') google.accounts.id.disableAutoSelect();
-      location.reload();
+      document.getElementById('appContent').style.display = 'none';
+      document.getElementById('loginOverlay').style.display = 'flex';
+      // Re-renderizar botón para permitir elegir otra cuenta
+      document.getElementById('googleSignInBtn').innerHTML = '';
+      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleCredentialResponse, auto_select: false });
+      google.accounts.id.renderButton(document.getElementById('googleSignInBtn'), {
+        theme: 'filled_black', size: 'large', text: 'signin_with', shape: 'pill', locale: 'es'
+      });
     });
   }
 }
@@ -1523,10 +1589,10 @@ function handleCredentialResponse(response) {
   if (!ALLOWED_EMAILS.includes(user.email)) {
     document.getElementById('loginOverlay').innerHTML = `
       <div class="login-box">
-        <div class="login-logo">🚫</div>
-        <h2>Acceso denegado</h2>
-        <p style="color:#fb7185;">La cuenta <strong>${user.email}</strong> no tiene permiso para acceder.</p>
-        <button onclick="location.reload()">Intentar con otra cuenta</button>
+        <div class="login-icon-wrap">🚫</div>
+        <h2 style="background:linear-gradient(135deg,#fb7185,#fda4af);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Sin acceso</h2>
+        <p class="login-subtitle">La cuenta <strong style="color:#fda4af">${user.email}</strong><br>no está autorizada para ingresar.</p>
+        <button onclick="location.reload()" style="background:linear-gradient(135deg,rgba(251,113,133,.2),rgba(251,113,133,.1));color:#fda4af;border-color:rgba(251,113,133,.35);box-shadow:none">↺ Intentar con otra cuenta</button>
       </div>`;
     return;
   }
