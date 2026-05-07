@@ -1349,6 +1349,7 @@ function renderSpotifyAcum() {
   const divisor = y.divisors?.spotify || 6;
   const personas = ["Mauro", "Nico", "Fausto"];
   const personaIcons = { Mauro: "🎸", Nico: "🎧", Fausto: "🎵" };
+  const spotifyImg = `<img src="https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png" style="width:22px;height:22px;border-radius:4px;flex:0 0 auto" alt="Spotify">`;
   const semestres = [
     { label: "1er semestre (Ene–Jun)", meses: [0,1,2,3,4,5], pagoIdx: 5 },
     { label: "2do semestre (Jul–Dic)", meses: [6,7,8,9,10,11], pagoIdx: 11 }
@@ -1393,7 +1394,7 @@ function renderSpotifyAcum() {
       <div style="background:linear-gradient(180deg,rgba(168,85,247,.09),rgba(139,92,246,.05));border:1px solid rgba(168,85,247,.22);border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
         <div style="padding:14px 16px 12px;border-bottom:1px solid rgba(168,85,247,.15);background:rgba(168,85,247,.08)">
           <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:22px">${personaIcons[persona] || "🎵"}</span>
+            ${spotifyImg}
             <div>
               <div style="font-size:16px;font-weight:900;color:var(--text)">${persona}</div>
               <div style="font-size:11px;color:var(--muted)">Plan Spotify compartido</div>
