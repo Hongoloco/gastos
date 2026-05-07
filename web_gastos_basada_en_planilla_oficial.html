@@ -333,7 +333,7 @@
     .spotify-acum-table td.acum-monto { color:var(--muted-strong); }
     .spotify-acum-table td.acum-total { color:#c084fc; font-weight:700; }
     .spotify-acum-table td.acum-cada { color:#e879f9; font-weight:800; }
-    .spotify-acum-semestre { display:grid; grid-template-columns:1fr 1fr; gap:18px; padding:0 20px 22px; }
+    .spotify-acum-semestre { display:grid; grid-template-columns:1fr; gap:18px; padding:0 20px 22px; }
     @media (max-width:700px) { .spotify-acum-semestre { grid-template-columns:1fr; } }
     .streaming-values-box { margin-top:20px; border-top:1px solid var(--line-soft); padding-top:18px; }
     .streaming-values-title { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:850; margin-bottom:12px; }
@@ -1345,10 +1345,17 @@ function renderSpotifyAcum() {
   const grid = document.getElementById("spotify-acum-grid");
   if (!grid) return;
 
+  const divisor = y.divisors?.spotify || 6;
+  const personas = ["Mauro", "Nico", "Fausto"];
+
   const semestres = [
     { label: "1er semestre (Ene–Jun)", meses: [0,1,2,3,4,5], pagoIdx: 5 },
     { label: "2do semestre (Jul–Dic)", meses: [6,7,8,9,10,11], pagoIdx: 11 }
   ];
+
+  // Total anual por persona
+  const totalAnual = y.months.reduce((s, m) => s + Number(m?.spotify || 0), 0);
+  const totalAnualPorPersona = totalAnual / divisor;
 
   grid.innerHTML = semestres.map(sem => {
     let acum = 0;
@@ -1358,13 +1365,21 @@ function renderSpotifyAcum() {
       acum += valor;
       const esPago = i === sem.pagoIdx;
       const esActivo = i === selectedIdx;
-      const cadaUno = acum / 6;
+      const porPersona = acum / divisor;
       const claseRow = esPago ? "acum-pago" : esActivo ? "acum-activo" : "";
+
+      if (esPago) {
+        // Fila de pago: mostrar monto total que paga cada uno
+        return `<tr class="${claseRow}">
+          <td class="acum-mes">💳 ${m?.mes || ""}</td>
+          <td class="acum-monto">${money(valor)}</td>
+          ${personas.map(() => `<td class="acum-cada" style="font-size:15px">${money(porPersona)}</td>`).join("")}
+        </tr>`;
+      }
       return `<tr class="${claseRow}">
-        <td class="acum-mes">${esPago ? "💳 " : esActivo ? "▶ " : ""}${m?.mes || ""}</td>
+        <td class="acum-mes">${esActivo ? "▶ " : ""}${m?.mes || ""}</td>
         <td class="acum-monto">${money(valor)}</td>
-        <td class="acum-total">${money(acum)}</td>
-        <td class="acum-cada">${money(cadaUno)}</td>
+        ${personas.map(() => `<td class="acum-total">${money(porPersona)}</td>`).join("")}
       </tr>`;
     }).join("");
 
@@ -1372,15 +1387,75 @@ function renderSpotifyAcum() {
       <p style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:0 12px 6px;">${sem.label}</p>
       <table class="spotify-acum-table">
         <thead><tr>
-          <th>Mes</th><th>Spotify</th><th>Acumulado</th><th>C/u paga</th>
+          <th>Mes</th><th>Spotify</th>
+          ${personas.map(p => `<th style="color:#c084fc">${p}</th>`).join("")}
         </tr></thead>
         <tbody>${filas}</tbody>
       </table>
     </div>`;
   }).join("");
 
+  // Fila de total anual
+  const totalRow = `
+    <div style="grid-column:1/-1;padding:0 0 4px">
+      <p style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:0 12px 6px;">Total anual</p>
+      <table class="spotify-acum-table">
+        <thead><tr>
+          <th>Concepto</th><th>Total plan</th>
+          ${personas.map(p => `<th style="color:#c084fc">${p}</th>`).join("")}
+        </tr></thead>
+        <tbody>
+          <tr class="acum-pago">
+            <td class="acum-mes">📅 Año ${yearSelect.value}</td>
+            <td class="acum-monto">${money(totalAnual)}</td>
+            ${personas.map(() => `<td class="acum-cada" style="font-size:15px">${money(totalAnualPorPersona)}</td>`).join("")}
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+
+  // Reestructurar el grid para que el total ocupe todo el ancho
+  grid.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;grid-column:1/-1">
+      ${semestres.map(sem => {
+        let acum = 0;
+        const filas = sem.meses.map(i => {
+          const m = y.months[i];
+          const valor = Number(m?.spotify || 0);
+          acum += valor;
+          const esPago = i === sem.pagoIdx;
+          const esActivo = i === selectedIdx;
+          const porPersona = acum / divisor;
+          const claseRow = esPago ? "acum-pago" : esActivo ? "acum-activo" : "";
+          if (esPago) {
+            return `<tr class="${claseRow}">
+              <td class="acum-mes">💳 ${m?.mes || ""}</td>
+              <td class="acum-monto">${money(valor)}</td>
+              ${personas.map(() => `<td class="acum-cada" style="font-size:15px">${money(porPersona)}</td>`).join("")}
+            </tr>`;
+          }
+          return `<tr class="${claseRow}">
+            <td class="acum-mes">${esActivo ? "▶ " : ""}${m?.mes || ""}</td>
+            <td class="acum-monto">${money(valor)}</td>
+            ${personas.map(() => `<td class="acum-total">${money(porPersona)}</td>`).join("")}
+          </tr>`;
+        }).join("");
+        return `<div>
+          <p style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:0 12px 6px;">${sem.label}</p>
+          <table class="spotify-acum-table">
+            <thead><tr>
+              <th>Mes</th><th>Spotify</th>
+              ${personas.map(p => `<th style="color:#c084fc">${p}</th>`).join("")}
+            </tr></thead>
+            <tbody>${filas}</tbody>
+          </table>
+        </div>`;
+      }).join("")}
+    </div>
+    ${totalRow}`;
+
   document.getElementById("spotify-acum-subtitle").textContent =
-    "Fila 💳 = mes de pago. C/u paga = lo que debe Mauro, Nico y Fausto cada uno.";
+    "Fila 💳 = mes de pago. Cada columna muestra lo acumulado por persona hasta ese mes.";
 }
 
 function exportCSV() {
