@@ -397,9 +397,50 @@
       input, select { color:black; background:white; border:1px solid #ccc; }
       .table-wrap { overflow:visible; }
     }
+    /* ── Login overlay ── */
+    #loginOverlay {
+      position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
+      background:
+        linear-gradient(160deg, rgba(10,15,20,.98) 0%, rgba(15,10,25,.98) 100%);
+      padding:24px;
+    }
+    .login-box {
+      width:min(420px,100%); text-align:center; padding:48px 40px;
+      background:linear-gradient(180deg, rgba(18,27,36,.96), rgba(14,21,29,.98));
+      border:1px solid rgba(45,212,191,.22); border-radius:14px;
+      box-shadow:0 32px 90px rgba(0,0,0,.6);
+    }
+    .login-logo { font-size:48px; line-height:1; margin-bottom:16px; }
+    .login-box h2 { margin:0 0 8px; font-size:26px; color:var(--text); }
+    .login-box p { color:var(--muted); font-size:14px; margin:0 0 32px; line-height:1.55; }
+    #googleSignInBtn { display:inline-flex; justify-content:center; }
+    .login-note { margin-top:20px; font-size:12px; color:var(--muted); }
+    /* ── User chip in header ── */
+    .user-chip {
+      display:flex; align-items:center; gap:8px; padding:6px 8px;
+      border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.04);
+    }
+    .user-avatar { width:28px; height:28px; border-radius:50%; flex:0 0 auto; }
+    .user-name { font-size:13px; font-weight:700; color:var(--muted-strong); max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   </style>
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async></script>
 </head>
 <body>
+
+<!-- ── Login overlay ── -->
+<div id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">📊</div>
+    <h2>Control de Gastos</h2>
+    <p>Iniciá sesión con tu cuenta de Google para acceder a tus gastos mensuales.</p>
+    <div id="googleSignInBtn"></div>
+    <p class="login-note">Solo vos podés ver esta información.</p>
+  </div>
+</div>
+
+<!-- ── Contenido de la app (se muestra tras login) ── -->
+<div id="appContent" style="display:none">
 <header>
   <div class="hero">
     <section class="card hero-main">
@@ -413,6 +454,7 @@
       </div>
     </section>
     <section class="card controls">
+      <div id="userInfo" class="user-chip" style="margin-bottom:2px;"></div>
       <div class="control-heading">
         <span>Panel de control</span>
         <small>Elegí el año y el mes</small>
@@ -566,6 +608,7 @@
 <footer>
   Los datos iniciales fueron tomados de las hojas “GASTOS CASA 2019” a “GASTOS CASA 2026”. Los cambios se guardan localmente en tu navegador.
 </footer>
+</div><!-- /#appContent -->
 
 <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
   <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -1440,6 +1483,78 @@ cobrosCache = {};
 renderMonths();
 renderReparto();
 maybeRefreshDollarRate();
+
+// ── Google Sign-In ────────────────────────────────────────────────────────────
+// IMPORTANTE: reemplazá el valor de GOOGLE_CLIENT_ID con tu Client ID real
+// obtenido en https://console.cloud.google.com → APIs y servicios → Credenciales
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID';
+
+function parseJwt(token) {
+  try {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(base64));
+  } catch { return null; }
+}
+function getStoredUser() {
+  try { return JSON.parse(localStorage.getItem('gastos_google_user') || 'null'); } catch { return null; }
+}
+function showApp(user) {
+  document.getElementById('loginOverlay').style.display = 'none';
+  document.getElementById('appContent').style.display = '';
+  const chip = document.getElementById('userInfo');
+  if (user) {
+    chip.innerHTML = `
+      <img src="${user.picture}" alt="" class="user-avatar" referrerpolicy="no-referrer">
+      <span class="user-name">${user.name}</span>
+      <button class="secondary" id="logoutBtn" style="padding:5px 10px;font-size:12px;margin-left:4px;">Salir</button>
+    `;
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('gastos_google_user');
+      if (typeof google !== 'undefined') google.accounts.id.disableAutoSelect();
+      location.reload();
+    });
+  }
+}
+function handleCredentialResponse(response) {
+  const user = parseJwt(response.credential);
+  if (!user) return;
+  localStorage.setItem('gastos_google_user', JSON.stringify({
+    name: user.name, email: user.email, picture: user.picture, sub: user.sub
+  }));
+  showApp(user);
+}
+function initGoogleAuth() {
+  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') {
+    // Sin Client ID configurado: mostrar aviso y abrir igual la app
+    document.getElementById('loginOverlay').innerHTML = `
+      <div class="login-box">
+        <div class="login-logo">⚙️</div>
+        <h2>Configuración pendiente</h2>
+        <p style="color:#fb7185;margin-bottom:24px;">Necesitás configurar un <strong>Google Client ID</strong> para activar el login.<br><br>
+        Editá el archivo HTML y reemplazá <code style="color:#7cf4e2">YOUR_GOOGLE_CLIENT_ID</code> con tu Client ID de <a href="https://console.cloud.google.com" target="_blank" style="color:var(--accent)">Google Cloud Console</a>.</p>
+        <button onclick="document.getElementById('loginOverlay').style.display='none';document.getElementById('appContent').style.display='';">
+          Entrar sin login (modo desarrollo)
+        </button>
+      </div>`;
+    return;
+  }
+  const storedUser = getStoredUser();
+  if (storedUser) { showApp(storedUser); return; }
+  // Mostrar overlay y botón de Google
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('appContent').style.display = 'none';
+  google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleCredentialResponse, auto_select: true });
+  google.accounts.id.renderButton(document.getElementById('googleSignInBtn'), {
+    theme: 'filled_black', size: 'large', text: 'signin_with', shape: 'pill', locale: 'es'
+  });
+  google.accounts.id.prompt();
+}
+// Esperar a que el script de Google cargue
+if (typeof google !== 'undefined') {
+  initGoogleAuth();
+} else {
+  document.querySelector('script[src*="accounts.google.com"]').addEventListener('load', initGoogleAuth);
+}
 </script>
 </body>
 </html>
