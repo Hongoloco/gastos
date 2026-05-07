@@ -1489,7 +1489,9 @@ maybeRefreshDollarRate();
 // obtenido en https://console.cloud.google.com → APIs y servicios → Credenciales
 const GOOGLE_CLIENT_ID = '342707287421-q5je2224nvqkn7ktdmd3e8mp7pjlptb6.apps.googleusercontent.com';
 
-function parseJwt(token) {
+const ALLOWED_EMAILS = ['ale21rock@gmail.com'];
+
+
   try {
     const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     return JSON.parse(atob(base64));
@@ -1518,6 +1520,16 @@ function showApp(user) {
 function handleCredentialResponse(response) {
   const user = parseJwt(response.credential);
   if (!user) return;
+  if (!ALLOWED_EMAILS.includes(user.email)) {
+    document.getElementById('loginOverlay').innerHTML = `
+      <div class="login-box">
+        <div class="login-logo">🚫</div>
+        <h2>Acceso denegado</h2>
+        <p style="color:#fb7185;">La cuenta <strong>${user.email}</strong> no tiene permiso para acceder.</p>
+        <button onclick="location.reload()">Intentar con otra cuenta</button>
+      </div>`;
+    return;
+  }
   localStorage.setItem('gastos_google_user', JSON.stringify({
     name: user.name, email: user.email, picture: user.picture, sub: user.sub
   }));
@@ -1539,7 +1551,7 @@ function initGoogleAuth() {
     return;
   }
   const storedUser = getStoredUser();
-  if (storedUser) { showApp(storedUser); return; }
+  if (storedUser && ALLOWED_EMAILS.includes(storedUser.email)) { showApp(storedUser); return; }
   // Mostrar overlay y botón de Google
   document.getElementById('loginOverlay').style.display = 'flex';
   document.getElementById('appContent').style.display = 'none';
