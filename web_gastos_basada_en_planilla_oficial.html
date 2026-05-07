@@ -2194,32 +2194,60 @@ function showHistorialModal() {
 
 // ── Comparar meses ────────────────────────────────────────────────────────────
 function showCompararModal() {
-  const yr = yearSelect.value;
-  const y = state[yr];
+  const curYr = yearSelect.value;
   const selIdx = Number(document.getElementById('monthSelect').value || 0);
-  const b = Math.max(0, selIdx - 1);
-  const opts = (def) => y.months.map((m, i) =>
+  const prevYr = String(Number(curYr) - 1);
+  const prevYrExists = !!state[prevYr];
+
+  const yrOpts = (def) => years.map(y =>
+    `<option value="${y}"${y===def?' selected':''}>${y}</option>`).join('');
+  const mOpts = (yr, def) => (state[yr]?.months || []).map((m, i) =>
     `<option value="${i}"${i===def?' selected':''}>${m.mes}</option>`).join('');
 
   openModal('⚖️ Comparar meses', `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-      <div><label>Mes A</label><select id="cmp-m1" onchange="cmpUpdate('${yr}')">${opts(selIdx)}</select></div>
-      <div><label>Mes B</label><select id="cmp-m2" onchange="cmpUpdate('${yr}')">${opts(b)}</select></div>
+      <div>
+        <label>Año A</label>
+        <select id="cmp-y1" onchange="cmpSyncMonths();cmpUpdate()">${yrOpts(curYr)}</select>
+        <label style="margin-top:8px">Mes A</label>
+        <select id="cmp-m1" onchange="cmpUpdate()">${mOpts(curYr, selIdx)}</select>
+      </div>
+      <div>
+        <label>Año B</label>
+        <select id="cmp-y2" onchange="cmpSyncMonths();cmpUpdate()">${yrOpts(prevYrExists ? prevYr : curYr)}</select>
+        <label style="margin-top:8px">Mes B</label>
+        <select id="cmp-m2" onchange="cmpUpdate()">${mOpts(prevYrExists ? prevYr : curYr, selIdx)}</select>
+      </div>
     </div>
     <div id="cmp-body"></div>
   `);
-  cmpUpdate(yr);
+  cmpUpdate();
 }
 
-window.cmpUpdate = function(yr) {
-  const y = state[yr];
-  if (!y) return;
+window.cmpSyncMonths = function() {
+  const y1 = document.getElementById('cmp-y1')?.value;
+  const y2 = document.getElementById('cmp-y2')?.value;
+  const m1Sel = document.getElementById('cmp-m1');
+  const m2Sel = document.getElementById('cmp-m2');
+  if (!m1Sel || !m2Sel) return;
+  const prev1 = m1Sel.value, prev2 = m2Sel.value;
+  m1Sel.innerHTML = (state[y1]?.months || []).map((m,i) =>
+    `<option value="${i}"${i==prev1?' selected':''}>${m.mes}</option>`).join('');
+  m2Sel.innerHTML = (state[y2]?.months || []).map((m,i) =>
+    `<option value="${i}"${i==prev2?' selected':''}>${m.mes}</option>`).join('');
+};
+
+window.cmpUpdate = function() {
+  const y1k = document.getElementById('cmp-y1')?.value || yearSelect.value;
+  const y2k = document.getElementById('cmp-y2')?.value || yearSelect.value;
   const i1 = Number(document.getElementById('cmp-m1')?.value ?? 0);
   const i2 = Number(document.getElementById('cmp-m2')?.value ?? 0);
-  const m1 = y.months[i1], m2 = y.months[i2];
+  const y1 = state[y1k], y2 = state[y2k];
+  if (!y1 || !y2) return;
+  const m1 = y1.months[i1], m2 = y2.months[i2];
   if (!m1 || !m2) return;
   const keys = ['ute','ose','antel','netflix','spotify'];
-  const cols = [m1, m2].map(m => {
+  const cols = [[m1, y1k], [m2, y2k]].map(([m, yr]) => {
     const rows = keys.map(k => {
       const v = Number(m[k]||0);
       return `<div class="compare-row">
@@ -2227,7 +2255,7 @@ window.cmpUpdate = function(yr) {
         <strong style="color:var(--accent-strong)">${money(v)}</strong>
       </div>`;
     }).join('');
-    return `<div class="compare-col"><h4>${m.mes}</h4>${rows}
+    return `<div class="compare-col"><h4>${m.mes} ${yr}</h4>${rows}
       <div class="compare-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft)">
         <strong>Total</strong><strong style="color:var(--accent-strong);font-size:16px">${money(totalMonth(m))}</strong>
       </div>
@@ -2236,11 +2264,15 @@ window.cmpUpdate = function(yr) {
   const diff = totalMonth(m1) - totalMonth(m2);
   const sg = diff > 0 ? '+' : '';
   const dc = diff > 0 ? '#fb7185' : '#4ade80';
+  const pct = totalMonth(m2) > 0 ? Math.round(diff / totalMonth(m2) * 100) : 0;
   const body = document.getElementById('cmp-body');
   if (body) body.innerHTML = `<div class="compare-cols">${cols}</div>
-    <div style="margin-top:12px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line-soft);border-radius:8px;display:flex;justify-content:space-between;align-items:center">
+    <div style="margin-top:12px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line-soft);border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
       <span style="color:var(--muted);font-size:12px;font-weight:700">Diferencia (A – B)</span>
-      <strong style="color:${dc};font-size:16px;font-variant-numeric:tabular-nums">${sg}${money(diff)}</strong>
+      <div style="display:flex;align-items:center;gap:10px">
+        <strong style="color:${dc};font-size:16px;font-variant-numeric:tabular-nums">${sg}${money(diff)}</strong>
+        <span style="font-size:12px;font-weight:800;padding:2px 8px;border-radius:99px;background:${diff>0?'rgba(251,113,133,.12)':'rgba(34,197,94,.12)'};color:${dc}">${sg}${pct}%</span>
+      </div>
     </div>`;
 };
 
