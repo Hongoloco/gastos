@@ -1538,7 +1538,7 @@ const GOOGLE_CLIENT_ID = '342707287421-q5je2224nvqkn7ktdmd3e8mp7pjlptb6.apps.goo
 
 const ALLOWED_EMAILS = ['ale21rock@gmail.com'];
 
-
+function parseJwt(token) {
   try {
     const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     return JSON.parse(atob(base64));
