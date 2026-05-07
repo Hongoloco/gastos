@@ -97,6 +97,40 @@
       background:rgba(45,212,191,.1); color:var(--accent-strong); border:1px solid rgba(45,212,191,.22);
       font-size:17px; font-weight:900;
     }
+    /* ── Banner deuda total ── */
+    #deuda-banner { display:none; max-width:1800px; margin:0 auto; padding:0 40px 0; }
+    .deuda-banner-inner {
+      background:linear-gradient(135deg,rgba(251,113,133,.12),rgba(168,85,247,.10));
+      border:1px solid rgba(251,113,133,.35); border-radius:10px;
+      padding:14px 20px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    }
+    .deuda-banner-inner.todo-ok {
+      background:rgba(34,197,94,.08); border-color:rgba(34,197,94,.3);
+    }
+    .deuda-banner-icon { font-size:22px; flex:0 0 auto; }
+    .deuda-banner-text { flex:1; min-width:200px; }
+    .deuda-banner-titulo { font-size:13px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+    .deuda-banner-monto { font-size:22px; font-weight:900; color:#fb7185; font-variant-numeric:tabular-nums; line-height:1.1; }
+    .deuda-banner-inner.todo-ok .deuda-banner-monto { color:#4ade80; }
+    .deuda-banner-desglose { display:flex; gap:10px; flex-wrap:wrap; }
+    .deuda-pill {
+      display:inline-flex; align-items:center; gap:5px;
+      background:rgba(251,113,133,.1); border:1px solid rgba(251,113,133,.25);
+      border-radius:20px; padding:3px 10px; font-size:12px; font-weight:700; color:#fda4af;
+    }
+    .deuda-pill.pagado { background:rgba(34,197,94,.08); border-color:rgba(34,197,94,.25); color:#86efac; }
+    /* ── Mes cerrado ── */
+    #btn-cerrar-mes { transition:background .2s, border-color .2s, color .2s; }
+    #btn-cerrar-mes.cerrado { background:rgba(34,197,94,.15) !important; border-color:rgba(34,197,94,.4) !important; color:#4ade80 !important; }
+    .mes-cerrado-badge {
+      display:inline-flex; align-items:center; gap:4px;
+      background:rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.3);
+      border-radius:20px; padding:2px 9px; font-size:11px; font-weight:800; color:#4ade80;
+      margin-left:8px; vertical-align:middle;
+    }
+    /* ── Hint atajos de teclado ── */
+    .kbd-hint { font-size:11px; color:var(--muted); display:flex; align-items:center; gap:5px; }
+    .kbd { display:inline-block; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15); border-radius:4px; padding:1px 6px; font-size:10px; font-family:monospace; }
     .kpi:nth-child(2) .kpi-icon { background:rgba(245,158,11,.1); color:#fed7aa; border-color:rgba(245,158,11,.24); }
     .kpi:nth-child(3) .kpi-icon { background:rgba(167,139,250,.1); color:#ddd6fe; border-color:rgba(167,139,250,.24); }
     .kpi:nth-child(4) .kpi-icon { background:rgba(56,189,248,.1); color:#bae6fd; border-color:rgba(56,189,248,.24); }
@@ -509,7 +543,7 @@
       <div id="userInfo" class="user-chip" style="margin-bottom:2px;"></div>
       <div class="control-heading">
         <span>Panel de control</span>
-        <small>Elegí el año y el mes</small>
+        <small class="kbd-hint"><kbd class="kbd">←</kbd><kbd class="kbd">→</kbd> para cambiar mes</small>
       </div>
       <div class="control-grid">
         <div>
@@ -533,11 +567,14 @@
         <button class="secondary" id="summaryBtn">Ver resumen</button>
         <button class="secondary" id="helpBtn">Guía rápida</button>
         <button class="secondary" onclick="window.print()">PDF / imprimir</button>
+        <button class="secondary" id="btn-cerrar-mes" onclick="toggleCerrarMes()">🔒 Cerrar mes</button>
         <button class="danger" id="resetBtn">Restaurar año</button>
       </div>
     </section>
   </div>
 </header>
+
+<div id="deuda-banner"></div>
 
 <main>
   <section class="kpis">
@@ -1061,6 +1098,8 @@ function renderReparto() {
   renderStreamingValues();
   renderCobros();
   renderSpotifyAcum();
+  renderDeudaBanner();
+  actualizarBtnCerrarMes();
 }
 
 function renderStreamingValues() {
@@ -1602,7 +1641,18 @@ modalBackdrop.addEventListener("click", e => {
   if (e.target === modalBackdrop) closeModal();
 });
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && modalBackdrop.classList.contains("open")) closeModal();
+  if (e.key === "Escape" && modalBackdrop.classList.contains("open")) { closeModal(); return; }
+  // Atajos ← → para cambiar mes (solo si no hay foco en input/select)
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    const sel = document.getElementById('monthSelect');
+    const cur = Number(sel.value || 0);
+    const max = sel.options.length - 1;
+    const next = e.key === 'ArrowLeft' ? Math.max(0, cur - 1) : Math.min(max, cur + 1);
+    if (next !== cur) { sel.value = next; sel.dispatchEvent(new Event('change')); }
+  }
 });
 
 // Limpiar cache de cobros al cargar la página para traer datos frescos de Sheets
@@ -1610,6 +1660,115 @@ cobrosCache = {};
 renderMonths();
 renderReparto();
 maybeRefreshDollarRate();
+
+// ── Deuda banner ─────────────────────────────────────────────────────────────
+async function renderDeudaBanner() {
+  const banner = document.getElementById('deuda-banner');
+  if (!banner) return;
+  const selectedIdx = Number(document.getElementById('monthSelect').value || 0);
+  const y = getYear();
+  const year = Number(yearSelect.value);
+
+  // Cobros normales (Mamá, Raquel, Paola)
+  const pagos = await cobrosCargarPagos(year, selectedIdx);
+  const deudores = ['Mamá', 'Raquel', 'Paola'];
+  const cards = [...document.querySelectorAll('.persona-card')];
+  let totalPendiente = 0;
+  let totalCobrado = 0;
+  const pills = deudores.map(nombre => {
+    const card = cards.find(c => c.querySelector('.persona-nombre')?.textContent === nombre);
+    const monto = card ? parseFloat(card.querySelector('.persona-total')?.textContent.replace(/[$.]/g,'').replace(',','.')) || 0 : 0;
+    const pagado = Math.min(pagos[nombre] || 0, monto);
+    const restante = Math.max(0, monto - pagado);
+    totalPendiente += restante;
+    totalCobrado += pagado;
+    if (monto <= 0) return '';
+    return `<span class="deuda-pill${restante === 0 ? ' pagado' : ''}">${restante === 0 ? '✓' : ''} ${nombre}: ${restante === 0 ? 'Saldado' : money(restante)}</span>`;
+  }).filter(Boolean);
+
+  // Spotify pendiente (Mauro, Nico, Fausto — solo junio y diciembre)
+  const esJunio = selectedIdx === 5;
+  const esDic = selectedIdx === 11;
+  let spotifyPills = [];
+  if (esJunio || esDic) {
+    const pagosSpotify = await cobrosCargarPagos(year, selectedIdx);
+    const divisor = y.divisors?.spotify || 6;
+    const acumSpotify = y.months.slice(0, selectedIdx + 1).reduce((s, m) => s + Number(m?.spotify || 0), 0);
+    const porPersona = acumSpotify / divisor;
+    ['Mauro','Nico','Fausto'].forEach(p => {
+      const key = `spotify_${p}`;
+      const pagado = pagosSpotify[key] !== undefined;
+      totalPendiente += pagado ? 0 : porPersona;
+      totalCobrado += pagado ? porPersona : 0;
+      spotifyPills.push(`<span class="deuda-pill${pagado ? ' pagado' : ''}"><img src="https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png" style="width:11px;height:11px;border-radius:2px"> ${p}: ${pagado ? 'Pagó' : money(porPersona)}</span>`);
+    });
+  }
+
+  const allPills = [...pills, ...spotifyPills];
+  if (allPills.length === 0) { banner.style.display = 'none'; return; }
+  banner.style.display = 'block';
+  const todoOk = totalPendiente === 0;
+  banner.innerHTML = `<div class="deuda-banner-inner${todoOk ? ' todo-ok' : ''}">
+    <div class="deuda-banner-icon">${todoOk ? '✅' : '💰'}</div>
+    <div class="deuda-banner-text">
+      <div class="deuda-banner-titulo">Te deben este mes</div>
+      <div class="deuda-banner-monto">${todoOk ? '¡Todo cobrado!' : money(totalPendiente)}</div>
+    </div>
+    <div class="deuda-banner-desglose">${allPills.join('')}</div>
+  </div>`;
+}
+
+// ── Cerrar mes ────────────────────────────────────────────────────────────────
+const MESES_CERRADOS_KEY = 'gastos_meses_cerrados';
+function getMesesCerrados() {
+  try { return JSON.parse(localStorage.getItem(MESES_CERRADOS_KEY) || '{}'); } catch { return {}; }
+}
+function mesesCerradosKey(year, monthIdx) { return `${year}_${monthIdx}`; }
+function isMesCerrado() {
+  const year = yearSelect.value;
+  const monthIdx = Number(document.getElementById('monthSelect').value || 0);
+  return !!getMesesCerrados()[mesesCerradosKey(year, monthIdx)];
+}
+function toggleCerrarMes() {
+  const year = yearSelect.value;
+  const monthIdx = Number(document.getElementById('monthSelect').value || 0);
+  const key = mesesCerradosKey(year, monthIdx);
+  const cerrados = getMesesCerrados();
+  if (cerrados[key]) {
+    delete cerrados[key];
+  } else {
+    cerrados[key] = new Date().toISOString();
+  }
+  localStorage.setItem(MESES_CERRADOS_KEY, JSON.stringify(cerrados));
+  actualizarBtnCerrarMes();
+}
+function actualizarBtnCerrarMes() {
+  const btn = document.getElementById('btn-cerrar-mes');
+  if (!btn) return;
+  const cerrado = isMesCerrado();
+  btn.textContent = cerrado ? '🔓 Mes cerrado' : '🔒 Cerrar mes';
+  btn.classList.toggle('cerrado', cerrado);
+  // Mostrar badge en el selector de mes
+  const label = document.querySelector('label[for="monthSelect"]');
+  if (label) {
+    const existing = label.querySelector('.mes-cerrado-badge');
+    if (cerrado && !existing) {
+      label.insertAdjacentHTML('beforeend', '<span class="mes-cerrado-badge">🔒 Cerrado</span>');
+    } else if (!cerrado && existing) {
+      existing.remove();
+    }
+  }
+}
+// Proteger edición de mes cerrado
+function checkMesCerrado() {
+  if (isMesCerrado()) {
+    const m = document.getElementById('monthSelect');
+    const mes = m?.options[m.value]?.text || 'este mes';
+    alert(`⚠️ ${mes} está marcado como cerrado. Abrilo con el botón 🔓 para editar.`);
+    return true;
+  }
+  return false;
+}
 
 // ── Google Sign-In ────────────────────────────────────────────────────────────
 // IMPORTANTE: reemplazá el valor de GOOGLE_CLIENT_ID con tu Client ID real
