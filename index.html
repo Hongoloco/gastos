@@ -80,7 +80,7 @@
     input[type="number"] { text-align:right; font-variant-numeric:tabular-nums; }
     input:focus, select:focus { border-color:rgba(45,212,191,.72); box-shadow:0 0 0 4px rgba(45,212,191,.13); }
     main { max-width:1800px; margin:0 auto; padding:0 40px 48px; display:grid; gap:22px; }
-    .kpis { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:18px; }
+    .kpis { display:grid; grid-template-columns:repeat(auto-fill, minmax(155px,1fr)); gap:18px; }
     .kpi { padding:18px 18px 16px; position:relative; overflow:hidden; background:linear-gradient(180deg, rgba(20,31,41,.96), rgba(12,19,26,.96)); }
     .kpi:before { content:""; position:absolute; inset:0 0 auto; height:3px; background:var(--accent); }
     .kpi:nth-child(1) { border-color:rgba(45,212,191,.28); }
@@ -531,6 +531,35 @@
     .btn-user-action:hover { background:rgba(255,255,255,.1); }
     .btn-user-action.danger { border-color:rgba(251,113,133,.3); color:#fda4af; background:rgba(251,113,133,.07); }
     .btn-user-action.danger:hover { background:rgba(251,113,133,.15); }
+    /* ── Slide animation mes ── */
+    @keyframes kf-month-slide { from { opacity:.55; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+    /* ── KPI sub-badge ── */
+    .kpi-sub { display:inline-block; font-size:11px; font-weight:800; margin-top:5px; padding:2px 8px; border-radius:99px; }
+    .kpi-sub.above { background:rgba(251,113,133,.12); color:#fb7185; border:1px solid rgba(251,113,133,.2); }
+    .kpi-sub.below { background:rgba(34,197,94,.12); color:#4ade80; border:1px solid rgba(34,197,94,.2); }
+    .kpi-sub.equal { background:rgba(156,163,175,.08); color:var(--muted); border:1px solid rgba(156,163,175,.12); }
+    /* ── Heatmap modal ── */
+    .heat-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .heat-table th { padding:6px 8px; text-align:left; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid var(--line-soft); white-space:nowrap; }
+    .heat-table th:not(:first-child) { text-align:right; }
+    .heat-table td { padding:5px 8px; border-bottom:1px solid rgba(255,255,255,.03); }
+    .heat-table td:not(:first-child) { text-align:right; border-radius:4px; font-variant-numeric:tabular-nums; font-weight:700; }
+    .heat-table tr.heat-activo td:first-child { color:var(--accent); font-weight:900; }
+    /* ── Compare modal ── */
+    .compare-cols { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .compare-col { background:rgba(255,255,255,.03); border:1px solid var(--line-soft); border-radius:8px; padding:14px; }
+    .compare-col h4 { margin:0 0 10px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--accent); }
+    .compare-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:13px; }
+    .compare-row:last-child { border-bottom:none; }
+    /* ── Tendencia SVG ── */
+    .t-legend { display:flex; flex-wrap:wrap; gap:6px; padding:0 18px 10px; }
+    .t-leg-item { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px; cursor:pointer; transition:background .15s, opacity .15s; border:1px solid transparent; }
+    .t-leg-item:hover { background:rgba(255,255,255,.07); }
+    .t-leg-item.active { border-color:currentColor; }
+    .t-leg-item.dimmed { opacity:.38; }
+    .t-scroll { overflow-x:auto; padding:0 18px 18px; }
+    .chart-mode-btn { font-size:11px; padding:5px 11px; border-radius:7px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--muted-strong); box-shadow:none; }
+    .chart-mode-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(45,212,191,.08); }
   </style>
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async></script>
@@ -595,6 +624,8 @@
         <button class="secondary" id="summaryBtn">Ver resumen</button>
         <button class="secondary" id="helpBtn">Guía rápida</button>
         <button class="secondary" onclick="window.print()">PDF / imprimir</button>
+        <button class="secondary" id="historialBtn">📅 Historial</button>
+        <button class="secondary" id="compararBtn">⚖️ Comparar</button>
         <button class="secondary" id="btn-cerrar-mes" onclick="toggleCerrarMes()">🔒 Cerrar mes</button>
         <button class="danger" id="resetBtn">Restaurar año</button>
       </div>
@@ -625,6 +656,11 @@
     <div class="card kpi">
       <div class="kpi-head"><span>Hoy</span><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:#86efac;border-color:rgba(34,197,94,.24)">📅</div></div>
       <strong id="kpiHoy" style="font-size:clamp(13px,1.4vw,17px);line-height:1.3;">-</strong>
+    </div>
+    <div class="card kpi" style="border-color:rgba(139,92,246,.28)">
+      <div class="kpi-head"><span>Proyección anual</span><div class="kpi-icon" style="background:rgba(139,92,246,.1);color:#ddd6fe;border-color:rgba(139,92,246,.24)">📈</div></div>
+      <strong id="kpiProyeccion">$0</strong>
+      <small id="kpiProyeccionSub" style="color:var(--muted);font-size:11px;display:block;margin-top:3px"></small>
     </div>
   </section>
 
@@ -717,9 +753,19 @@
   <section class="card chart-card">
     <div class="section-title">
       <h2>Evolución mensual</h2>
-      <p>Total mensual por servicios.</p>
+      <div style="display:flex;align-items:center;gap:8px">
+        <p>Total mensual por servicios.</p>
+        <button class="chart-mode-btn active" id="chartBarsBtn" onclick="setChartMode('bars')">Barras</button>
+        <button class="chart-mode-btn" id="chartLinesBtn" onclick="setChartMode('lines')">Tendencia</button>
+      </div>
     </div>
     <div class="chart" id="chart"></div>
+    <div id="tendencia-wrap" style="display:none">
+      <div class="t-legend" id="t-legend"></div>
+      <div class="t-scroll">
+        <svg id="tendencia-svg" style="display:block;width:100%;min-width:560px" viewBox="0 0 900 240"></svg>
+      </div>
+    </div>
   </section>
 </main>
 
@@ -1082,10 +1128,40 @@ function renderKpis() {
   const active = totals.filter(v=>v>0);
   const max = Math.max(...totals);
   const imax = totals.indexOf(max);
+  const selectedIdx = Number(document.getElementById('monthSelect')?.value || 0);
+  const currentTotal = totals[selectedIdx] || 0;
+  const avgValue = active.length ? sum / active.length : 0;
+
   document.getElementById("kpiYear").textContent = money(sum);
-  document.getElementById("kpiAvg").textContent = money(active.length ? sum/active.length : 0);
-  document.getElementById("kpiHigh").textContent = y.months[imax]?.mes || "-";
+  document.getElementById("kpiAvg").textContent = money(avgValue);
+
+  // Badge vs promedio bajo el KPI de promedio
+  const kpiAvgEl = document.getElementById("kpiAvg");
+  let badge = kpiAvgEl.nextElementSibling;
+  if (badge?.classList?.contains('kpi-sub')) badge.remove();
+  if (avgValue > 0 && currentTotal > 0) {
+    const pct = Math.round((currentTotal - avgValue) / avgValue * 100);
+    badge = document.createElement('span');
+    badge.className = `kpi-sub ${pct > 5 ? 'above' : pct < -5 ? 'below' : 'equal'}`;
+    badge.textContent = `Mes actual: ${pct > 0 ? '+' : ''}${pct}% vs prom.`;
+    kpiAvgEl.insertAdjacentElement('afterend', badge);
+  }
+
+  document.getElementById("kpiHigh").textContent =
+    `${y.months[imax]?.mes || "-"} (${money(max)})`;
   document.getElementById("kpiBase").textContent = money(Number(document.getElementById("baseUte").value || y.baseUte || 0));
+
+  // Proyección anual basada en promedio de meses con datos
+  const proyEl = document.getElementById('kpiProyeccion');
+  const proySubEl = document.getElementById('kpiProyeccionSub');
+  if (proyEl) {
+    const proyeccion = active.length > 0 ? (sum / active.length) * 12 : 0;
+    proyEl.textContent = money(proyeccion);
+    if (proySubEl) proySubEl.textContent = active.length < 12
+      ? `Basado en ${active.length} mes${active.length > 1 ? 'es' : ''}`
+      : 'Año completo';
+  }
+
   const ahora = new Date();
   const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   const dias = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
@@ -1835,6 +1911,8 @@ document.getElementById("applyStreamingBtn").addEventListener("click", applyStre
 document.getElementById("summaryBtn").addEventListener("click", showSummaryModal);
 document.getElementById("helpBtn").addEventListener("click", showHelpModal);
 document.getElementById("resetBtn").addEventListener("click", showResetModal);
+document.getElementById("historialBtn").addEventListener("click", showHistorialModal);
+document.getElementById("compararBtn").addEventListener("click", showCompararModal);
 modalCloseBtn.addEventListener("click", closeModal);
 modalBackdrop.addEventListener("click", e => {
   if (e.target === modalBackdrop) closeModal();
@@ -1850,7 +1928,11 @@ document.addEventListener("keydown", e => {
     const cur = Number(sel.value || 0);
     const max = sel.options.length - 1;
     const next = e.key === 'ArrowLeft' ? Math.max(0, cur - 1) : Math.min(max, cur + 1);
-    if (next !== cur) { sel.value = next; sel.dispatchEvent(new Event('change')); }
+    if (next !== cur) {
+      const mainEl = document.querySelector('main');
+      if (mainEl) { mainEl.style.animation = 'none'; void mainEl.offsetWidth; mainEl.style.animation = 'kf-month-slide .22s ease'; }
+      sel.value = next; sel.dispatchEvent(new Event('change'));
+    }
   }
 });
 
@@ -1968,6 +2050,199 @@ function checkMesCerrado() {
   }
   return false;
 }
+
+// ── Tendencia multi-servicio ──────────────────────────────────────────────────
+let _chartMode = 'bars';
+function setChartMode(mode) {
+  _chartMode = mode;
+  document.getElementById('chart').style.display = mode === 'bars' ? '' : 'none';
+  document.getElementById('tendencia-wrap').style.display = mode === 'lines' ? '' : 'none';
+  document.getElementById('chartBarsBtn').classList.toggle('active', mode === 'bars');
+  document.getElementById('chartLinesBtn').classList.toggle('active', mode === 'lines');
+  if (mode === 'lines') renderTendencia();
+}
+
+function renderTendencia() {
+  const y = getYear();
+  const svgEl = document.getElementById('tendencia-svg');
+  const legendEl = document.getElementById('t-legend');
+  if (!svgEl || !legendEl) return;
+
+  const W = 880, H = 230, padL = 64, padR = 18, padT = 18, padB = 28;
+  const gW = W - padL - padR, gH = H - padT - padB;
+  const keys = ['ute','ose','antel','netflix','spotify'];
+  const clrs = { ute:'#f97316', ose:'#38bdf8', antel:'#a78bfa', netflix:'#ef4444', spotify:'#22c55e', total:'#facc15' };
+  const nms  = { ute:'UTE', ose:'OSE', antel:'ANTEL', netflix:'Netflix', spotify:'Spotify', total:'Total' };
+  const allK = [...keys, 'total'];
+  const months = y.months;
+  const hidden = svgEl._hidden || new Set();
+  svgEl._hidden = hidden;
+
+  const data = {};
+  allK.forEach(k => {
+    data[k] = months.map((m, i) => k === 'total' ? totalMonth(m) : Number(m[k] || 0));
+  });
+
+  const maxVal = Math.max(...Object.values(data).flat(), 1);
+  const xPos = i => padL + (i / (months.length - 1)) * gW;
+  const yPos = v => padT + gH - (v / maxVal) * gH;
+
+  // Y grid + labels
+  let svg = '';
+  for (let t = 0; t <= 4; t++) {
+    const v = maxVal * t / 4;
+    const yy = yPos(v);
+    svg += `<line x1="${padL}" y1="${yy.toFixed(1)}" x2="${W-padR}" y2="${yy.toFixed(1)}" stroke="rgba(255,255,255,.07)" stroke-width="1"/>`;
+    svg += `<text x="${padL-6}" y="${(yy+4).toFixed(1)}" text-anchor="end" font-size="9" fill="#9fb3bd">${money(v)}</text>`;
+  }
+
+  // X labels
+  months.forEach((m, i) => {
+    svg += `<text x="${xPos(i).toFixed(1)}" y="${H-5}" text-anchor="middle" font-size="9" fill="#9fb3bd">${m.mes.slice(0,3)}</text>`;
+  });
+
+  // Lines
+  allK.forEach(k => {
+    if (hidden.has(k)) return;
+    const pts = data[k].map((v, i) => `${xPos(i).toFixed(1)},${yPos(v).toFixed(1)}`).join(' ');
+    const sw = k === 'total' ? 2.2 : 1.6;
+    const dash = k === 'total' ? '6,3' : 'none';
+    svg += `<polyline fill="none" stroke="${clrs[k]}" stroke-width="${sw}" stroke-dasharray="${dash}" stroke-linecap="round" stroke-linejoin="round" points="${pts}" opacity=".9"/>`;
+    data[k].forEach((v, i) => {
+      if (v > 0) svg += `<circle cx="${xPos(i).toFixed(1)}" cy="${yPos(v).toFixed(1)}" r="3" fill="${clrs[k]}" opacity=".85"><title>${nms[k]} ${months[i]?.mes}: ${money(v)}</title></circle>`;
+    });
+  });
+
+  svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svgEl.innerHTML = svg;
+
+  legendEl.innerHTML = allK.map(k => `
+    <div class="t-leg-item${hidden.has(k) ? ' dimmed' : ' active'}" onclick="toggleTendLine('${k}')" style="color:${clrs[k]}">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${clrs[k]};flex:0 0 auto"></span>
+      ${nms[k]}
+    </div>`).join('');
+}
+
+function toggleTendLine(key) {
+  const svgEl = document.getElementById('tendencia-svg');
+  if (!svgEl) return;
+  svgEl._hidden = svgEl._hidden || new Set();
+  if (svgEl._hidden.has(key)) svgEl._hidden.delete(key); else svgEl._hidden.add(key);
+  renderTendencia();
+}
+
+// ── Historial anual con heatmap ───────────────────────────────────────────────
+function showHistorialModal() {
+  const yr = yearSelect.value;
+  const y = state[yr];
+  const keys = ['ute','ose','antel','netflix','spotify'];
+  const clrs = { ute:'#f97316', ose:'#38bdf8', antel:'#a78bfa', netflix:'#ef4444', spotify:'#22c55e', total:'#facc15' };
+  const nms  = { ute:'UTE', ose:'OSE', antel:'ANTEL', netflix:'Netflix', spotify:'Spotify' };
+  const selIdx = Number(document.getElementById('monthSelect').value || 0);
+
+  // Máximos por columna para heatmap
+  const maxByKey = { total: 0 };
+  keys.forEach(k => { maxByKey[k] = 0; });
+  y.months.forEach(m => {
+    keys.forEach(k => { maxByKey[k] = Math.max(maxByKey[k], Number(m[k]||0)); });
+    maxByKey.total = Math.max(maxByKey.total, totalMonth(m));
+  });
+
+  function heatBg(val, maxV) {
+    if (!val || !maxV) return 'transparent';
+    const p = val / maxV;
+    const r = Math.round(30 + p * 210);
+    const g = Math.round(195 - p * 155);
+    return `rgba(${r},${g},30,.2)`;
+  }
+
+  const thead = `<tr>
+    <th>Mes</th>
+    ${keys.map(k => `<th style="color:${clrs[k]}">${nms[k]}</th>`).join('')}
+    <th style="color:${clrs.total}">Total</th>
+  </tr>`;
+
+  const trows = y.months.map((m, i) => {
+    const tot = totalMonth(m);
+    const active = i === selIdx;
+    return `<tr class="${active ? 'heat-activo' : ''}">
+      <td style="color:var(--muted-strong);font-size:12px;font-weight:${active?'900':'600'};white-space:nowrap">${active ? '▶ ' : ''}${m.mes}</td>
+      ${keys.map(k => {
+        const v = Number(m[k]||0);
+        return `<td style="background:${heatBg(v,maxByKey[k])}">${v ? money(v) : '<span style="opacity:.3">–</span>'}</td>`;
+      }).join('')}
+      <td style="background:${heatBg(tot,maxByKey.total)};color:${clrs.total};font-weight:900">${money(tot)}</td>
+    </tr>`;
+  }).join('');
+
+  const sumRow = `<tr style="border-top:2px solid var(--line)">
+    <td style="font-weight:900;color:var(--accent-strong);font-size:12px">TOTAL AÑO</td>
+    ${keys.map(k => {
+      const s = y.months.reduce((a,m) => a+Number(m[k]||0), 0);
+      return `<td style="color:${clrs[k]};font-weight:900">${money(s)}</td>`;
+    }).join('')}
+    <td style="color:${clrs.total};font-weight:900">${money(y.months.reduce((a,m)=>a+totalMonth(m),0))}</td>
+  </tr>`;
+
+  openModal(`📅 Historial ${yr}`, `
+    <div style="overflow-x:auto">
+      <table class="heat-table"><thead>${thead}</thead><tbody>${trows}${sumRow}</tbody></table>
+    </div>
+    <p class="hint" style="margin-top:10px">Verde = bajo, rojo = alto relativo a cada columna. ▶ = mes seleccionado.</p>
+  `);
+}
+
+// ── Comparar meses ────────────────────────────────────────────────────────────
+function showCompararModal() {
+  const yr = yearSelect.value;
+  const y = state[yr];
+  const selIdx = Number(document.getElementById('monthSelect').value || 0);
+  const b = Math.max(0, selIdx - 1);
+  const opts = (def) => y.months.map((m, i) =>
+    `<option value="${i}"${i===def?' selected':''}>${m.mes}</option>`).join('');
+
+  openModal('⚖️ Comparar meses', `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div><label>Mes A</label><select id="cmp-m1" onchange="cmpUpdate('${yr}')">${opts(selIdx)}</select></div>
+      <div><label>Mes B</label><select id="cmp-m2" onchange="cmpUpdate('${yr}')">${opts(b)}</select></div>
+    </div>
+    <div id="cmp-body"></div>
+  `);
+  cmpUpdate(yr);
+}
+
+window.cmpUpdate = function(yr) {
+  const y = state[yr];
+  if (!y) return;
+  const i1 = Number(document.getElementById('cmp-m1')?.value ?? 0);
+  const i2 = Number(document.getElementById('cmp-m2')?.value ?? 0);
+  const m1 = y.months[i1], m2 = y.months[i2];
+  if (!m1 || !m2) return;
+  const keys = ['ute','ose','antel','netflix','spotify'];
+  const cols = [m1, m2].map(m => {
+    const rows = keys.map(k => {
+      const v = Number(m[k]||0);
+      return `<div class="compare-row">
+        <span style="display:flex;align-items:center;gap:5px">${serviceIconHtml(k)} ${serviceLabels[k]}</span>
+        <strong style="color:var(--accent-strong)">${money(v)}</strong>
+      </div>`;
+    }).join('');
+    return `<div class="compare-col"><h4>${m.mes}</h4>${rows}
+      <div class="compare-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft)">
+        <strong>Total</strong><strong style="color:var(--accent-strong);font-size:16px">${money(totalMonth(m))}</strong>
+      </div>
+    </div>`;
+  }).join('');
+  const diff = totalMonth(m1) - totalMonth(m2);
+  const sg = diff > 0 ? '+' : '';
+  const dc = diff > 0 ? '#fb7185' : '#4ade80';
+  const body = document.getElementById('cmp-body');
+  if (body) body.innerHTML = `<div class="compare-cols">${cols}</div>
+    <div style="margin-top:12px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line-soft);border-radius:8px;display:flex;justify-content:space-between;align-items:center">
+      <span style="color:var(--muted);font-size:12px;font-weight:700">Diferencia (A – B)</span>
+      <strong style="color:${dc};font-size:16px;font-variant-numeric:tabular-nums">${sg}${money(diff)}</strong>
+    </div>`;
+};
 
 // ── Google Sign-In ────────────────────────────────────────────────────────────
 // IMPORTANTE: reemplazá el valor de GOOGLE_CLIENT_ID con tu Client ID real
