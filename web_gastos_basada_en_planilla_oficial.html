@@ -1308,10 +1308,10 @@ function renderPersonas() {
   document.getElementById("personas-subtitle").textContent =
     `Total de ${escapeHtml(m.mes)} — cada persona, su parte.`;
 
-  renderPersonasChart(m);
+  renderPersonasChart(m, personas);
 }
 
-function renderPersonasChart(m) {
+function renderPersonasChart(m, personas) {
   const wrap = document.getElementById("personas-chart-wrap");
   if (!wrap) return;
 
@@ -1328,6 +1328,13 @@ function renderPersonasChart(m) {
   const values = keys.map(k => Math.round(Number(m[k]||0)));
   const total = values.reduce((a,b)=>a+b,0);
   if (!total) { wrap.innerHTML = ""; return; }
+
+  // Ranking de personas (barras horizontales)
+  const personasValidas = (personas || [])
+    .map(p => ({ ...p, total: Math.round(p.ute+p.ose+p.antel+p.netflix+p.spotify) }))
+    .filter(p => p.total > 0)
+    .sort((a,b) => b.total - a.total);
+  const maxPersona = personasValidas[0]?.total || 1;
 
   // SVG donut
   const cx=120, cy=120, R=95, r=55;
@@ -1363,16 +1370,33 @@ function renderPersonasChart(m) {
         </g>
       </svg>
     </div>
-    <div class="chart-legend" id="donut-legend">
-      ${segments.map((s,i)=>`
-        <div class="chart-legend-item" id="donut-leg-${i}" style="--item-color:${s.color}"
-          onclick="donutClick(${i})" onmouseenter="donutHover(${i})" onmouseleave="donutLeave()">
-          <img src="${serviceIcons2[s.k]}" style="width:16px;height:16px;object-fit:contain;border-radius:3px;flex:0 0 auto" alt="">
-          <span class="chart-legend-name">${serviceNames[s.k]}</span>
-          <span class="chart-legend-pct">${(s.pct*100).toFixed(1)}%</span>
-          <span class="chart-legend-monto" style="color:${s.color}">${money(s.value)}</span>
-        </div>
-      `).join("")}
+    <div style="display:flex;flex-direction:column;gap:0;min-width:0">
+      <p style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 6px">Por servicio</p>
+      <div class="chart-legend" id="donut-legend">
+        ${segments.map((s,i)=>`
+          <div class="chart-legend-item" id="donut-leg-${i}" style="--item-color:${s.color}"
+            onclick="donutClick(${i})" onmouseenter="donutHover(${i})" onmouseleave="donutLeave()">
+            <img src="${serviceIcons2[s.k]}" style="width:16px;height:16px;object-fit:contain;border-radius:3px;flex:0 0 auto" alt="">
+            <span class="chart-legend-name">${serviceNames[s.k]}</span>
+            <span class="chart-legend-pct">${(s.pct*100).toFixed(1)}%</span>
+            <span class="chart-legend-monto" style="color:${s.color}">${money(s.value)}</span>
+          </div>
+        `).join("")}
+      </div>
+      <p style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:18px 0 8px">Ranking por persona</p>
+      <div style="display:grid;gap:7px">
+        ${personasValidas.map((p,i) => {
+          const barPct = (p.total / maxPersona * 100).toFixed(1);
+          const colorStr = p.color.startsWith('var') ? '' : p.color;
+          return `<div style="display:grid;grid-template-columns:60px 1fr 72px;align-items:center;gap:8px">
+            <span style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.icon} ${p.nombre}</span>
+            <div style="height:8px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden">
+              <div style="height:100%;width:${barPct}%;background:${p.color};border-radius:99px;transition:width .4s ease"></div>
+            </div>
+            <span style="font-size:12px;font-weight:900;color:${p.color};font-variant-numeric:tabular-nums;text-align:right">${money(p.total)}</span>
+          </div>`;
+        }).join("")}
+      </div>
     </div>`;
 
   // Guardar segments en el DOM para los handlers
