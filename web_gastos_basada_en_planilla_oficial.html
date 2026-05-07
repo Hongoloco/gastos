@@ -1340,15 +1340,15 @@ async function cobrosMarcarTodosSaldados() {
   renderCobros();
 }
 
-function renderSpotifyAcum() {
+async function renderSpotifyAcum() {
   const y = getYear();
   const selectedIdx = Number(document.getElementById("monthSelect").value || 0);
   const grid = document.getElementById("spotify-acum-grid");
   if (!grid) return;
 
+  const currentYear = Number(yearSelect.value);
   const divisor = y.divisors?.spotify || 6;
   const personas = ["Mauro", "Nico", "Fausto"];
-  const personaIcons = { Mauro: "🎸", Nico: "🎧", Fausto: "🎵" };
   const spotifyImg = `<img src="https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png" style="width:22px;height:22px;border-radius:4px;flex:0 0 auto" alt="Spotify">`;
   const semestres = [
     { label: "1er semestre (Ene–Jun)", meses: [0,1,2,3,4,5], pagoIdx: 5 },
@@ -1357,8 +1357,15 @@ function renderSpotifyAcum() {
   const totalAnual = y.months.reduce((s, m) => s + Number(m?.spotify || 0), 0);
   const totalAnualPorPersona = totalAnual / divisor;
 
+  // Cargar estado de pagos para junio (5) y diciembre (11)
+  const [pagosJunio, pagosDic] = await Promise.all([
+    cobrosCargarPagos(currentYear, 5),
+    cobrosCargarPagos(currentYear, 11)
+  ]);
+
   // Una tarjeta por persona
   const personaCards = personas.map(persona => {
+    const nombreKey = `spotify_${persona}`;
     const semCards = semestres.map(sem => {
       let acum = 0;
       const filas = sem.meses.map(i => {
@@ -1370,11 +1377,27 @@ function renderSpotifyAcum() {
         const esPago = i === sem.pagoIdx;
         const esActivo = i === selectedIdx;
         const claseRow = esPago ? "acum-pago" : esActivo ? "acum-activo" : "";
+
+        let pagoRowExtra = "";
+        if (esPago) {
+          const pagosDelMes = i === 5 ? pagosJunio : pagosDic;
+          const pago = pagosDelMes[nombreKey];
+          const pagado = pago !== undefined;
+          const btnId = `spf-btn-${persona}-${i}`;
+          pagoRowExtra = `<tr>
+            <td colspan="3" style="padding:6px 10px 8px;text-align:center">
+              ${pagado
+                ? `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.35);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;cursor:pointer" id="${btnId}" onclick="spotifyTogglePago('${persona}',${currentYear},${i},${porPersona.toFixed(2)})">✓ Pagó <span style="font-size:10px;opacity:.75;margin-left:2px">× deshacer</span></span>`
+                : `<button id="${btnId}" onclick="spotifyTogglePago('${persona}',${currentYear},${i},${porPersona.toFixed(2)})" style="background:rgba(168,85,247,.18);color:#c084fc;border:1px solid rgba(168,85,247,.4);border-radius:20px;padding:3px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Marcar pagado</button>`}
+            </td>
+          </tr>`;
+        }
+
         return `<tr class="${claseRow}">
           <td class="acum-mes" style="font-size:12px">${esPago ? "💳 " : esActivo ? "▶ " : ""}${m?.mes || ""}</td>
           <td class="acum-total" style="font-size:12px;text-align:right">${money(mensual)}</td>
           <td class="${esPago ? "acum-cada" : "acum-total"}" style="text-align:right;font-size:${esPago ? "14px" : "12px"}">${money(porPersona)}</td>
-        </tr>`;
+        </tr>${pagoRowExtra}`;
       }).join("");
       return `
         <div>
@@ -1415,6 +1438,24 @@ function renderSpotifyAcum() {
 
   document.getElementById("spotify-acum-subtitle").textContent =
     "Su parte = lo que acumula cada mes. Fila 💳 = mes de pago (junio y diciembre).";
+}
+
+async function spotifyTogglePago(persona, year, monthIdx, monto) {
+  const nombreKey = `spotify_${persona}`;
+  const pagos = await cobrosCargarPagos(year, monthIdx);
+  if (pagos[nombreKey] !== undefined) {
+    // Desmarcar pago
+    const key = `${year}_${monthIdx}`;
+    if (cobrosCache[key]) delete cobrosCache[key][nombreKey];
+    localStorage.setItem(`cobros_pagos_${year}_${monthIdx}`, JSON.stringify(cobrosCache[key] || {}));
+    try {
+      await fetch(`${COBROS_API}?action=delete&year=${year}&month=${monthIdx}&nombre=${encodeURIComponent(nombreKey)}`);
+    } catch { /* offline */ }
+  } else {
+    // Marcar pagado
+    await cobrosSavePago(year, monthIdx, nombreKey, monto);
+  }
+  renderSpotifyAcum();
 }
 
 function exportCSV() {
