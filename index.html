@@ -411,6 +411,34 @@
     .cobros-total-label { font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:#fda4af; }
     .cobros-total-monto { font-size:22px; font-weight:900; font-variant-numeric:tabular-nums; color:#fb7185; }
     .personas-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:14px; }
+    /* ── Donut chart ── */
+    .personas-chart-wrap {
+      padding:24px 20px 28px;
+      border-top:1px solid var(--line-soft);
+      display:grid;
+      grid-template-columns:minmax(200px,280px) 1fr;
+      gap:32px;
+      align-items:center;
+    }
+    @media(max-width:700px){ .personas-chart-wrap { grid-template-columns:1fr; justify-items:center; } }
+    .donut-svg { overflow:visible; cursor:pointer; display:block; margin:auto; }
+    .donut-segment { transition:opacity .18s, transform .18s; transform-origin:center; transform-box:fill-box; }
+    .donut-segment:hover { opacity:.85; transform:scale(1.04); }
+    .donut-segment.active { opacity:1; transform:scale(1.07); filter:drop-shadow(0 0 8px currentColor); }
+    .donut-center-label { pointer-events:none; }
+    .chart-legend { display:grid; gap:10px; }
+    .chart-legend-item {
+      display:flex; align-items:center; gap:10px; cursor:pointer;
+      padding:9px 12px; border-radius:8px;
+      border:1px solid transparent;
+      transition:background .15s, border-color .15s;
+    }
+    .chart-legend-item:hover { background:rgba(255,255,255,.05); }
+    .chart-legend-item.active { border-color:var(--item-color, var(--accent)); background:color-mix(in srgb,var(--item-color,var(--accent)),transparent 88%); }
+    .chart-legend-dot { width:13px; height:13px; border-radius:50%; flex:0 0 auto; }
+    .chart-legend-name { font-size:13px; font-weight:700; color:var(--text); flex:1; }
+    .chart-legend-pct { font-size:11px; font-weight:900; color:var(--muted); width:38px; text-align:right; }
+    .chart-legend-monto { font-size:14px; font-weight:900; font-variant-numeric:tabular-nums; margin-left:auto; }
     .persona-card {
       padding:20px 18px; border-radius:12px;
       border:1px solid color-mix(in srgb, var(--persona-color, var(--accent)), transparent 55%);
@@ -634,6 +662,7 @@
         <p id="personas-subtitle">Total del mes seleccionado por integrante.</p>
       </div>
       <div class="personas-grid" id="personas-grid" style="padding:0 20px 22px;"></div>
+      <div class="personas-chart-wrap" id="personas-chart-wrap"></div>
     </div>
 
     <aside class="card panel">
@@ -1278,6 +1307,108 @@ function renderPersonas() {
 
   document.getElementById("personas-subtitle").textContent =
     `Total de ${escapeHtml(m.mes)} — cada persona, su parte.`;
+
+  renderPersonasChart(m);
+}
+
+function renderPersonasChart(m) {
+  const wrap = document.getElementById("personas-chart-wrap");
+  if (!wrap) return;
+
+  const serviceColors = { ute:"#f97316", ose:"#38bdf8", antel:"#a78bfa", netflix:"#ef4444", spotify:"#22c55e" };
+  const serviceNames  = { ute:"UTE", ose:"OSE", antel:"ANTEL", netflix:"Netflix", spotify:"Spotify" };
+  const serviceIcons2 = {
+    ute:"https://www.ute.com.uy/themes/ute/ute_favicon.ico",
+    ose:"https://www.ose.com.uy/media/images/fav_ose_4.png?timestamp=20171031121645",
+    antel:"https://www.antel.com.uy/o/antel-theme/images/favicon.ico",
+    netflix:"https://assets.nflxext.com/us/ffe/siteui/common/icons/nficon2016.png",
+    spotify:"https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png"
+  };
+  const keys = ["ute","ose","antel","netflix","spotify"];
+  const values = keys.map(k => Math.round(Number(m[k]||0)));
+  const total = values.reduce((a,b)=>a+b,0);
+  if (!total) { wrap.innerHTML = ""; return; }
+
+  // SVG donut
+  const cx=120, cy=120, R=95, r=55;
+  let startAngle = -Math.PI/2;
+  const segments = keys.map((k, i) => {
+    const pct = values[i]/total;
+    const angle = pct * 2 * Math.PI;
+    const x1=cx+R*Math.cos(startAngle), y1=cy+R*Math.sin(startAngle);
+    const x2=cx+R*Math.cos(startAngle+angle), y2=cy+R*Math.sin(startAngle+angle);
+    const ix1=cx+r*Math.cos(startAngle+angle), iy1=cy+r*Math.sin(startAngle+angle);
+    const ix2=cx+r*Math.cos(startAngle), iy2=cy+r*Math.sin(startAngle);
+    const large = angle>Math.PI?1:0;
+    const d = `M ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2} L ${ix1} ${iy1} A ${r} ${r} 0 ${large} 0 ${ix2} ${iy2} Z`;
+    const midAngle = startAngle + angle/2;
+    startAngle += angle;
+    return { k, d, color:serviceColors[k], pct, value:values[i], midAngle };
+  }).filter(s => s.value > 0);
+
+  const segmentsSvg = segments.map((s,i) => `
+    <path class="donut-segment" d="${s.d}" fill="${s.color}" opacity=".88"
+      data-idx="${i}" onclick="donutClick(${i})" onmouseenter="donutHover(${i})" onmouseleave="donutLeave()"
+      style="cursor:pointer" />
+  `).join("");
+
+  wrap.innerHTML = `
+    <div style="position:relative">
+      <svg class="donut-svg" viewBox="0 0 240 240" width="240" height="240" id="donut-svg">
+        ${segmentsSvg}
+        <g class="donut-center-label" id="donut-center">
+          <text x="120" y="111" text-anchor="middle" font-size="11" fill="var(--muted)" font-weight="700" text-transform="uppercase" letter-spacing="1">TOTAL</text>
+          <text x="120" y="133" text-anchor="middle" font-size="19" fill="var(--text)" font-weight="900" id="donut-center-monto">${money(total)}</text>
+          <text x="120" y="151" text-anchor="middle" font-size="11" fill="var(--muted)" id="donut-center-label">del mes</text>
+        </g>
+      </svg>
+    </div>
+    <div class="chart-legend" id="donut-legend">
+      ${segments.map((s,i)=>`
+        <div class="chart-legend-item" id="donut-leg-${i}" style="--item-color:${s.color}"
+          onclick="donutClick(${i})" onmouseenter="donutHover(${i})" onmouseleave="donutLeave()">
+          <img src="${serviceIcons2[s.k]}" style="width:16px;height:16px;object-fit:contain;border-radius:3px;flex:0 0 auto" alt="">
+          <span class="chart-legend-name">${serviceNames[s.k]}</span>
+          <span class="chart-legend-pct">${(s.pct*100).toFixed(1)}%</span>
+          <span class="chart-legend-monto" style="color:${s.color}">${money(s.value)}</span>
+        </div>
+      `).join("")}
+    </div>`;
+
+  // Guardar segments en el DOM para los handlers
+  wrap._segments = segments;
+  wrap._activeIdx = null;
+}
+
+function donutHover(idx) {
+  const wrap = document.getElementById("personas-chart-wrap");
+  if (!wrap?._segments) return;
+  const s = wrap._segments[idx];
+  document.getElementById("donut-center-monto").textContent = money(s.value);
+  document.getElementById("donut-center-label").textContent = `${(s.pct*100).toFixed(1)}% del total`;
+  document.querySelectorAll(".donut-segment").forEach((el,i)=> el.style.opacity = i===idx ? "1" : "0.45");
+  document.querySelectorAll(".chart-legend-item").forEach((el,i)=> el.classList.toggle("active", i===idx));
+}
+
+function donutLeave() {
+  const wrap = document.getElementById("personas-chart-wrap");
+  if (!wrap?._segments) return;
+  const activeIdx = wrap._activeIdx;
+  if (activeIdx !== null) {
+    donutHover(activeIdx); return;
+  }
+  const total = wrap._segments.reduce((a,s)=>a+s.value,0);
+  document.getElementById("donut-center-monto").textContent = money(total);
+  document.getElementById("donut-center-label").textContent = "del mes";
+  document.querySelectorAll(".donut-segment").forEach(el=> el.style.opacity = "0.88");
+  document.querySelectorAll(".chart-legend-item").forEach(el=> el.classList.remove("active"));
+}
+
+function donutClick(idx) {
+  const wrap = document.getElementById("personas-chart-wrap");
+  if (!wrap?._segments) return;
+  wrap._activeIdx = wrap._activeIdx === idx ? null : idx;
+  if (wrap._activeIdx !== null) donutHover(idx); else donutLeave();
 }
 
 const COBROS_API = "https://script.google.com/macros/s/AKfycbzRmlSy8TOtWIF55AvD7RhFwk4upA-bG8p3DLOD6N0e94QziIAMq8xVOQVJ0DJ4Wu9pNQ/exec";
