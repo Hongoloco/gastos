@@ -323,9 +323,13 @@
     }
     .personas-card { border-color:rgba(45,212,191,.18); }
     .spotify-acum-card { border-color:rgba(168,85,247,.22); margin-top:0; }
-    .spotify-acum-table { width:100%; border-collapse:collapse; font-size:13px; }
-    .spotify-acum-table th { text-align:left; padding:6px 12px; color:var(--muted); font-weight:600; border-bottom:1px solid var(--line-soft); font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
-    .spotify-acum-table td { padding:7px 12px; border-bottom:1px solid var(--line-soft); font-variant-numeric:tabular-nums; }
+    .spotify-acum-table { width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed; }
+    .spotify-acum-table colgroup col:nth-child(1) { width:44%; }
+    .spotify-acum-table colgroup col:nth-child(2) { width:28%; }
+    .spotify-acum-table colgroup col:nth-child(3) { width:28%; }
+    .spotify-acum-table th { text-align:left; padding:5px 8px; color:var(--muted); font-weight:600; border-bottom:1px solid var(--line-soft); font-size:10px; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .spotify-acum-table th:nth-child(2), .spotify-acum-table th:nth-child(3) { text-align:right; }
+    .spotify-acum-table td { padding:6px 8px; border-bottom:1px solid var(--line-soft); font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .spotify-acum-table tr:last-child td { border-bottom:none; }
     .spotify-acum-table tr.acum-activo td { background:color-mix(in srgb,#a855f7,transparent 88%); font-weight:700; }
     .spotify-acum-table tr.acum-pago td { background:color-mix(in srgb,#a855f7,transparent 78%); font-weight:900; color:#c084fc; }
@@ -1394,19 +1398,20 @@ async function renderSpotifyAcum() {
         }
 
         return `<tr class="${claseRow}">
-          <td class="acum-mes" style="font-size:12px">${esPago ? "💳 " : esActivo ? "▶ " : ""}${m?.mes || ""}</td>
-          <td class="acum-total" style="font-size:12px;text-align:right">${money(mensual)}</td>
-          <td class="${esPago ? "acum-cada" : "acum-total"}" style="text-align:right;font-size:${esPago ? "14px" : "12px"}">${money(porPersona)}</td>
+          <td class="acum-mes">${esPago ? "💳 " : esActivo ? "▶ " : ""}${m?.mes || ""}</td>
+          <td class="acum-total" style="text-align:right">${money(mensual)}</td>
+          <td class="${esPago ? "acum-cada" : "acum-total"}" style="text-align:right">${money(porPersona)}</td>
         </tr>${pagoRowExtra}`;
       }).join("");
       return `
         <div>
           <p style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:0 10px 5px">${sem.label}</p>
-          <table class="spotify-acum-table" style="font-size:12px">
+          <table class="spotify-acum-table">
+            <colgroup><col><col><col></colgroup>
             <thead><tr>
               <th>Mes</th>
-              <th style="text-align:right">Su parte</th>
-              <th style="text-align:right;color:#c084fc">Acumulado</th>
+              <th>Su parte</th>
+              <th style="color:#c084fc">Acumulado</th>
             </tr></thead>
             <tbody>${filas}</tbody>
           </table>
