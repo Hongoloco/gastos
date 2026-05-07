@@ -655,7 +655,7 @@
         </div>
         <div class="streaming-grid">
           <div><label for="netflixUsd">Netflix USD</label><input id="netflixUsd" type="number" step="0.01" value="17" /></div>
-          <div><label for="usdUyu">Dólar UY</label><input id="usdUyu" type="number" step="0.01" /></div>
+          <div><label for="usdUyu">Dólar 1° del mes</label><input id="usdUyu" type="number" step="0.01" /></div>
           <div><label for="spotifyUsd">Spotify USD</label><input id="spotifyUsd" type="number" step="0.01" value="15" /></div>
         </div>
         <div class="actions">
@@ -667,7 +667,7 @@
       </div>
       <div class="result-list" id="reparto"></div>
       <div class="streaming-values-box" id="streaming-values-box">
-        <div class="streaming-values-title">💵 Valor en pesos (dólar del mes)</div>
+        <div class="streaming-values-title">💵 Valor en pesos (dólar del 1° del mes)</div>
         <div class="streaming-values-grid" id="streaming-values-grid"></div>
       </div>
       <div class="cobros-box" id="cobros-box">
@@ -891,9 +891,30 @@ function applyStreamingToSelectedMonth() {
   renderReparto();
   renderStreamingHint(m.mes);
 }
+async function fetchDollarForDate(dateStr) {
+  // dateStr: "YYYY-MM-DD". Prueba esa fecha y los 4 días siguientes (por si cae en finde/feriado)
+  for (let i = 0; i <= 4; i++) {
+    const d = new Date(dateStr + 'T12:00:00Z');
+    d.setDate(d.getDate() + i);
+    const dd = String(d.getUTCDate()).padStart(2,'0');
+    const mm = String(d.getUTCMonth()+1).padStart(2,'0');
+    const yyyy = d.getUTCFullYear();
+    try {
+      const url = `https://tipocambio.bcu.gub.uy/api/Tc/get?FechaDesde=${yyyy}-${mm}-${dd}&FechaHasta=${yyyy}-${mm}-${dd}&Moneda=2222`;
+      const res = await fetch(url, { cache:'no-store' });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const venta = Number(data?.Tclist?.[0]?.Venta || data?.tclist?.[0]?.Venta || 0);
+      if (venta > 0) return { rate: roundMoneyValue(venta), date: `${yyyy}-${mm}-${dd}`, source: 'BCU' };
+    } catch { /* intentar siguiente día */ }
+  }
+  return null;
+}
+
 async function updateDollarRate() {
   renderRateStatus("idle", "Consultando cotización BROU...");
   try {
+    // Cotización de hoy para el panel de control
     const response = await fetch(DOLLAR_API_URL, { cache:"no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
@@ -905,19 +926,43 @@ async function updateDollarRate() {
     y.streaming.dollarSource = "BROU";
     y.streaming.dollarUpdatedAt = data.fechaActualizacion || new Date().toISOString();
     usdUyuInput.value = y.streaming.usdUyu;
-    // Aplicar al mes actual y meses futuros (sin datos históricos) del año en curso
+
+    // Aplicar cotización del día 1 de cada mes a los meses sin datos históricos del año actual
     const nowReal = new Date();
     const currentYear = String(nowReal.getFullYear());
-    const currentMonthIdx = nowReal.getMonth();
-    const currentMonthKey = String(currentMonthIdx + 1).padStart(2, '0');
+    const currentMonthIdx = nowReal.getMonth(); // 0-based
     const currentYearState = state[currentYear];
     if (currentYearState) {
       const globalNetflixUsd = Number(currentYearState.streaming?.netflixUsd || 17);
       const globalSpotifyUsd = Number(currentYearState.streaming?.spotifyUsd || 15);
-      // Aplicar a mes actual y todos los meses futuros del año
-      for (let mi = currentMonthIdx; mi < currentYearState.months.length; mi++) {
+      renderRateStatus("idle", "Buscando cotizaciones del 1° de cada mes…");
+      for (let mi = 0; mi <= currentMonthIdx; mi++) {
         const m = currentYearState.months[mi];
         if (!m) continue;
+        const mk = String(mi + 1).padStart(2, '0');
+        // Si ya tiene tasa histórica BCU real, no sobreescribir
+        const existing = bcuMonthlyRates[currentYear]?.[mk];
+        if (existing?.source === 'BCU' && m.usdUyu) continue;
+        const dateStr = `${currentYear}-${mk}-01`;
+        const result = await fetchDollarForDate(dateStr);
+        const monthRate = result?.rate || (mi === currentMonthIdx ? rate : null);
+        if (!monthRate) continue;
+        const netflixUsd = m.netflixUsd || globalNetflixUsd;
+        const spotifyUsd = m.spotifyUsd || globalSpotifyUsd;
+        m.usdUyu = monthRate;
+        m.netflixUsd = netflixUsd;
+        m.spotifyUsd = spotifyUsd;
+        m.netflix = roundMoneyValue(netflixUsd * monthRate);
+        m.spotify = roundMoneyValue(spotifyUsd * monthRate);
+        m.total = totalMonth(m);
+        if (!bcuMonthlyRates[currentYear]) bcuMonthlyRates[currentYear] = {};
+        bcuMonthlyRates[currentYear][mk] = { rate: monthRate, date: result?.date || dateStr, source: result?.source || 'BROU' };
+      }
+      // Meses futuros del año: usar cotización de hoy
+      for (let mi = currentMonthIdx + 1; mi < currentYearState.months.length; mi++) {
+        const m = currentYearState.months[mi];
+        if (!m) continue;
+        const mk = String(mi + 1).padStart(2, '0');
         const netflixUsd = m.netflixUsd || globalNetflixUsd;
         const spotifyUsd = m.spotifyUsd || globalSpotifyUsd;
         m.usdUyu = rate;
@@ -926,7 +971,6 @@ async function updateDollarRate() {
         m.netflix = roundMoneyValue(netflixUsd * rate);
         m.spotify = roundMoneyValue(spotifyUsd * rate);
         m.total = totalMonth(m);
-        const mk = String(mi + 1).padStart(2, '0');
         if (!bcuMonthlyRates[currentYear]) bcuMonthlyRates[currentYear] = {};
         bcuMonthlyRates[currentYear][mk] = { rate, source: "BROU venta" };
       }
@@ -935,7 +979,7 @@ async function updateDollarRate() {
     renderMonths();
     renderReparto();
     renderStreamingHint();
-    renderRateStatus("ok", `Dólar BROU venta: ${money(rate)}. Actualizado ${formatDateTime(y.streaming.dollarUpdatedAt)}.`);
+    renderRateStatus("ok", `Dólar actualizado con cotización del 1° de cada mes (BCU). Hoy: ${money(rate)}.`);
   } catch (error) {
     renderRateStatus("error", "No pude actualizar el dólar. Podés escribir la cotización manualmente.");
   }
@@ -1115,7 +1159,7 @@ function renderStreamingValues() {
   
   const netflixUyu = netflixUsd * usdUyu;
   const spotifyUyu = spotifyUsd * usdUyu;
-  const rateSource = m.usdUyu ? "aplicado" : (bcuRate ? "BROU" : "global");
+  const rateSource = m.usdUyu ? (bcuMonthlyRates[year]?.[monthKey]?.source === 'BCU' ? 'BCU 1°' : 'aplicado') : (bcuRate ? 'BCU 1°' : 'global');
   const rateLabel = `$${usdUyu.toFixed(2)} (${rateSource})`;
   
   const grid = document.getElementById("streaming-values-grid");
