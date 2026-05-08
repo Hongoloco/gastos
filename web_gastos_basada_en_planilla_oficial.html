@@ -390,14 +390,18 @@
     .cobros-item-left { display:flex; flex-direction:column; gap:2px; }
     .cobros-item-nombre { font-weight:700; font-size:14px; color:var(--text); }
     .cobros-item-pagado-label { font-size:11px; color:#4ade80; font-weight:700; }
-    .cobros-item-right { display:flex; align-items:center; gap:8px; }
+    .cobros-item-descuento-label { font-size:11px; color:#fbbf24; font-weight:700; }
+    .cobros-item-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
     .cobros-item-monto { font-size:17px; font-weight:900; font-variant-numeric:tabular-nums; color:#fb7185; }
     .cobros-item-saldado-badge { font-size:13px; font-weight:900; color:#4ade80; }
     .cobro-pago-btn { font-size:11px; font-weight:800; padding:4px 9px; border-radius:6px; border:1px solid rgba(251,113,133,.4); background:rgba(251,113,133,.12); color:#fb7185; cursor:pointer; transition:background .15s; white-space:nowrap; }
     .cobro-pago-btn:hover { background:rgba(251,113,133,.25); }
+    .cobro-descuento-btn { font-size:11px; font-weight:800; padding:4px 9px; border-radius:6px; border:1px solid rgba(251,191,36,.42); background:rgba(251,191,36,.10); color:#fbbf24; cursor:pointer; transition:background .15s; white-space:nowrap; }
+    .cobro-descuento-btn:hover { background:rgba(251,191,36,.2); }
     .cobro-reset-btn { font-size:11px; padding:4px 7px; border-radius:6px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.05); color:var(--muted); cursor:pointer; }
     .cobro-reset-btn:hover { background:rgba(255,255,255,.1); }
-    .cobros-pago-form { display:none; align-items:center; gap:7px; padding:8px 14px 10px; border-top:1px solid rgba(251,113,133,.15); background:rgba(251,113,133,.04); }
+    .cobros-pago-form { display:none; align-items:center; gap:7px; flex-wrap:wrap; padding:8px 14px 10px; border-top:1px solid rgba(251,113,133,.15); background:rgba(251,113,133,.04); }
+    .cobros-pago-form.cobros-descuento-form { border-top-color:rgba(251,191,36,.18); background:rgba(251,191,36,.05); }
     .cobros-pago-form.visible { display:flex; }
     .cobros-pago-form label { font-size:11.5px; color:var(--muted); white-space:nowrap; }
     .cobros-pago-input { flex:1; min-width:0; background:var(--input-bg,rgba(255,255,255,.07)); border:1px solid rgba(255,255,255,.12); border-radius:6px; padding:5px 9px; color:var(--text); font-size:13px; font-variant-numeric:tabular-nums; }
@@ -1609,9 +1613,22 @@ function donutClick(idx) {
 }
 
 const COBROS_API = "https://script.google.com/macros/s/AKfycbzRmlSy8TOtWIF55AvD7RhFwk4upA-bG8p3DLOD6N0e94QziIAMq8xVOQVJ0DJ4Wu9pNQ/exec";
+const COBROS_DESCUENTO_SUFFIX = "__descuento";
 
 // Cache local para no re-fetch innecesario
 let cobrosCache = {}; // key: "year_month" -> { Nombre: monto }
+
+function cobrosDescuentoKey(nombre) {
+  return `${nombre}${COBROS_DESCUENTO_SUFFIX}`;
+}
+
+function cobrosEstadoPersona(monto, pagos, nombre) {
+  const descuentoKey = cobrosDescuentoKey(nombre);
+  const descuento = Math.min(Number(pagos[descuentoKey] || 0), monto);
+  const pagado = Math.min(Number(pagos[nombre] || 0), Math.max(0, monto - descuento));
+  const restante = Math.max(0, monto - pagado - descuento);
+  return { pagado, descuento, restante, descuentoKey };
+}
 
 async function cobrosCargarPagos(year, monthIdx, forceRefresh = false) {
   const key = `${year}_${monthIdx}`;
@@ -1667,10 +1684,12 @@ async function cobrosResetPago(nombre, monthIdx, year) {
     await fetch(url);
   } catch { /* offline */ }
   renderCobros();
+  renderDeudaBanner();
 }
 
-function cobrosToggleForm(nombre) {
-  const form = document.getElementById(`cobros-form-${nombre}`);
+function cobrosToggleForm(nombre, tipo = "pago") {
+  const formId = tipo === "descuento" ? `cobros-descuento-form-${nombre}` : `cobros-form-${nombre}`;
+  const form = document.getElementById(formId);
   if (!form) return;
   form.classList.toggle("visible");
   if (form.classList.contains("visible")) form.querySelector(".cobros-pago-input")?.focus();
@@ -1681,8 +1700,26 @@ async function cobrosConfirmarPago(nombre, montoTotal, monthIdx, year) {
   if (!val || isNaN(val) || val <= 0) { input?.focus(); return; }
   const btn = document.querySelector(`#cobros-form-${nombre} .cobro-confirm-btn`);
   if (btn) { btn.textContent = "…"; btn.disabled = true; }
-  await cobrosSavePago(year, monthIdx, nombre, Math.min(val, montoTotal));
+  const pagos = await cobrosCargarPagos(year, monthIdx);
+  const descuento = Math.min(Number(pagos[cobrosDescuentoKey(nombre)] || 0), montoTotal);
+  await cobrosSavePago(year, monthIdx, nombre, Math.min(val, Math.max(0, montoTotal - descuento)));
   renderCobros();
+  renderDeudaBanner();
+}
+async function cobrosConfirmarDescuento(nombre, montoTotal, monthIdx, year) {
+  const input = document.getElementById(`cobros-descuento-input-${nombre}`);
+  const val = parseFloat(input?.value.replace(",", "."));
+  if (!val || isNaN(val) || val <= 0) { input?.focus(); return; }
+  const pagos = await cobrosCargarPagos(year, monthIdx);
+  const descuento = Math.min(val, montoTotal);
+  const pagoActual = Number(pagos[nombre] || 0);
+  const pagoAjustado = Math.min(pagoActual, Math.max(0, montoTotal - descuento));
+  const btn = document.querySelector(`#cobros-descuento-form-${nombre} .cobro-confirm-btn`);
+  if (btn) { btn.textContent = "…"; btn.disabled = true; }
+  await cobrosSavePago(year, monthIdx, cobrosDescuentoKey(nombre), descuento);
+  if (pagoAjustado !== pagoActual) await cobrosSavePago(year, monthIdx, nombre, pagoAjustado);
+  renderCobros();
+  renderDeudaBanner();
 }
 
 function renderCobros() {
@@ -1698,11 +1735,10 @@ function renderCobros() {
     const cobros = deudores.map(nombre => {
       const card = cards.find(c => c.querySelector(".persona-nombre")?.textContent === nombre);
       const monto = card ? parseFloat(card.querySelector(".persona-total")?.textContent.replace(/[$.]/g, "").replace(",", ".")) || 0 : 0;
-      const pagado = Math.min(pagos[nombre] || 0, monto);
-      const restante = Math.max(0, monto - pagado);
-      return { nombre, monto, pagado, restante };
+      return { nombre, monto, ...cobrosEstadoPersona(monto, pagos, nombre) };
     }).filter(c => c.monto > 0);
     const totalRestante = cobros.reduce((s, c) => s + c.restante, 0);
+    const totalDescontado = cobros.reduce((s, c) => s + c.descuento, 0);
     if (cobros.length === 0) { list.innerHTML = "<p style='color:var(--muted);font-size:13px'>No hay montos este mes.</p>"; return; }
     list.innerHTML = cobros.map(c => `
       <div class="cobros-item${c.restante === 0 ? ' cobros-item-saldado' : ''}">
@@ -1710,6 +1746,7 @@ function renderCobros() {
           <div class="cobros-item-left">
             <span class="cobros-item-nombre">${c.nombre}</span>
             ${c.pagado > 0 ? `<span class="cobros-item-pagado-label">✓ Pagó ${money(c.pagado)}</span>` : ""}
+            ${c.descuento > 0 ? `<span class="cobros-item-descuento-label">− Desconté ${money(c.descuento)} porque le debo</span>` : ""}
           </div>
           <div class="cobros-item-right">
             ${c.restante === 0
@@ -1717,19 +1754,28 @@ function renderCobros() {
               : `<span class="cobros-item-monto">${money(c.restante)}</span>`
             }
             ${c.restante > 0 ? `<button class="cobro-pago-btn" onclick="cobrosToggleForm('${c.nombre}')">+ Pago</button>` : ""}
-            ${c.pagado > 0 ? `<button class="cobro-reset-btn" title="Deshacer pago" onclick="cobrosResetPago('${c.nombre}',${selectedIdx},${year})">↩</button>` : ""}
+            <button class="cobro-descuento-btn" onclick="cobrosToggleForm('${c.nombre}','descuento')">${c.descuento > 0 ? "Editar descuento" : "− Descuento"}</button>
+            ${c.pagado > 0 ? `<button class="cobro-reset-btn" title="Deshacer pago" onclick="cobrosResetPago('${c.nombre}',${selectedIdx},${year})">↩ Pago</button>` : ""}
+            ${c.descuento > 0 ? `<button class="cobro-reset-btn" title="Deshacer descuento" onclick="cobrosResetPago('${c.descuentoKey}',${selectedIdx},${year})">↩ Desc.</button>` : ""}
           </div>
         </div>
         ${c.restante > 0 ? `
         <div class="cobros-pago-form" id="cobros-form-${c.nombre}">
           <label>Monto recibido:</label>
-          <input class="cobros-pago-input" id="cobros-input-${c.nombre}" type="number" min="1" max="${c.monto}" placeholder="${c.restante.toFixed(0)}" onkeydown="if(event.key==='Enter')cobrosConfirmarPago('${c.nombre}',${c.monto},${selectedIdx},${year})">
+          <input class="cobros-pago-input" id="cobros-input-${c.nombre}" type="number" min="1" max="${c.restante}" placeholder="${c.restante.toFixed(0)}" onkeydown="if(event.key==='Enter')cobrosConfirmarPago('${c.nombre}',${c.monto},${selectedIdx},${year})">
           <button class="cobro-confirm-btn" onclick="cobrosConfirmarPago('${c.nombre}',${c.monto},${selectedIdx},${year})">✓</button>
           <button class="cobro-cancel-btn" onclick="cobrosToggleForm('${c.nombre}')">✕</button>
         </div>` : ""}
+        <div class="cobros-pago-form cobros-descuento-form" id="cobros-descuento-form-${c.nombre}">
+          <label>Descontar porque le debo:</label>
+          <input class="cobros-pago-input" id="cobros-descuento-input-${c.nombre}" type="number" min="1" max="${c.monto}" placeholder="${(c.descuento || c.restante || c.monto).toFixed(0)}" onkeydown="if(event.key==='Enter')cobrosConfirmarDescuento('${c.nombre}',${c.monto},${selectedIdx},${year})">
+          <button class="cobro-confirm-btn" onclick="cobrosConfirmarDescuento('${c.nombre}',${c.monto},${selectedIdx},${year})">✓</button>
+          <button class="cobro-cancel-btn" onclick="cobrosToggleForm('${c.nombre}','descuento')">✕</button>
+        </div>
+      </div>
     `).join("") + `
       <div class="cobros-total">
-        <span class="cobros-total-label">Total a cobrar</span>
+        <span class="cobros-total-label">Total a cobrar${totalDescontado > 0 ? " con descuentos" : ""}</span>
         <span class="cobros-total-monto">${money(totalRestante)}</span>
       </div>
       ${cobros.some(c => c.restante > 0) ? `<button class="cobros-saldar-btn" onclick="cobrosMarcarTodosSaldados()">✓ Todos saldados este mes</button>` : ''}`;
@@ -1743,14 +1789,15 @@ async function cobrosMarcarTodosSaldados() {
   const cards = [...document.querySelectorAll(".persona-card")];
   const btn = document.querySelector(".cobros-saldar-btn");
   if (btn) { btn.textContent = "Guardando…"; btn.disabled = true; }
-  // Invalidar cache para este mes para re-leer montos frescos
-  delete cobrosCache[`${year}_${selectedIdx}`];
+  const pagos = await cobrosCargarPagos(year, selectedIdx);
   for (const nombre of deudores) {
     const card = cards.find(c => c.querySelector(".persona-nombre")?.textContent === nombre);
     const monto = card ? parseFloat(card.querySelector(".persona-total")?.textContent.replace(/[$.]/g, "").replace(",", ".")) || 0 : 0;
-    if (monto > 0) await cobrosSavePago(year, selectedIdx, nombre, monto);
+    const { descuento } = cobrosEstadoPersona(monto, pagos, nombre);
+    if (monto > 0) await cobrosSavePago(year, selectedIdx, nombre, Math.max(0, monto - descuento));
   }
   renderCobros();
+  renderDeudaBanner();
 }
 
 async function renderSpotifyAcum() {
@@ -1870,6 +1917,7 @@ async function spotifyTogglePago(persona, year, monthIdx, monto) {
     await cobrosSavePago(year, monthIdx, nombreKey, monto);
   }
   renderSpotifyAcum();
+  renderDeudaBanner();
 }
 
 function exportCSV() {
@@ -1925,6 +1973,7 @@ function showHelpModal() {
       <p><b>Editar gastos:</b> cambia cualquier importe de la tabla y el total mensual, los indicadores y el gráfico se recalculan al instante.</p>
       <p><b>Vista por mes:</b> arriba podés elegir ver todo el año o solo el mes seleccionado para que la tabla no quede apretada.</p>
       <p><b>Reparto del mes:</b> elegí un mes arriba y ajustá base UTE, fijos y porcentajes para ver cuánto corresponde a cada parte.</p>
+      <p><b>Cobros:</b> además de marcar pagos recibidos, podés descontar una parte si vos le debés algo a esa persona.</p>
       <p><b>Streaming:</b> Netflix se calcula desde el plan de USD 17 y Spotify desde el plan familiar de USD 15. Ambos usan el dólar bancario venta de Uruguay.</p>
       <p><b>Guardado local:</b> los cambios quedan en este navegador con localStorage. No se suben a internet ni modifican la planilla Excel original.</p>
       <p><b>Exportar:</b> el botón CSV descarga el año visible para llevarlo a Excel o respaldarlo.</p>
@@ -2061,12 +2110,12 @@ async function renderDeudaBanner() {
   const pills = deudores.map(nombre => {
     const card = cards.find(c => c.querySelector('.persona-nombre')?.textContent === nombre);
     const monto = card ? parseFloat(card.querySelector('.persona-total')?.textContent.replace(/[$.]/g,'').replace(',','.')) || 0 : 0;
-    const pagado = Math.min(pagos[nombre] || 0, monto);
-    const restante = Math.max(0, monto - pagado);
+    const { pagado, descuento, restante } = cobrosEstadoPersona(monto, pagos, nombre);
     totalPendiente += restante;
-    totalCobrado += pagado;
+    totalCobrado += pagado + descuento;
     if (monto <= 0) return '';
-    return `<span class="deuda-pill${restante === 0 ? ' pagado' : ''}">${restante === 0 ? '✓' : ''} ${nombre}: ${restante === 0 ? 'Saldado' : money(restante)}</span>`;
+    const extra = descuento > 0 ? ` · desc. ${money(descuento)}` : '';
+    return `<span class="deuda-pill${restante === 0 ? ' pagado' : ''}">${restante === 0 ? '✓' : ''} ${nombre}: ${restante === 0 ? 'Saldado' : money(restante)}${extra}</span>`;
   }).filter(Boolean);
 
   // Spotify pendiente (Mauro, Nico, Fausto — solo junio y diciembre)
