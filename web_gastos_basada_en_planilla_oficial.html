@@ -1368,22 +1368,20 @@ function renderKpis() {
     `${y.months[imax]?.mes || "-"} (${money(max)})`;
   document.getElementById("kpiBase").textContent = money(Number(document.getElementById("baseUte").value || y.baseUte || 0));
 
-  // Proyección anual robusta: año actual usa meses transcurridos, años cerrados muestran total real.
+  // Proyección anual: usar solo meses cerrados.
   const proyEl = document.getElementById('kpiProyeccion');
   const proySubEl = document.getElementById('kpiProyeccionSub');
   if (proyEl) {
-    const selectedYear = Number(yearSelect.value);
-    const now = new Date();
-    const isCurrentYear = selectedYear === now.getFullYear();
-    const elapsedMonths = isCurrentYear ? now.getMonth() + 1 : 12;
-    const projectionBase = totals.slice(0, elapsedMonths);
-    const projectionSum = projectionBase.reduce((a, b) => a + b, 0);
-    const projectionAvg = elapsedMonths > 0 ? projectionSum / elapsedMonths : 0;
-    const proyeccion = isCurrentYear ? projectionAvg * 12 : sum;
+    let closedMap = {};
+    try { closedMap = JSON.parse(localStorage.getItem('gastos_meses_cerrados') || '{}') || {}; } catch { closedMap = {}; }
+    const closedTotals = totals.filter((_, idx) => Boolean(closedMap[`${yearSelect.value}_${idx}`]));
+    const closedCount = closedTotals.length;
+    const closedSum = closedTotals.reduce((a, b) => a + b, 0);
+    const proyeccion = closedCount > 0 ? (closedSum / closedCount) * 12 : 0;
     proyEl.textContent = money(proyeccion);
-    if (proySubEl) proySubEl.textContent = isCurrentYear
-      ? `Basado en ${elapsedMonths} mes${elapsedMonths > 1 ? 'es' : ''} transcurrido${elapsedMonths > 1 ? 's' : ''}`
-      : 'Año completo';
+    if (proySubEl) proySubEl.textContent = closedCount > 0
+      ? `Basado en ${closedCount} mes${closedCount > 1 ? 'es' : ''} cerrado${closedCount > 1 ? 's' : ''}`
+      : 'Sin meses cerrados';
   }
 
   const ahora = new Date();
