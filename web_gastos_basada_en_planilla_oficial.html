@@ -1875,6 +1875,61 @@ function renderCobros() {
   });
 }
 
+function buildRepartoSnapshot(y, m, monthIdx) {
+  const base = Number(y.baseUte || 0);
+  const fixMama = Number(document.getElementById("fixMama")?.value || 0);
+  const fixRaquel = Number(document.getElementById("fixRaquel")?.value || 0);
+  const pctMi = Number(document.getElementById("pctMiCasa")?.value || 0) / 100;
+  const pctPaola = Number(document.getElementById("pctPaola")?.value || 0) / 100;
+  const div = Math.max(1, Number(document.getElementById("divServicios")?.value || 4));
+  const ute = Number(m?.ute || 0);
+  const basePart = Math.min(ute, base);
+  const excedente = Math.max(0, ute - base);
+  const mamaUte = ute ? Math.min(fixMama, ute) : 0;
+  const raquelUte = ute ? Math.min(fixRaquel, Math.max(0, ute - mamaUte)) : 0;
+  const baseSinFijos = Math.max(0, basePart - mamaUte - raquelUte);
+  const basePorPersona = baseSinFijos / 3;
+  const miCasaExtra = excedente * pctMi;
+  const paolaExtra = excedente * pctPaola;
+  const oseParte = Number(m?.ose || 0) / div;
+  const antelParte = Number(m?.antel || 0) / div;
+  const netflixDiv = Math.max(1, y.divisors?.netflix || 3);
+  const spotifyDiv = Math.max(1, y.divisors?.spotify || 4);
+  const netflixParte = Number(m?.netflix || 0) / netflixDiv;
+  const spotifyParte = Number(m?.spotify || 0) / spotifyDiv;
+  const spotifyMensualPagante = Number(m?.spotify || 0) / 6;
+  const spotifyAcumIdx = monthIdx === 5 ? [0,1,2,3,4,5] : monthIdx === 11 ? [6,7,8,9,10,11] : [];
+  const spotifyAcumGuests = spotifyAcumIdx.reduce((sum, i) => sum + Number(y.months[i]?.spotify || 0), 0) / 6;
+  return {
+    base,
+    ute,
+    excedente,
+    mamaUte,
+    raquelUte,
+    basePorPersona,
+    miCasaExtra,
+    paolaExtra,
+    oseParte,
+    antelParte,
+    netflixParte,
+    spotifyParte,
+    spotifyMensualPagante,
+    spotifyAcumGuests,
+    selectedMonth: m?.mes || ""
+  };
+}
+
+function buildCobrosSnapshot(year, monthIdx) {
+  const pagos = cobrosCache[`${year}_${monthIdx}`] || JSON.parse(localStorage.getItem(`cobros_pagos_${year}_${monthIdx}`) || "{}") || {};
+  const deudores = ["Mamá", "Raquel", "Paola"];
+  return deudores.map(nombre => {
+    const card = [...document.querySelectorAll(".persona-card")].find(c => c.querySelector(".persona-nombre")?.textContent === nombre);
+    const monto = card ? parseFloat(card.querySelector(".persona-total")?.textContent.replace(/[$.]/g, "").replace(",", ".")) || 0 : 0;
+    const estado = cobrosEstadoPersona(monto, pagos, nombre);
+    return { nombre, monto, ...estado };
+  }).filter(c => c.monto > 0);
+}
+
 async function cobrosMarcarTodosSaldados() {
   const selectedIdx = Number(document.getElementById("monthSelect").value || 0);
   const year = yearSelect.value;
@@ -2015,9 +2070,57 @@ async function spotifyTogglePago(persona, year, monthIdx, monto) {
 
 function exportCSV() {
   const y = getYear();
-  const header = ["MES","UTE","OSE","ANTEL","NETFLIX","SPOTIFY","TOTAL"];
-  const rows = y.months.map(m => [m.mes,m.ute,m.ose,m.antel,m.netflix,m.spotify,totalMonth(m)]);
-  const csv = [header, ...rows].map(r => r.join(";")).join("\n");
+  const header = [
+    "AÑO","MES","UTE","OSE","ANTEL","NETFLIX","SPOTIFY","TOTAL",
+    "BASE_UTE","EXCEDENTE_UTE","MAMA_UTE","RAQUEL_UTE","BASE_POR_PERSONA",
+    "MI_CASA_EXCEDENTE","PAOLA_EXCEDENTE","OSE_POR_CASA","ANTEL_POR_CASA",
+    "NETFLIX_POR_PERSONA","SPOTIFY_POR_PERSONA","SPOTIFY_MENSUAL_PAGANTE","SPOTIFY_ACUM_GUESTS",
+    "COBROS_MAMA_TOTAL","COBROS_MAMA_PAGADO","COBROS_MAMA_DESCUENTO","COBROS_MAMA_RESTANTE",
+    "COBROS_RAQUEL_TOTAL","COBROS_RAQUEL_PAGADO","COBROS_RAQUEL_DESCUENTO","COBROS_RAQUEL_RESTANTE",
+    "COBROS_PAOLA_TOTAL","COBROS_PAOLA_PAGADO","COBROS_PAOLA_DESCUENTO","COBROS_PAOLA_RESTANTE"
+  ];
+  const rows = y.months.map((m, idx) => {
+    const rep = buildRepartoSnapshot(y, m, idx);
+    const cobros = buildCobrosSnapshot(yearSelect.value, idx);
+    const byName = Object.fromEntries(cobros.map(c => [c.nombre.toUpperCase(), c]));
+    const row = [
+      yearSelect.value,
+      m.mes,
+      m.ute,
+      m.ose,
+      m.antel,
+      m.netflix,
+      m.spotify,
+      totalMonth(m),
+      rep.base,
+      rep.excedente,
+      rep.mamaUte,
+      rep.raquelUte,
+      rep.basePorPersona,
+      rep.miCasaExtra,
+      rep.paolaExtra,
+      rep.oseParte,
+      rep.antelParte,
+      rep.netflixParte,
+      rep.spotifyParte,
+      rep.spotifyMensualPagante,
+      rep.spotifyAcumGuests,
+      byName.MAMÁ?.monto || 0,
+      byName.MAMÁ?.pagado || 0,
+      byName.MAMÁ?.descuento || 0,
+      byName.MAMÁ?.restante || 0,
+      byName.RAQUEL?.monto || 0,
+      byName.RAQUEL?.pagado || 0,
+      byName.RAQUEL?.descuento || 0,
+      byName.RAQUEL?.restante || 0,
+      byName.PAOLA?.monto || 0,
+      byName.PAOLA?.pagado || 0,
+      byName.PAOLA?.descuento || 0,
+      byName.PAOLA?.restante || 0,
+    ];
+    return row;
+  });
+  const csv = [header, ...rows].map(r => r.map(v => String(v ?? "")).join(";")).join("\n");
   downloadTextFile(`gastos_${yearSelect.value}.csv`, csv, 'text/csv;charset=utf-8');
 }
 
