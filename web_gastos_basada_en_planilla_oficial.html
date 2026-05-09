@@ -977,7 +977,8 @@ function createYearFromTemplate(year, template) {
 
 function calculateAnnual(yearData) {
   const annual = {};
-  serviceKeys.forEach(key => {
+  const annualKeys = ['ute','ose','antel','netflix','spotify'];
+  annualKeys.forEach(key => {
     annual[key] = yearData.months.reduce((sum, month) => sum + Number(month[key] || 0), 0);
   });
   annual.total = yearData.months.reduce((sum, month) => sum + totalMonth(month), 0);
