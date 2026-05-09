@@ -953,11 +953,9 @@ function createYearFromTemplate(year, template) {
   const netflixUsd = Number(streamingMonth.netflixUsd || template?.streaming?.netflixUsd || 17);
   const spotifyUsd = Number(streamingMonth.spotifyUsd || template?.streaming?.spotifyUsd || 15);
   const usdUyu = Number(streamingMonth.usdUyu || template?.streaming?.usdUyu || 0);
-  const netflix = usdUyu ? roundMoneyValue(netflixUsd * usdUyu) : Number(streamingMonth.netflix || 0);
-  const spotify = usdUyu ? roundMoneyValue(spotifyUsd * usdUyu) : Number(streamingMonth.spotify || 0);
   const months = MONTH_NAMES.map(mes => {
     const month = {
-      mes, ute:0, ose:0, antel:0, netflix, spotify,
+      mes, ute:0, ose:0, antel:0, netflix:0, spotify:0,
       mama_ute:0, raquel_ute:0, paola_ute:0,
       mama_ose:0, raquel_ose:0, paola_ose:0,
       mama_antel:0, raquel_antel:0, paola_antel:0,
@@ -1035,16 +1033,29 @@ function applyBcuRatesToState() {
   let changed = false;
   const nowReal = new Date();
   const realYear = String(nowReal.getFullYear());
-  const realMonthKey = String(nowReal.getMonth() + 1).padStart(2, '0');
+  const realMonthIdx = nowReal.getMonth();
   for (const [year, months] of Object.entries(bcuMonthlyRates)) {
     const y = state[year];
     if (!y) continue;
+    if (year === realYear) {
+      for (let idx = realMonthIdx + 1; idx < y.months.length; idx++) {
+        const m = y.months[idx];
+        if (!m) continue;
+        if (Number(m.netflix || 0) !== 0 || Number(m.spotify || 0) !== 0 || Number(m.usdUyu || 0) !== 0) {
+          m.netflix = 0;
+          m.spotify = 0;
+          m.usdUyu = 0;
+          m.total = totalMonth(m);
+          changed = true;
+        }
+      }
+    }
     const globalNetflixUsd = Number(y.streaming?.netflixUsd || 17);
     const globalSpotifyUsd = Number(y.streaming?.spotifyUsd || 15);
     for (const [monthKey, data] of Object.entries(months)) {
-      // El mes actual se actualiza con el rate live del BROU, no con el histórico
-      if (year === realYear && monthKey === realMonthKey) continue;
       const idx = parseInt(monthKey, 10) - 1;
+      // En el año actual, no aplicar ni el mes actual ni meses futuros por adelantado.
+      if (year === realYear && idx >= realMonthIdx) continue;
       const m = y.months[idx];
       if (!m) continue;
       const netflixUsd = m.netflixUsd || globalNetflixUsd;
