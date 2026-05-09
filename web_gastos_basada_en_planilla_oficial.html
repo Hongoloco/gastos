@@ -865,6 +865,13 @@ const chartPalette = [
   ["#c2410c", "#f97316", "#fed7aa"]
 ];
 
+function setCobrosStatus(message, isError = false) {
+  const status = document.getElementById("cobrosStatus");
+  if (!status) return;
+  status.textContent = message || "";
+  status.style.color = isError ? "#fb7185" : "#86efac";
+}
+
 ensureFutureYears();
 refreshYearOptions(String(new Date().getFullYear()));
 
@@ -1187,7 +1194,11 @@ async function fetchDollarForDate(dateStr) {
       const data = await res.json();
       const venta = Number(data?.Tclist?.[0]?.Venta || data?.tclist?.[0]?.Venta || 0);
       if (venta > 0) return { rate: roundMoneyValue(venta), date: `${yyyy}-${mm}-${dd}`, source: 'BCU' };
-    } catch { /* intentar siguiente día */ }
+    } catch (error) {
+      const text = String(error?.message || error || "");
+      // Si falla DNS/red, no insistir 4 días más para evitar spam de warnings.
+      if (/failed to fetch|networkerror|err_name_not_resolved/i.test(text)) break;
+    }
   }
   return null;
 }
