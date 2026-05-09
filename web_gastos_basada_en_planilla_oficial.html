@@ -894,6 +894,7 @@ function sanitizeMonthRecord(month) {
 
 function sanitizeState(source) {
   const cleaned = structuredClone(source || {});
+  const annualKeys = ['ute','ose','antel','netflix','spotify'];
   Object.values(cleaned).forEach(yearData => {
     if (!yearData || typeof yearData !== 'object') return;
     yearData.baseUte = toFiniteMoney(yearData.baseUte, 0);
@@ -908,7 +909,10 @@ function sanitizeState(source) {
     yearData.streaming.spotifyUsd = toFiniteMoney(yearData.streaming.spotifyUsd, 15);
     yearData.streaming.usdUyu = toFiniteMoney(yearData.streaming.usdUyu, 0);
     yearData.months = Array.isArray(yearData.months) ? yearData.months.map(sanitizeMonthRecord) : [];
-    yearData.annual = calculateAnnual(yearData);
+    yearData.annual = {
+      ...Object.fromEntries(annualKeys.map(key => [key, yearData.months.reduce((sum, month) => sum + Number(month[key] || 0), 0)])),
+      total: yearData.months.reduce((sum, month) => sum + totalMonth(month), 0)
+    };
   });
   return cleaned;
 }
