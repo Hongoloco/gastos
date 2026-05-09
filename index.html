@@ -1,10 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <meta http-equiv="refresh" content="0; url=web_gastos_basada_en_planilla_oficial.html">
-    <title>Redirecting...</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Control de Gastos Mensuales - basado en planilla oficial</title>
+    <script>
+        (async function () {
+            try {
+                const response = await fetch('web_gastos_basada_en_planilla_oficial.html', { cache: 'no-store' });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const html = await response.text();
+                document.open();
+                document.write(html);
+                document.close();
+            } catch (error) {
+                document.body.innerHTML = '<p style="font-family:system-ui,sans-serif;padding:24px">No se pudo cargar la app principal. <a href="web_gastos_basada_en_planilla_oficial.html">Abrir la versión completa</a>.</p>';
+            }
+        })();
+    </script>
 </head>
 <body>
-    <p>Redirecting to <a href="web_gastos_basada_en_planilla_oficial.html">the main app</a>.</p>
+    <p style="font-family:system-ui,sans-serif;padding:24px">Cargando la app...</p>
 </body>
 </html>
