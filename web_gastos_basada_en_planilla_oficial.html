@@ -651,6 +651,8 @@
         <button id="exportBtn">Exportar CSV</button>
         <button class="secondary" id="backupBtn">Backup JSON</button>
         <button class="secondary" id="importBtn">Importar JSON</button>
+        <button class="secondary" id="pdfCobrosBtn">PDF cobros</button>
+        <button class="secondary" id="mailCobrosBtn">Enviar mail</button>
         <button class="secondary" id="summaryBtn">Ver resumen</button>
         <button class="secondary" id="helpBtn">Guía rápida</button>
         <button class="secondary" onclick="window.print()">PDF / imprimir</button>
@@ -2144,6 +2146,124 @@ function exportBackupJson() {
   );
 }
 
+function buildCobrosReportData() {
+  const year = yearSelect.value;
+  const monthIdx = Number(monthSelect.value || 0);
+  const y = getYear();
+  const m = y.months[monthIdx] || y.months[0];
+  const pagos = cobrosCache[`${year}_${monthIdx}`] || JSON.parse(localStorage.getItem(`cobros_pagos_${year}_${monthIdx}`) || "{}") || {};
+  const rows = ["Mamá", "Raquel", "Paola"].map(nombre => {
+    const card = [...document.querySelectorAll(".persona-card")].find(c => c.querySelector(".persona-nombre")?.textContent === nombre);
+    const total = card ? parseFloat(card.querySelector(".persona-total")?.textContent.replace(/[$.]/g, "").replace(",", ".")) || 0 : 0;
+    if (!total) return null;
+    const estado = cobrosEstadoPersona(total, pagos, nombre);
+    return { nombre, total, ...estado };
+  }).filter(Boolean);
+  return {
+    year,
+    monthIdx,
+    monthName: m?.mes || "",
+    rows,
+    totalToCollect: rows.reduce((sum, row) => sum + row.restante, 0),
+    totalPaid: rows.reduce((sum, row) => sum + row.pagado, 0),
+    totalDiscounted: rows.reduce((sum, row) => sum + row.descuento, 0)
+  };
+}
+
+function reportHtmlEscape(value) {
+  return String(value).replace(/[&<>"]/g, char => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;"
+  }[char]));
+}
+
+function buildCobrosReportHtml(report) {
+  const rowHtml = report.rows.map(row => `
+    <tr>
+      <td>${reportHtmlEscape(row.nombre)}</td>
+      <td>${money(row.total)}</td>
+      <td>${money(row.pagado)}</td>
+      <td>${money(row.descuento)}</td>
+      <td>${money(row.restante)}</td>
+    </tr>
+  `).join('');
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cobros ${report.monthName} ${report.year}</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:28px;color:#111827;background:#fff}
+    h1{margin:0 0 6px;font-size:28px}
+    .sub{color:#4b5563;margin:0 0 18px;font-size:14px}
+    .meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0 22px}
+    .card{border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;background:#f9fafb}
+    .card span{display:block;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:6px}
+    .card strong{font-size:22px}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:10px 8px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:13px}
+    th{background:#f3f4f6;color:#374151;text-transform:uppercase;letter-spacing:.05em;font-size:11px}
+    td:last-child,th:last-child{text-align:right}
+    .note{margin-top:14px;color:#6b7280;font-size:12px}
+    @media print{body{padding:16px}.note{position:fixed;bottom:12px;left:16px;right:16px}}
+  </style>
+</head>
+<body>
+  <h1>Cobros a cobrar - ${reportHtmlEscape(report.monthName)} ${reportHtmlEscape(report.year)}</h1>
+  <p class="sub">Solo muestra lo que paga cada persona, lo pagado, los descuentos y lo pendiente.</p>
+  <div class="meta">
+    <div class="card"><span>Total a cobrar</span><strong>${money(report.totalToCollect)}</strong></div>
+    <div class="card"><span>Total pagado</span><strong>${money(report.totalPaid)}</strong></div>
+    <div class="card"><span>Total descontado</span><strong>${money(report.totalDiscounted)}</strong></div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Persona</th><th>Total</th><th>Pagado</th><th>Descuento</th><th>Restante</th></tr>
+    </thead>
+    <tbody>
+      ${rowHtml}
+    </tbody>
+  </table>
+  <p class="note">Generado desde Control de Gastos. Para enviarlo por mail, imprimilo como PDF y adjuntalo al correo.</p>
+  <script>window.addEventListener('load', () => setTimeout(() => window.print(), 350));</script>
+</body>
+</html>`;
+}
+
+function openCobrosPdfReport() {
+  const report = buildCobrosReportData();
+  const win = window.open('', '_blank', 'noopener,noreferrer,width=980,height=900');
+  if (!win) {
+    alert('El navegador bloqueó la ventana del PDF. Permití ventanas emergentes e intentá de nuevo.');
+    return;
+  }
+  win.document.open();
+  win.document.write(buildCobrosReportHtml(report));
+  win.document.close();
+}
+
+function openCobrosMailDraft() {
+  const report = buildCobrosReportData();
+  const subject = `Cobros ${report.monthName} ${report.year}`;
+  const lines = [
+    `Cobros ${report.monthName} ${report.year}`,
+    `Total a cobrar: ${money(report.totalToCollect)}`,
+    `Total pagado: ${money(report.totalPaid)}`,
+    `Total descontado: ${money(report.totalDiscounted)}`,
+    '',
+    ...report.rows.map(row => `${row.nombre}: total ${money(row.total)} | pagado ${money(row.pagado)} | desc. ${money(row.descuento)} | restante ${money(row.restante)}`),
+    '',
+    'Abrí el PDF desde la web, imprimilo y adjuntalo a este correo.'
+  ];
+  const body = encodeURIComponent(lines.join('\n'));
+  const mailto = `mailto:ale21rock@gmail.com?subject=${encodeURIComponent(subject)}&body=${body}`;
+  window.location.href = mailto;
+}
+
 function restoreStateFromObject(source) {
   if (!source || typeof source !== 'object') throw new Error('El archivo no tiene un formato válido.');
   const candidate = source.state && typeof source.state === 'object' ? source.state : source;
@@ -2338,6 +2458,8 @@ spotifyUsdInput.addEventListener("input", saveStreamingConfig);
 document.getElementById("exportBtn").addEventListener("click", exportCSV);
 document.getElementById("backupBtn").addEventListener("click", exportBackupJson);
 document.getElementById("importBtn").addEventListener("click", showImportModal);
+document.getElementById("pdfCobrosBtn").addEventListener("click", openCobrosPdfReport);
+document.getElementById("mailCobrosBtn").addEventListener("click", openCobrosMailDraft);
 document.getElementById("updateDollarBtn").addEventListener("click", updateDollarRate);
 document.getElementById("applyStreamingBtn").addEventListener("click", applyStreamingToSelectedMonth);
 document.getElementById("summaryBtn").addEventListener("click", showSummaryModal);
