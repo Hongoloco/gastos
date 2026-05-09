@@ -1197,7 +1197,7 @@ async function updateDollarRate() {
     y.streaming.dollarUpdatedAt = data.fechaActualizacion || new Date().toISOString();
     usdUyuInput.value = y.streaming.usdUyu;
 
-    // Aplicar cotización del día 1 de cada mes a los meses sin datos históricos del año actual
+    // Aplicar cotización del día 1 mes a mes (sin completar meses futuros)
     const nowReal = new Date();
     const currentYear = String(nowReal.getFullYear());
     const currentMonthIdx = nowReal.getMonth(); // 0-based
@@ -1228,22 +1228,6 @@ async function updateDollarRate() {
         if (!bcuMonthlyRates[currentYear]) bcuMonthlyRates[currentYear] = {};
         bcuMonthlyRates[currentYear][mk] = { rate: monthRate, date: result?.date || dateStr, source: result?.source || 'BROU' };
       }
-      // Meses futuros del año: usar cotización de hoy
-      for (let mi = currentMonthIdx + 1; mi < currentYearState.months.length; mi++) {
-        const m = currentYearState.months[mi];
-        if (!m) continue;
-        const mk = String(mi + 1).padStart(2, '0');
-        const netflixUsd = m.netflixUsd || globalNetflixUsd;
-        const spotifyUsd = m.spotifyUsd || globalSpotifyUsd;
-        m.usdUyu = rate;
-        m.netflixUsd = netflixUsd;
-        m.spotifyUsd = spotifyUsd;
-        m.netflix = roundMoneyValue(netflixUsd * rate);
-        m.spotify = roundMoneyValue(spotifyUsd * rate);
-        m.total = totalMonth(m);
-        if (!bcuMonthlyRates[currentYear]) bcuMonthlyRates[currentYear] = {};
-        bcuMonthlyRates[currentYear][mk] = { rate, source: "BROU venta" };
-      }
     }
     save();
     renderMonths();
@@ -1255,11 +1239,18 @@ async function updateDollarRate() {
   }
 }
 function shouldRefreshDollarRate() {
+  // Actualiza automáticamente solo el día 1 de cada mes (no todos los días)
+  const now = new Date();
+  if (now.getDate() !== 1) return false;
+
   // Siempre verifica el año real actual, no el año que se está viendo
   const currentYearState = state[String(new Date().getFullYear())];
   const updatedAt = currentYearState?.streaming?.dollarUpdatedAt;
   if (!updatedAt) return true;
-  return new Date(updatedAt).toDateString() !== new Date().toDateString();
+  const lastUpdate = new Date(updatedAt);
+  return lastUpdate.getFullYear() !== now.getFullYear()
+    || lastUpdate.getMonth() !== now.getMonth()
+    || lastUpdate.getDate() !== 1;
 }
 function maybeRefreshDollarRate() {
   if (shouldRefreshDollarRate()) updateDollarRate();
