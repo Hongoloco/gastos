@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Control de Gastos Mensuales - basado en planilla oficial</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root {
       --bg:#0a0f14; --surface:#121b24; --surface-soft:#17232e; --surface-raised:#1d2a36;
@@ -2958,7 +2959,12 @@ function initGoogleAuth() {
 if (typeof google !== 'undefined') {
   initGoogleAuth();
 } else {
-  document.querySelector('script[src*="accounts.google.com"]').addEventListener('load', initGoogleAuth);
+  const googleScript = document.querySelector('script[src*="accounts.google.com"]');
+  if (googleScript) {
+    googleScript.addEventListener('load', initGoogleAuth);
+  } else {
+    window.addEventListener('load', initGoogleAuth, { once: true });
+  }
 }
 </script>
 </body>
