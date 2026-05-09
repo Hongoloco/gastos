@@ -649,9 +649,11 @@
         </div>
       </div>
       <div class="actions">
-        <button id="exportBtn">Exportar CSV</button>
+        <button id="exportBtn">CSV año</button>
+        <button class="secondary" id="exportMonthBtn">CSV mes</button>
         <button class="secondary" id="backupBtn">Backup JSON</button>
         <button class="secondary" id="importBtn">Importar JSON</button>
+        <button class="secondary" id="pdfPersonasBtn">PDF personas</button>
         <button class="secondary" id="pdfCobrosBtn">PDF cobros</button>
         <button class="secondary" id="mailCobrosBtn">Enviar mail</button>
         <button class="secondary" id="summaryBtn">Ver resumen</button>
@@ -1493,9 +1495,8 @@ function renderStreamingValues() {
   `;
 }
 
-function renderPersonas() {
-  const y = getYear();
-  const m = y.months[Number(monthSelect.value || 0)] || y.months[0];
+function calculatePersonasForMonth(y, monthIdx) {
+  const m = y.months[monthIdx] || y.months[0];
   const base = Number(document.getElementById("baseUte").value || y.baseUte || 0);
   const fixMama = Number(document.getElementById("fixMama").value || 0);
   const fixRaquel = Number(document.getElementById("fixRaquel").value || 0);
@@ -1508,66 +1509,80 @@ function renderPersonas() {
   const excedente = Math.max(0, ute - base);
   const mamaUte = ute ? Math.min(fixMama, ute) : 0;
   const raquelUte = ute ? Math.min(fixRaquel, Math.max(0, ute - mamaUte)) : 0;
-  // Base sin los fijos de mamá y raquel, dividida entre 3 (Paola, Vero, Ale)
   const baseSinFijos = Math.max(0, basePart - mamaUte - raquelUte);
   const basePorPersona = baseSinFijos / 3;
-  // Excedente repartido según porcentajes
   const miCasaExtra = excedente * pctMi;
   const paolaExtra = excedente * pctPaola;
   const miCasaPerPerson = miCasaExtra / numMiCasa;
-  const oseParte = Number(m.ose || 0) / div;
-  const antelParte = Number(m.antel || 0) / div;
-  // OSE: 4 casas iguales — Mamá, Raquel, Paola, Vero+Ale (comparten casa)
   const oseTotal = Number(m.ose || 0);
   const mamaOseParte = oseTotal / 4;
   const raquelOseShare = oseTotal / 4;
   const paolaOseParte = oseTotal / 4;
-  const veroAleOsePerPerson = oseTotal / 8; // Vero y Ale comparten la 4ta casa
-  const netflixDiv = Math.max(1, y.divisors?.netflix || 3);
-  const spotifyDiv = Math.max(1, y.divisors?.spotify || 4);
-  const netflixParte = Number(m.netflix || 0) / netflixDiv;
-  const spotifyParte = Number(m.spotify || 0) / spotifyDiv;
-  // Netflix y ANTEL solo lo pagan Paola, Vero, Ale (÷3)
+  const veroAleOsePerPerson = oseTotal / 8;
   const netflixPayors = 3;
-  const antelPayors = 4; // Mamá, Paola, Vero, Ale
+  const antelPayors = 4;
   const netflixPartePagante = Number(m.netflix || 0) / netflixPayors;
   const antelPartePagante = Number(m.antel || 0) / antelPayors;
-  // Spotify: Vero/Ale/Paola siempre pagan Spotify÷6 por mes
-  // Nico/Mauro/Fausto pagan en junio (acum. ene–jun) y diciembre (acum. jul–dic)
   const isJuneOrDec = m.mes === "JUNIO" || m.mes === "DICIEMBRE";
   const spotifyPartePagante = Number(m.spotify || 0) / 6;
   const spotifyAcumIdx = m.mes === "JUNIO" ? [0,1,2,3,4,5] : m.mes === "DICIEMBRE" ? [6,7,8,9,10,11] : [];
   const spotifyAcumGuests = spotifyAcumIdx.reduce((sum, i) => sum + Number(y.months[i]?.spotify || 0), 0) / 6;
 
   const personas = [
-    { nombre:"Mamá",   icon:"👩",   color:"var(--accent2)",  ute:mamaUte,                           ose:mamaOseParte,            antel:antelPartePagante,  netflix:0,                    spotify:0 },
-    { nombre:"Raquel", icon:"👩‍🦱", color:"var(--ose)",      ute:raquelUte,                           ose:raquelOseShare,          antel:0,                  netflix:0,                    spotify:0 },
-    { nombre:"Paola",  icon:"👩🏿", color:"var(--antel)",    ute:basePorPersona + paolaExtra,        ose:paolaOseParte,           antel:antelPartePagante, netflix:netflixPartePagante,  spotify:spotifyPartePagante },
-    { nombre:"Vero",   icon:"👩‍🦳", color:"var(--accent)",   ute:basePorPersona + miCasaPerPerson,   ose:veroAleOsePerPerson,     antel:antelPartePagante, netflix:netflixPartePagante,  spotify:spotifyPartePagante },
-    { nombre:"Ale",    icon:"🧑",   color:"var(--danger)",   ute:basePorPersona + miCasaPerPerson,   ose:veroAleOsePerPerson,     antel:antelPartePagante, netflix:netflixPartePagante,  spotify:spotifyPartePagante }
+    { nombre:"Mamá",   icon:"👩",   color:"var(--accent2)",  ute:mamaUte,                         ose:mamaOseParte,        antel:antelPartePagante, netflix:0,                  spotify:0 },
+    { nombre:"Raquel", icon:"👩‍🦱", color:"var(--ose)",      ute:raquelUte,                       ose:raquelOseShare,      antel:0,                 netflix:0,                  spotify:0 },
+    { nombre:"Paola",  icon:"👩🏿", color:"var(--antel)",    ute:basePorPersona + paolaExtra,      ose:paolaOseParte,       antel:antelPartePagante, netflix:netflixPartePagante,spotify:spotifyPartePagante },
+    { nombre:"Vero",   icon:"👩‍🦳", color:"var(--accent)",   ute:basePorPersona + miCasaPerPerson, ose:veroAleOsePerPerson, antel:antelPartePagante, netflix:netflixPartePagante,spotify:spotifyPartePagante },
+    { nombre:"Ale",    icon:"🧑",   color:"var(--danger)",   ute:basePorPersona + miCasaPerPerson, ose:veroAleOsePerPerson, antel:antelPartePagante, netflix:netflixPartePagante,spotify:spotifyPartePagante }
   ];
-  
-  // Agregar Mauro, Nico y Fausto solo en junio y diciembre con su pago acumulado semestral
+
   if (isJuneOrDec) {
     personas.push(
-      { nombre:"Mauro",  icon:"👨",   color:"#8b5cf6",   ute:0, ose:0, antel:0, netflix:0, spotify:spotifyAcumGuests },
-      { nombre:"Nico",   icon:"👨‍🦱", color:"#06b6d4",   ute:0, ose:0, antel:0, netflix:0, spotify:spotifyAcumGuests },
-      { nombre:"Fausto", icon:"👨‍🦰", color:"#ec4899",   ute:0, ose:0, antel:0, netflix:0, spotify:spotifyAcumGuests }
+      { nombre:"Mauro",  icon:"👨",   color:"#8b5cf6", ute:0, ose:0, antel:0, netflix:0, spotify:spotifyAcumGuests },
+      { nombre:"Nico",   icon:"👨‍🦱", color:"#06b6d4", ute:0, ose:0, antel:0, netflix:0, spotify:spotifyAcumGuests },
+      { nombre:"Fausto", icon:"👨‍🦰", color:"#ec4899", ute:0, ose:0, antel:0, netflix:0, spotify:spotifyAcumGuests }
     );
   }
 
+  return personas.map(p => ({ ...p, total: p.ute + p.ose + p.antel + p.netflix + p.spotify }));
+}
+
+function aggregatePersonasForYear(y) {
+  const byName = {};
+  y.months.forEach((_, idx) => {
+    calculatePersonasForMonth(y, idx).forEach(persona => {
+      if (!byName[persona.nombre]) {
+        byName[persona.nombre] = { ...persona };
+        return;
+      }
+      byName[persona.nombre].ute += persona.ute;
+      byName[persona.nombre].ose += persona.ose;
+      byName[persona.nombre].antel += persona.antel;
+      byName[persona.nombre].netflix += persona.netflix;
+      byName[persona.nombre].spotify += persona.spotify;
+      byName[persona.nombre].total += persona.total;
+    });
+  });
+  return Object.values(byName).sort((a, b) => b.total - a.total);
+}
+
+function renderPersonas() {
+  const y = getYear();
+  const monthIdx = Number(monthSelect.value || 0);
+  const m = y.months[monthIdx] || y.months[0];
+  const personas = calculatePersonasForMonth(y, monthIdx);
+
   const grid = document.getElementById("personas-grid");
   try {
-    personas.sort((a, b) => (b.ute+b.ose+b.antel+b.netflix+b.spotify) - (a.ute+a.ose+a.antel+a.netflix+a.spotify));
+    personas.sort((a, b) => b.total - a.total);
     grid.innerHTML = personas.map(p => {
-    const total = p.ute + p.ose + p.antel + p.netflix + p.spotify;
     return `
       <div class="persona-card" style="--persona-color:${p.color}">
         <div class="persona-header">
           <span class="persona-icon">${p.icon}</span>
           <span class="persona-nombre">${p.nombre}</span>
         </div>
-        <strong class="persona-total">${money(total)}</strong>
+        <strong class="persona-total">${money(p.total)}</strong>
         <div class="persona-breakdown">
           <span><img class="brand-icon-sm" src="https://www.ute.com.uy/themes/ute/ute_favicon.ico" alt=""> UTE <b>${money(p.ute)}</b></span>
           <span><img class="brand-icon-sm" src="https://www.ose.com.uy/media/images/fav_ose_4.png?timestamp=20171031121645" alt=""> OSE <b>${money(p.ose)}</b></span>
@@ -2133,6 +2148,61 @@ function exportCSV() {
   downloadTextFile(`gastos_${yearSelect.value}.csv`, csv, 'text/csv;charset=utf-8');
 }
 
+function exportCSVMonth() {
+  const y = getYear();
+  const idx = Number(monthSelect.value || 0);
+  const m = y.months[idx] || y.months[0];
+  const header = [
+    "AÑO","MES","UTE","OSE","ANTEL","NETFLIX","SPOTIFY","TOTAL",
+    "BASE_UTE","EXCEDENTE_UTE","MAMA_UTE","RAQUEL_UTE","BASE_POR_PERSONA",
+    "MI_CASA_EXCEDENTE","PAOLA_EXCEDENTE","OSE_POR_CASA","ANTEL_POR_CASA",
+    "NETFLIX_POR_PERSONA","SPOTIFY_POR_PERSONA","SPOTIFY_MENSUAL_PAGANTE","SPOTIFY_ACUM_GUESTS",
+    "COBROS_MAMA_TOTAL","COBROS_MAMA_PAGADO","COBROS_MAMA_DESCUENTO","COBROS_MAMA_RESTANTE",
+    "COBROS_RAQUEL_TOTAL","COBROS_RAQUEL_PAGADO","COBROS_RAQUEL_DESCUENTO","COBROS_RAQUEL_RESTANTE",
+    "COBROS_PAOLA_TOTAL","COBROS_PAOLA_PAGADO","COBROS_PAOLA_DESCUENTO","COBROS_PAOLA_RESTANTE"
+  ];
+  const rep = buildRepartoSnapshot(y, m, idx);
+  const cobros = buildCobrosSnapshot(yearSelect.value, idx);
+  const byName = Object.fromEntries(cobros.map(c => [c.nombre.toUpperCase(), c]));
+  const row = [
+    yearSelect.value,
+    m.mes,
+    m.ute,
+    m.ose,
+    m.antel,
+    m.netflix,
+    m.spotify,
+    totalMonth(m),
+    rep.base,
+    rep.excedente,
+    rep.mamaUte,
+    rep.raquelUte,
+    rep.basePorPersona,
+    rep.miCasaExtra,
+    rep.paolaExtra,
+    rep.oseParte,
+    rep.antelParte,
+    rep.netflixParte,
+    rep.spotifyParte,
+    rep.spotifyMensualPagante,
+    rep.spotifyAcumGuests,
+    byName.MAMÁ?.monto || 0,
+    byName.MAMÁ?.pagado || 0,
+    byName.MAMÁ?.descuento || 0,
+    byName.MAMÁ?.restante || 0,
+    byName.RAQUEL?.monto || 0,
+    byName.RAQUEL?.pagado || 0,
+    byName.RAQUEL?.descuento || 0,
+    byName.RAQUEL?.restante || 0,
+    byName.PAOLA?.monto || 0,
+    byName.PAOLA?.pagado || 0,
+    byName.PAOLA?.descuento || 0,
+    byName.PAOLA?.restante || 0,
+  ];
+  const csv = [header, row].map(r => r.map(v => String(v ?? "")).join(";")).join("\n");
+  downloadTextFile(`gastos_${yearSelect.value}_${m.mes}.csv`, csv, 'text/csv;charset=utf-8');
+}
+
 function exportBackupJson() {
   const payload = {
     app: 'gastos_planilla_oficial_v2',
@@ -2246,6 +2316,132 @@ function openCobrosPdfReport() {
   win.document.open();
   win.document.write(buildCobrosReportHtml(report));
   win.document.close();
+}
+
+function buildPersonasPdfReport(period = "month", personaFilter = "TODAS") {
+  const y = getYear();
+  const monthIdx = Number(monthSelect.value || 0);
+  const monthName = y.months[monthIdx]?.mes || "";
+  let rows = period === "year"
+    ? aggregatePersonasForYear(y)
+    : calculatePersonasForMonth(y, monthIdx);
+  if (personaFilter && personaFilter !== "TODAS") {
+    rows = rows.filter(row => row.nombre === personaFilter);
+  }
+  return {
+    period,
+    year: yearSelect.value,
+    monthName,
+    personaFilter,
+    rows,
+    total: rows.reduce((sum, row) => sum + row.total, 0)
+  };
+}
+
+function buildPersonasPdfHtml(report) {
+  const subtitle = report.period === "year"
+    ? `Año completo ${report.year}`
+    : `${report.monthName} ${report.year}`;
+  const rowsHtml = report.rows.map(row => `
+    <tr>
+      <td>${reportHtmlEscape(row.nombre)}</td>
+      <td>${money(row.ute)}</td>
+      <td>${money(row.ose)}</td>
+      <td>${money(row.antel)}</td>
+      <td>${money(row.netflix)}</td>
+      <td>${money(row.spotify)}</td>
+      <td>${money(row.total)}</td>
+    </tr>
+  `).join('');
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personas ${report.year}</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:24px;color:#111827;background:#fff}
+    h1{margin:0 0 4px;font-size:26px}
+    .sub{margin:0 0 14px;color:#4b5563;font-size:14px}
+    .meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+    .badge{border:1px solid #d1d5db;border-radius:999px;padding:5px 10px;font-size:12px;color:#374151;background:#f9fafb}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:9px 7px;border-bottom:1px solid #e5e7eb;text-align:right;font-size:12px}
+    th:first-child,td:first-child{text-align:left}
+    th{background:#f3f4f6;color:#374151;text-transform:uppercase;letter-spacing:.04em;font-size:10px}
+    tfoot td{font-weight:800}
+    @media print{body{padding:14px}}
+  </style>
+</head>
+<body>
+  <h1>Reporte por persona</h1>
+  <p class="sub">${reportHtmlEscape(subtitle)}</p>
+  <div class="meta">
+    <span class="badge">Filtro: ${reportHtmlEscape(report.personaFilter === "TODAS" ? "Todas" : report.personaFilter)}</span>
+    <span class="badge">Total: ${money(report.total)}</span>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Persona</th><th>UTE</th><th>OSE</th><th>ANTEL</th><th>Netflix</th><th>Spotify</th><th>Total</th></tr>
+    </thead>
+    <tbody>${rowsHtml}</tbody>
+    <tfoot>
+      <tr><td>Total general</td><td colspan="5"></td><td>${money(report.total)}</td></tr>
+    </tfoot>
+  </table>
+  <script>window.addEventListener('load', () => setTimeout(() => window.print(), 320));<\/script>
+</body>
+</html>`;
+}
+
+function openPersonasPdfReport(period = "month", personaFilter = "TODAS") {
+  const report = buildPersonasPdfReport(period, personaFilter);
+  if (!report.rows.length) {
+    alert("No hay datos para el filtro seleccionado.");
+    return;
+  }
+  const win = window.open('', '_blank', 'noopener,noreferrer,width=980,height=900');
+  if (!win) {
+    alert('El navegador bloqueó la ventana del PDF. Permití ventanas emergentes e intentá de nuevo.');
+    return;
+  }
+  win.document.open();
+  win.document.write(buildPersonasPdfHtml(report));
+  win.document.close();
+}
+
+function showPersonasPdfModal() {
+  const y = getYear();
+  const monthIdx = Number(monthSelect.value || 0);
+  const names = calculatePersonasForMonth(y, monthIdx).map(persona => persona.nombre);
+  openModal("PDF por persona", `
+    <div style="display:grid;gap:10px">
+      <div>
+        <label for="pdfPeriodSelect">Período</label>
+        <select id="pdfPeriodSelect">
+          <option value="month">Mes seleccionado</option>
+          <option value="year">Año completo</option>
+        </select>
+      </div>
+      <div>
+        <label for="pdfPersonSelect">Persona</label>
+        <select id="pdfPersonSelect">
+          <option value="TODAS">Todas</option>
+          ${names.map(name => `<option value="${reportHtmlEscape(name)}">${reportHtmlEscape(name)}</option>`).join('')}
+        </select>
+      </div>
+      <p class="hint">Genera un PDF listo para imprimir con desglose por persona.</p>
+    </div>
+  `, [
+    { text:"Cancelar", variant:"secondary", onClick:closeModal },
+    { text:"Abrir PDF", onClick:() => {
+      const period = document.getElementById("pdfPeriodSelect")?.value || "month";
+      const persona = document.getElementById("pdfPersonSelect")?.value || "TODAS";
+      closeModal();
+      openPersonasPdfReport(period, persona);
+    }}
+  ]);
 }
 
 function openCobrosMailDraftFallback(report) {
@@ -2485,8 +2681,10 @@ netflixUsdInput.addEventListener("input", saveStreamingConfig);
 usdUyuInput.addEventListener("input", saveStreamingConfig);
 spotifyUsdInput.addEventListener("input", saveStreamingConfig);
 document.getElementById("exportBtn").addEventListener("click", exportCSV);
+document.getElementById("exportMonthBtn").addEventListener("click", exportCSVMonth);
 document.getElementById("backupBtn").addEventListener("click", exportBackupJson);
 document.getElementById("importBtn").addEventListener("click", showImportModal);
+document.getElementById("pdfPersonasBtn").addEventListener("click", showPersonasPdfModal);
 document.getElementById("pdfCobrosBtn").addEventListener("click", openCobrosPdfReport);
 document.getElementById("mailCobrosBtn").addEventListener("click", openCobrosMailDraft);
 document.getElementById("updateDollarBtn").addEventListener("click", updateDollarRate);
