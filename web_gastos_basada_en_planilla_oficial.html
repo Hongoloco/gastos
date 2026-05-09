@@ -1713,6 +1713,7 @@ function donutClick(idx) {
 }
 
 const COBROS_API = "https://script.google.com/macros/s/AKfycbzRmlSy8TOtWIF55AvD7RhFwk4upA-bG8p3DLOD6N0e94QziIAMq8xVOQVJ0DJ4Wu9pNQ/exec";
+const COBROS_REPORT_EMAIL = "ale21rock@gmail.com";
 const COBROS_DESCUENTO_SUFFIX = "__descuento";
 
 // Cache local para no re-fetch innecesario
@@ -2246,8 +2247,7 @@ function openCobrosPdfReport() {
   win.document.close();
 }
 
-function openCobrosMailDraft() {
-  const report = buildCobrosReportData();
+function openCobrosMailDraftFallback(report) {
   const subject = `Cobros ${report.monthName} ${report.year}`;
   const lines = [
     `Cobros ${report.monthName} ${report.year}`,
@@ -2260,8 +2260,36 @@ function openCobrosMailDraft() {
     'Abrí el PDF desde la web, imprimilo y adjuntalo a este correo.'
   ];
   const body = encodeURIComponent(lines.join('\n'));
-  const mailto = `mailto:ale21rock@gmail.com?subject=${encodeURIComponent(subject)}&body=${body}`;
+  const mailto = `mailto:${COBROS_REPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${body}`;
   window.location.href = mailto;
+}
+
+async function openCobrosMailDraft() {
+  const report = buildCobrosReportData();
+  const payload = {
+    action: 'sendReport',
+    recipient: COBROS_REPORT_EMAIL,
+    subject: `Cobros ${report.monthName} ${report.year}`,
+    report,
+    generatedAt: new Date().toISOString()
+  };
+  try {
+    setCobrosStatus(`Enviando PDF a ${COBROS_REPORT_EMAIL}…`);
+    const response = await fetch(COBROS_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.error || `HTTP ${response.status}`);
+    }
+    setCobrosStatus(`PDF enviado a ${COBROS_REPORT_EMAIL}.`);
+  } catch (error) {
+    console.warn('No se pudo enviar el PDF desde Apps Script:', error);
+    setCobrosStatus('No pude usar el envío automático. Abro un borrador local.', true);
+    openCobrosMailDraftFallback(report);
+  }
 }
 
 function restoreStateFromObject(source) {
