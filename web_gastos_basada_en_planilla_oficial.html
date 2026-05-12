@@ -407,6 +407,26 @@
     .tarjetas-import-status {
       min-height:22px; font-size:12px; color:var(--muted); font-weight:700; line-height:1.4;
     }
+    .tarjetas-zero-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; padding:0 20px 18px;
+    }
+    .tarjetas-zero-item {
+      border:1px solid var(--line-soft); border-radius:8px; padding:13px;
+      background:rgba(9,14,19,.38); display:grid; gap:5px;
+    }
+    .tarjetas-zero-item span {
+      color:var(--muted); font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.06em;
+    }
+    .tarjetas-zero-item strong { color:var(--text); font-size:18px; line-height:1.18; font-variant-numeric:tabular-nums; }
+    .tarjetas-zero-item small { color:var(--muted); font-size:12px; line-height:1.35; }
+    .tarjetas-advice-list {
+      display:grid; gap:10px; padding:0 20px 22px;
+    }
+    .tarjetas-advice-item {
+      border:1px solid var(--line-soft); border-left:3px solid var(--accent2); border-radius:8px;
+      padding:10px 12px; background:rgba(245,158,11,.07); color:var(--muted-strong);
+      font-size:13px; font-weight:750; line-height:1.45;
+    }
     .tarjetas-installment-form {
       display:grid; grid-template-columns:1.2fr 1.4fr .75fr .8fr .7fr .7fr .9fr .9fr auto;
       gap:10px; align-items:end; padding:18px 20px 4px;
@@ -986,6 +1006,27 @@
       <div class="kpi-head"><span>Mínimos pendientes</span><div class="kpi-icon">min</div></div>
       <strong id="tarjetasKpiMinimos">$0 / US$0</strong>
     </div>
+  </section>
+
+  <section class="card tarjetas-card" id="tarjetasZeroSection">
+    <div class="section-title">
+      <h2>Plan para dejar en cero</h2>
+      <p>Lo cargado en estados y cuotas se proyecta mes a mes, sin mezclar pesos con dólares.</p>
+    </div>
+    <div class="tarjetas-zero-grid" id="tarjetasZeroGrid"></div>
+    <div class="tarjetas-table-wrap">
+      <table class="tarjetas-table">
+        <thead>
+          <tr><th>Mes</th><th>Pago sugerido</th><th>Cuotas del mes</th><th>Queda en cuotas</th><th>Nota</th></tr>
+        </thead>
+        <tbody id="tarjetasZeroPlanBody"></tbody>
+      </table>
+    </div>
+    <div class="section-title" style="padding-top:0">
+      <h2>Sugerencias</h2>
+      <p>Prioridades calculadas con los datos guardados localmente.</p>
+    </div>
+    <div class="tarjetas-advice-list" id="tarjetasZeroAdvice"></div>
   </section>
 
   <section class="grid tarjetas-grid">
@@ -2951,6 +2992,7 @@ function renderTarjetas() {
   renderTarjetasStatements();
   renderTarjetasInstallments();
   renderTarjetasProjection();
+  renderTarjetasZeroPlan();
   renderTarjetasKpis();
 }
 
@@ -3103,6 +3145,203 @@ function renderTarjetasKpis() {
   }
 }
 
+function renderTarjetasZeroPlan() {
+  const grid = document.getElementById("tarjetasZeroGrid");
+  const body = document.getElementById("tarjetasZeroPlanBody");
+  const advice = document.getElementById("tarjetasZeroAdvice");
+  if (!grid || !body || !advice) return;
+  const { year, month } = selectedTarjetaPeriod();
+  const selectedAbs = tarjetaMonthAbs(year, month);
+  const openTotals = tarjetasOpenTotals();
+  const futureCommitment = sumTarjetasInstallmentsFromAbs(selectedAbs + 1);
+  const currentInstallments = sumTarjetasInstallmentsForAbs(selectedAbs);
+  const totalCommitment = {
+    uyu:openTotals.faltaUyu + futureCommitment.uyu,
+    usd:openTotals.faltaUsd + futureCommitment.usd
+  };
+  const peak = tarjetasInstallmentPeak(selectedAbs);
+  const endAbs = tarjetasLastInstallmentAbs(selectedAbs);
+  const monthsToShow = Math.min(24, Math.max(6, endAbs - selectedAbs + 1));
+  grid.innerHTML = `
+    ${tarjetasZeroMetric("Pagar para quedar al día", formatTarjetasMoneyPair(openTotals.faltaUyu, openTotals.faltaUsd), nearestTarjetasDueText(openTotals.entries))}
+    ${tarjetasZeroMetric("Cuotas futuras", formatTarjetasMoneyPair(futureCommitment.uyu, futureCommitment.usd), "Desde el mes siguiente al periodo elegido.")}
+    ${tarjetasZeroMetric("Total compromiso", formatTarjetasMoneyPair(totalCommitment.uyu, totalCommitment.usd), "Saldo actual pendiente más cuotas que ya cargaste.")}
+    ${tarjetasZeroMetric("Pico mensual cuotas", formatTarjetasMoneyPair(peak.uyu, peak.usd), tarjetasPeakLabel(peak))}
+  `;
+  body.innerHTML = Array.from({ length:monthsToShow }, (_, offset) => {
+    const abs = selectedAbs + offset;
+    const monthly = sumTarjetasInstallmentsForAbs(abs);
+    const remainingAfter = sumTarjetasInstallmentsFromAbs(abs + 1);
+    const suggested = offset === 0
+      ? { uyu:openTotals.faltaUyu, usd:openTotals.faltaUsd }
+      : monthly;
+    const note = tarjetasZeroPlanNote(offset, monthly, openTotals, currentInstallments);
+    return `<tr>
+      <td>${monthLabelFromAbs(abs)}</td>
+      <td>${formatTarjetasMoneyPair(suggested.uyu, suggested.usd)}</td>
+      <td>${formatTarjetasMoneyPair(monthly.uyu, monthly.usd)}</td>
+      <td>${formatTarjetasMoneyPair(remainingAfter.uyu, remainingAfter.usd)}</td>
+      <td>${escapeHtml(note)}</td>
+    </tr>`;
+  }).join("");
+  advice.innerHTML = buildTarjetasZeroAdvice(openTotals, futureCommitment, totalCommitment, peak, selectedAbs)
+    .map(text => `<div class="tarjetas-advice-item">${escapeHtml(text)}</div>`)
+    .join("");
+}
+
+function tarjetasZeroMetric(label, value, detail) {
+  return `<div class="tarjetas-zero-item">
+    <span>${escapeHtml(label)}</span>
+    <strong>${escapeHtml(value)}</strong>
+    <small>${escapeHtml(detail)}</small>
+  </div>`;
+}
+
+function tarjetasOpenTotals() {
+  const entries = tarjetasState.cards.map(card => ({
+    card,
+    entry:getTarjetaEntry(card.id)
+  }));
+  return entries.reduce((acc, item) => {
+    const totals = tarjetaEntryTotals(item.entry);
+    acc.totalUyu += Number(item.entry.totalUyu || 0);
+    acc.totalUsd += Number(item.entry.totalUsd || 0);
+    acc.paidUyu += Number(item.entry.paidUyu || 0);
+    acc.paidUsd += Number(item.entry.paidUsd || 0);
+    acc.minUyu += Number(item.entry.minUyu || 0);
+    acc.minUsd += Number(item.entry.minUsd || 0);
+    acc.faltaUyu += totals.faltaUyu;
+    acc.faltaUsd += totals.faltaUsd;
+    acc.faltaMinUyu += totals.faltaMinUyu;
+    acc.faltaMinUsd += totals.faltaMinUsd;
+    acc.entries.push(item);
+    return acc;
+  }, {
+    totalUyu:0, totalUsd:0, paidUyu:0, paidUsd:0, minUyu:0, minUsd:0,
+    faltaUyu:0, faltaUsd:0, faltaMinUyu:0, faltaMinUsd:0, entries:[]
+  });
+}
+
+function sumTarjetasInstallmentsForAbs(abs) {
+  return tarjetasState.installments.reduce((acc, item) => {
+    const startAbs = tarjetaMonthAbs(item.startYear, item.startMonth);
+    const endAbs = startAbs + Number(item.total || 1) - 1;
+    if (abs < startAbs || abs > endAbs) return acc;
+    if (item.currency === "USD") acc.usd += Number(item.amount || 0);
+    else acc.uyu += Number(item.amount || 0);
+    return acc;
+  }, { uyu:0, usd:0 });
+}
+
+function sumTarjetasInstallmentsFromAbs(fromAbs) {
+  return tarjetasState.installments.reduce((acc, item) => {
+    const startAbs = tarjetaMonthAbs(item.startYear, item.startMonth);
+    const endAbs = startAbs + Number(item.total || 1) - 1;
+    const firstAbs = Math.max(fromAbs, startAbs);
+    const remaining = Math.max(0, endAbs - firstAbs + 1);
+    if (!remaining) return acc;
+    const amount = Number(item.amount || 0) * remaining;
+    if (item.currency === "USD") acc.usd += amount;
+    else acc.uyu += amount;
+    return acc;
+  }, { uyu:0, usd:0 });
+}
+
+function tarjetasLastInstallmentAbs(selectedAbs) {
+  return tarjetasState.installments.reduce((maxAbs, item) => {
+    const startAbs = tarjetaMonthAbs(item.startYear, item.startMonth);
+    const endAbs = startAbs + Number(item.total || 1) - 1;
+    return endAbs >= selectedAbs ? Math.max(maxAbs, endAbs) : maxAbs;
+  }, selectedAbs);
+}
+
+function tarjetasInstallmentPeak(selectedAbs) {
+  const endAbs = tarjetasLastInstallmentAbs(selectedAbs);
+  let peak = { uyuAbs:selectedAbs, usdAbs:selectedAbs, uyu:0, usd:0 };
+  for (let abs = selectedAbs; abs <= endAbs; abs++) {
+    const monthly = sumTarjetasInstallmentsForAbs(abs);
+    if (monthly.uyu > peak.uyu) {
+      peak.uyu = monthly.uyu;
+      peak.uyuAbs = abs;
+    }
+    if (monthly.usd > peak.usd) {
+      peak.usd = monthly.usd;
+      peak.usdAbs = abs;
+    }
+  }
+  return peak;
+}
+
+function tarjetasPeakLabel(peak) {
+  const parts = [];
+  if (peak.uyu) parts.push(`Pesos: ${monthLabelFromAbs(peak.uyuAbs)}`);
+  if (peak.usd) parts.push(`Dólares: ${monthLabelFromAbs(peak.usdAbs)}`);
+  return parts.join(" | ") || "Sin cuotas futuras.";
+}
+
+function monthLabelFromAbs(abs) {
+  const year = Math.floor(abs / 12);
+  const month = abs % 12;
+  return `${MONTH_NAMES[month]} ${year}`;
+}
+
+function formatTarjetasMoneyPair(uyu, usd) {
+  const roundedUyu = roundMoneyValue(uyu || 0);
+  const roundedUsd = roundMoneyValue(usd || 0);
+  if (!roundedUyu && !roundedUsd) return `${moneyUyuExact(0)} / ${moneyUsd(0)}`;
+  return `${moneyUyuExact(roundedUyu)} / ${moneyUsd(roundedUsd)}`;
+}
+
+function nearestTarjetasDueText(entries) {
+  const dates = entries
+    .filter(item => {
+      const totals = tarjetaEntryTotals(item.entry);
+      return item.entry.dueDate && (totals.faltaUyu > 0.009 || totals.faltaUsd > 0.009);
+    })
+    .map(item => item.entry.dueDate)
+    .sort();
+  return dates[0] ? `Vencimiento más cercano: ${formatInputDate(dates[0])}.` : "Sin vencimientos pendientes cargados.";
+}
+
+function formatInputDate(value) {
+  const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return "-";
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+function tarjetasZeroPlanNote(offset, monthly, openTotals, currentInstallments) {
+  if (offset === 0) {
+    if (openTotals.faltaUyu || openTotals.faltaUsd) return "Objetivo: pagar contado pendiente y no financiar el estado.";
+    if (currentInstallments.uyu || currentInstallments.usd) return "El estado del mes figura cubierto; mirá las cuotas futuras.";
+    return "Sin saldo pendiente en el periodo elegido.";
+  }
+  if (monthly.uyu || monthly.usd) return "Reserva este importe como base del mes si no sumás nuevas compras.";
+  return "No hay cuotas cargadas para este mes.";
+}
+
+function buildTarjetasZeroAdvice(openTotals, futureCommitment, totalCommitment, peak, selectedAbs) {
+  const suggestions = [];
+  if (openTotals.faltaUyu || openTotals.faltaUsd) {
+    suggestions.push(`Prioridad 1: pagar el saldo contado pendiente (${formatTarjetasMoneyPair(openTotals.faltaUyu, openTotals.faltaUsd)}) antes del vencimiento. Ese es el movimiento que más ayuda a no financiar.`);
+  }
+  if ((openTotals.faltaMinUyu || openTotals.faltaMinUsd) && (openTotals.faltaUyu || openTotals.faltaUsd)) {
+    suggestions.push(`El mínimo pendiente (${formatTarjetasMoneyPair(openTotals.faltaMinUyu, openTotals.faltaMinUsd)}) sirve como piso de emergencia, pero el objetivo sano es el contado completo.`);
+  }
+  if (futureCommitment.uyu || futureCommitment.usd) {
+    suggestions.push(`Ya tenés comprometido en cuotas futuras ${formatTarjetasMoneyPair(futureCommitment.uyu, futureCommitment.usd)}. Tomalo como deuda real aunque todavía no haya vencido.`);
+  }
+  if (peak.uyu || peak.usd) {
+    suggestions.push(`Tus picos por cuotas cargadas son ${tarjetasPeakLabel(peak)} con ${formatTarjetasMoneyPair(peak.uyu, peak.usd)}. Hasta pasar esos picos, conviene evitar cuotas nuevas.`);
+  }
+  if (totalCommitment.uyu || totalCommitment.usd) {
+    suggestions.push(`Para dejar la tarjeta en cero de verdad, el compromiso visible hoy es ${formatTarjetasMoneyPair(totalCommitment.uyu, totalCommitment.usd)}: estado actual pendiente mas cuotas futuras cargadas.`);
+  }
+  if (!suggestions.length) {
+    suggestions.push("Con lo cargado ahora no aparece saldo ni cuotas pendientes. Buen momento para mantener la tarjeta en contado y cargar cualquier nuevo estado apenas cierre.");
+  }
+  return suggestions;
+}
+
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
@@ -3116,6 +3355,7 @@ function updateTarjetaEntryFromInput(input) {
   entry[field] = input.type === "number" ? roundMoneyValue(input.value || 0) : input.value;
   saveTarjetasState();
   renderTarjetasKpis();
+  renderTarjetasZeroPlan();
 }
 
 function updateTarjetaCardFromInput(input) {
@@ -3175,6 +3415,7 @@ function addTarjetaInstallmentFromForm() {
   saveTarjetasState();
   renderTarjetasInstallments();
   renderTarjetasProjection();
+  renderTarjetasZeroPlan();
 }
 
 function renderTarjetasProjection() {
@@ -3761,6 +4002,7 @@ document.getElementById("tarjetasInstallmentList")?.addEventListener("click", e 
   saveTarjetasState();
   renderTarjetasInstallments();
   renderTarjetasProjection();
+  renderTarjetasZeroPlan();
 });
 modalCloseBtn.addEventListener("click", closeModal);
 modalBackdrop.addEventListener("click", e => {
