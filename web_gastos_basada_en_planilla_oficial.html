@@ -3235,16 +3235,77 @@ async function handleTarjetasPdfImport() {
 async function extractPdfTextLines(file) {
   const buffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data:buffer }).promise;
-  const lines = [];
+  const rowLines = [];
+  const rawFragments = [];
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
     const page = await pdf.getPage(pageNum);
+    const viewport = page.getViewport({ scale:1 });
     const content = await page.getTextContent();
-    content.items
-      .map(item => String(item.str || "").trim())
-      .filter(Boolean)
-      .forEach(text => lines.push(text));
+    const items = content.items.map(item => {
+      const transform = item.transform || [];
+      return {
+        text:String(item.str || "").replace(/\s+/g, " ").trim(),
+        x:Number(transform[4]) || 0,
+        y:Number(transform[5]) || 0,
+        width:Number(item.width) || 0
+      };
+    }).filter(item => item.text);
+    rawFragments.push(...items.map(item => item.text));
+    const rows = [];
+    items.forEach(item => {
+      let row = rows.find(candidate => Math.abs(candidate.y - item.y) <= 2.6);
+      if (!row) {
+        row = { y:item.y, items:[] };
+        rows.push(row);
+      }
+      row.items.push(item);
+      row.y = row.items.reduce((sum, rowItem) => sum + rowItem.y, 0) / row.items.length;
+    });
+    rows
+      .sort((a, b) => b.y - a.y)
+      .forEach(row => {
+        const line = joinPdfTextRow(row.items);
+        if (!line) return;
+        const currency = inferPdfInstallmentCurrency(row.items, viewport.width);
+        rowLines.push(currency ? `${line} [${currency}]` : line);
+      });
   }
-  return lines;
+  return uniquePdfLines([...rowLines, ...rawFragments]);
+}
+
+function joinPdfTextRow(items) {
+  let previousRight = null;
+  return [...items]
+    .sort((a, b) => a.x - b.x)
+    .reduce((parts, item) => {
+      if (previousRight !== null && item.x - previousRight > 10) parts.push(" ");
+      parts.push(item.text);
+      previousRight = Math.max(previousRight || 0, item.x + (item.width || Math.max(4, item.text.length * 4)));
+      return parts;
+    }, [])
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function inferPdfInstallmentCurrency(items, pageWidth) {
+  const joined = items.map(item => item.text).join(" ");
+  if (!/\b\d{1,2}\/\s*\d{1,2}\b/.test(joined)) return "";
+  const amountItems = items.filter(item => extractMoneyValues(item.text).length);
+  if (!amountItems.length || !pageWidth) return "";
+  const lastAmount = amountItems[amountItems.length - 1];
+  return lastAmount.x > pageWidth * 0.82 ? "USD" : "UYU";
+}
+
+function uniquePdfLines(lines) {
+  const seen = new Set();
+  return lines
+    .map(line => String(line || "").replace(/\s+/g, " ").trim())
+    .filter(line => {
+      if (!line || seen.has(line)) return false;
+      seen.add(line);
+      return true;
+    });
 }
 
 function parseItauPdfLines(lines) {
@@ -3252,18 +3313,13 @@ function parseItauPdfLines(lines) {
   const joined = cleanLines.join("\n");
   const dates = [...joined.matchAll(/\b\d{2}\/\d{2}\/\d{2}\b/g)].map(match => match[0]);
   const saldoLine = cleanLines.find(line => /SALDO CONTADO/i.test(line)) || "";
-  const saldoAmounts = extractMoneyValues(saldoLine);
+  const saldoAmounts = findItauAmountsNearLabel(cleanLines, /SALDO\s+CONTADO/i);
   const paymentLines = cleanLines.filter(line => /\bPAGOS\b/i.test(line));
-  const payments = paymentLines.reduce((acc, line) => {
-    const nums = extractMoneyValues(line);
-    if (nums[0] !== undefined) acc.uyu += Math.abs(nums[0]);
-    if (nums[1] !== undefined) acc.usd += Math.abs(nums[1]);
-    return acc;
-  }, { uyu:0, usd:0 });
+  const payments = sumItauPayments(paymentLines);
   const minimums = parseItauMinimums(cleanLines, saldoAmounts);
   const installments = parseItauInstallments(cleanLines);
   return {
-    hasUsefulText:Boolean(saldoLine || paymentLines.length || installments.length),
+    hasUsefulText:Boolean(saldoAmounts.length || paymentLines.length || installments.length),
     statementDate:dateToInput(dates[0] || ""),
     dueDate:dateToInput(dates[1] || ""),
     closeDate:dateToInput(dates[2] || ""),
@@ -3276,6 +3332,31 @@ function parseItauPdfLines(lines) {
     installments,
     rawLineCount:cleanLines.length
   };
+}
+
+function findItauAmountsNearLabel(lines, labelRegex) {
+  for (let index = 0; index < lines.length; index++) {
+    if (!labelRegex.test(lines[index])) continue;
+    const sameLineAmounts = extractMoneyValues(lines[index]);
+    if (sameLineAmounts.length) return sameLineAmounts;
+    const nearbyAmounts = extractMoneyValues(lines.slice(index, index + 5).join(" "));
+    if (nearbyAmounts.length) return nearbyAmounts;
+  }
+  return [];
+}
+
+function sumItauPayments(lines) {
+  const seen = new Set();
+  return lines.reduce((acc, line) => {
+    const nums = extractMoneyValues(line);
+    if (!nums.length) return acc;
+    const key = nums.slice(0, 2).join("_");
+    if (seen.has(key)) return acc;
+    seen.add(key);
+    if (nums[0] !== undefined) acc.uyu += Math.abs(nums[0]);
+    if (nums[1] !== undefined) acc.usd += Math.abs(nums[1]);
+    return acc;
+  }, { uyu:0, usd:0 });
 }
 
 function extractMoneyValues(line) {
@@ -3295,14 +3376,18 @@ function dateToInput(date) {
 }
 
 function parseItauMinimums(lines, saldoAmounts = []) {
-  const marker = lines.findIndex(line => /Las cuotas incluyen IVA sobre los/i.test(line) || /^intereses\./i.test(line));
-  const chunk = marker >= 0 ? lines.slice(marker + 1, marker + 16) : lines;
-  const standalone = chunk
-    .filter(line => /^-?\d{1,3}(?:\.\d{3})*,\d{1,2}$|^-?\d+,\d{1,2}$/.test(line))
-    .map(parseUyAmount);
-  const uyu = standalone[1] || 0;
-  const usd = standalone[6] || 0;
-  if (uyu || usd) return { uyu, usd };
+  const rowMinimums = parseItauMinimumsFromSummaryRows(lines, saldoAmounts);
+  if (rowMinimums.uyu || rowMinimums.usd) return rowMinimums;
+  for (let marker = 0; marker < lines.length; marker++) {
+    if (!/Las cuotas incluyen IVA sobre los/i.test(lines[marker]) && !/^intereses\./i.test(lines[marker])) continue;
+    const chunk = lines.slice(marker + 1, marker + 18);
+    const standalone = chunk
+      .filter(line => /^-?\d{1,3}(?:\.\d{3})*,\d{1,2}$|^-?\d+,\d{1,2}$/.test(line))
+      .map(parseUyAmount);
+    const uyu = standalone[1] || 0;
+    const usd = standalone[6] || 0;
+    if (uyu || usd) return { uyu, usd };
+  }
   const vaLines = lines.filter(line => /^VA\d{20,}/.test(line));
   const totalUyuCents = amountToCentsString(saldoAmounts[0]);
   const totalUsdCents = amountToCentsString(saldoAmounts[1]);
@@ -3310,6 +3395,21 @@ function parseItauMinimums(lines, saldoAmounts = []) {
     uyu:decodeMinimumFromVaLine(vaLines[0], totalUyuCents),
     usd:decodeMinimumFromVaLine(vaLines[1], totalUsdCents)
   };
+}
+
+function parseItauMinimumsFromSummaryRows(lines, saldoAmounts = []) {
+  const result = { uyu:0, usd:0 };
+  lines.forEach(line => {
+    const amounts = extractMoneyValues(line);
+    if (amounts.length < 5) return;
+    if (!result.uyu && amountsAreClose(amounts[0], saldoAmounts[0])) result.uyu = amounts[1];
+    if (!result.usd && amountsAreClose(amounts[0], saldoAmounts[1])) result.usd = amounts[1];
+  });
+  return result;
+}
+
+function amountsAreClose(a, b) {
+  return Number.isFinite(Number(a)) && Number.isFinite(Number(b)) && Math.abs(Number(a) - Number(b)) < 0.01;
 }
 
 function amountToCentsString(amount) {
@@ -3332,6 +3432,7 @@ function parseItauInstallments(lines) {
   const seen = new Set();
   lines.forEach(line => {
     if (/^\d+\s+cuotas\s+de/i.test(line)) return;
+    if (/^\d{1,2}\/\s*\d{1,2}$/.test(line)) return;
     const cuota = line.match(/\b(\d{1,2})\/\s*(\d{1,2})\b/);
     if (!cuota) return;
     const amounts = extractMoneyValues(line);
@@ -3339,9 +3440,10 @@ function parseItauInstallments(lines) {
     if (!amount) return;
     let description = line
       .replace(/^\s*\d{2}\s+\d{2}\s+\d{2}\s+/, "")
-      .replace(/\b\d{4,}\b/g, "")
       .replace(cuota[0], "")
       .replace(/-?\d{1,3}(?:\.\d{3})*,\d{2}|-?\d+,\d{2}/g, "")
+      .replace(/\b\d{4,}\b/g, "")
+      .replace(/\[(?:UYU|USD)\]/g, "")
       .replace(/\s+/g, " ")
       .trim();
     description = description || "Cuota Itaú";
@@ -3355,7 +3457,7 @@ function parseItauInstallments(lines) {
     results.push({
       id:newTarjetaId(),
       description,
-      currency:"UYU",
+      currency:/\[USD\]/.test(line) ? "USD" : "UYU",
       amount:roundMoneyValue(amount),
       current,
       total,
