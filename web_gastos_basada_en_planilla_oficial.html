@@ -3375,19 +3375,49 @@ function renderTarjetasInstallments() {
     list.innerHTML = `<p class="hint">Todavía no hay cuotas cargadas.</p>`;
     return;
   }
-  list.innerHTML = tarjetasState.installments.map(item => {
+  const selectedAbs = tarjetaMonthAbs(tarjetasState.selectedYear, tarjetasState.selectedMonth);
+  list.innerHTML = sortedTarjetaInstallmentsByRemaining(tarjetasState.installments, selectedAbs).map(item => {
     const card = getTarjetaCard(item.cardId);
+    const progress = tarjetaInstallmentProgress(item, selectedAbs);
     return `<div class="tarjeta-installment-item">
       <div>
         <div class="tarjeta-installment-title">${escapeHtml(item.description)}</div>
         <div class="tarjeta-installment-meta">${escapeHtml(card?.name || "Tarjeta")} · desde ${MONTH_NAMES[item.startMonth]} ${item.startYear}</div>
       </div>
       <strong>${item.currency === "USD" ? moneyUsd(item.amount) : moneyUyuExact(item.amount)}</strong>
-      <span class="tarjeta-installment-meta">${item.current}/${item.total}</span>
+      <span class="tarjeta-installment-meta">${progress.current}/${item.total} · ${escapeHtml(progress.label)}</span>
       <span class="tarjeta-installment-meta">${escapeHtml(item.currency)}</span>
       <button class="danger" type="button" data-delete-installment="${escapeHtml(item.id)}">Eliminar</button>
     </div>`;
   }).join("");
+}
+
+function sortedTarjetaInstallmentsByRemaining(items, abs = tarjetaMonthAbs(tarjetasState.selectedYear, tarjetasState.selectedMonth)) {
+  return [...items].sort((a, b) => {
+    const progressA = tarjetaInstallmentProgress(a, abs);
+    const progressB = tarjetaInstallmentProgress(b, abs);
+    if (progressA.done !== progressB.done) return progressA.done ? 1 : -1;
+    if (progressA.remaining !== progressB.remaining) return progressA.remaining - progressB.remaining;
+    const startA = tarjetaMonthAbs(a.startYear, a.startMonth);
+    const startB = tarjetaMonthAbs(b.startYear, b.startMonth);
+    if (startA !== startB) return startA - startB;
+    return String(a.description || "").localeCompare(String(b.description || ""), "es");
+  });
+}
+
+function tarjetaInstallmentProgress(item, abs = tarjetaMonthAbs(tarjetasState.selectedYear, tarjetasState.selectedMonth)) {
+  const total = Math.max(1, Number(item.total || 1));
+  const startAbs = tarjetaMonthAbs(item.startYear, item.startMonth);
+  const endAbs = startAbs + total - 1;
+  if (abs > endAbs) return { current:total, remaining:Number.MAX_SAFE_INTEGER, displayRemaining:0, done:true, label:"Finalizada" };
+  if (abs < startAbs) return { current:1, remaining:total, displayRemaining:total, done:false, label:tarjetaRemainingLabel(total) };
+  const current = Math.min(total, Math.max(1, abs - startAbs + 1));
+  const remaining = Math.max(1, total - current + 1);
+  return { current, remaining, displayRemaining:remaining, done:false, label:tarjetaRemainingLabel(remaining) };
+}
+
+function tarjetaRemainingLabel(remaining) {
+  return Number(remaining) === 1 ? "Falta 1" : `Faltan ${remaining}`;
 }
 
 function addTarjetaInstallmentFromForm() {
@@ -3427,10 +3457,10 @@ function renderTarjetasProjection() {
     const abs = tarjetaMonthAbs(year, month) + offset;
     const rowYear = Math.floor(abs / 12);
     const rowMonth = abs % 12;
-    const activeItems = tarjetasState.installments.filter(item => {
+    const activeItems = sortedTarjetaInstallmentsByRemaining(tarjetasState.installments.filter(item => {
       const startAbs = tarjetaMonthAbs(item.startYear, item.startMonth);
       return abs >= startAbs && abs < startAbs + Number(item.total || 1);
-    });
+    }), abs);
     const uyu = activeItems.filter(i => i.currency !== "USD").reduce((sum, item) => sum + Number(item.amount || 0), 0);
     const usd = activeItems.filter(i => i.currency === "USD").reduce((sum, item) => sum + Number(item.amount || 0), 0);
     const detail = activeItems.map(item => {
@@ -3711,6 +3741,7 @@ function parseItauInstallments(lines) {
 
 function showTarjetasPdfReviewModal(cardId, parsed) {
   const card = getTarjetaCard(cardId);
+  const orderedInstallments = sortedTarjetaInstallmentsByRemaining(parsed.installments);
   openModal(`Revisar PDF - ${card.name}`, `
     <div class="tarjetas-review-grid">
       ${reviewInput("statementDate", "Fecha estado", "date", parsed.statementDate)}
@@ -3727,9 +3758,11 @@ function showTarjetasPdfReviewModal(cardId, parsed) {
       <h3>Cuotas detectadas</h3>
       <div class="tarjetas-table-wrap" style="padding:0">
         <table class="tarjetas-table tarjetas-review-table">
-          <thead><tr><th>Guardar</th><th>Descripción</th><th>Moneda</th><th>Importe</th><th>Actual</th><th>Total</th></tr></thead>
+          <thead><tr><th>Guardar</th><th>Descripción</th><th>Moneda</th><th>Importe</th><th>Actual</th><th>Total</th><th>Faltan</th></tr></thead>
           <tbody>
-            ${parsed.installments.length ? parsed.installments.map((item, index) => `
+            ${orderedInstallments.length ? orderedInstallments.map((item, index) => {
+              const progress = tarjetaInstallmentProgress(item);
+              return `
               <tr data-review-installment="${index}">
                 <td><input type="checkbox" checked data-review-field="include"></td>
                 <td><input class="review-desc" value="${escapeHtml(item.description)}" data-review-field="description"></td>
@@ -3742,8 +3775,9 @@ function showTarjetasPdfReviewModal(cardId, parsed) {
                 <td><input type="number" step="0.01" value="${escapeHtml(item.amount)}" data-review-field="amount"></td>
                 <td><input type="number" min="1" value="${escapeHtml(item.current)}" data-review-field="current"></td>
                 <td><input type="number" min="1" value="${escapeHtml(item.total)}" data-review-field="total"></td>
+                <td>${escapeHtml(progress.label)}</td>
               </tr>
-            `).join("") : `<tr><td colspan="6">No se detectaron cuotas.</td></tr>`}
+            `; }).join("") : `<tr><td colspan="7">No se detectaron cuotas.</td></tr>`}
           </tbody>
         </table>
       </div>
