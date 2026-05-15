@@ -6,6 +6,7 @@ const COBROS_SHEET_NAME = 'Cobros';
 const APP_STATE_SHEET_NAME = 'AppState';
 const APP_STATE_CHUNKS_SHEET_NAME = 'AppStateChunks';
 const GASTOS_SHEET_NAME = 'Gastos';
+const SYNC_LOG_SHEET_NAME = 'SyncLog';
 const DEFAULT_STATE_KEY = 'gastos_planilla_oficial_v2';
 const STATE_CHUNK_SIZE = 45000;
 const DRIVE_BACKUP_FOLDER_ID = '1Bz9SO0_yQqKUA6F3XnSjxfjy74A9RmlP';
@@ -173,7 +174,46 @@ function saveAppState_(payload) {
   }
 
   const driveBackup = saveDriveBackupSafely_(json, updatedAt);
-  return { ok: true, key, updatedAt, chunks: chunks.length, driveBackup };
+  const syncLog = appendSyncLogSafely_(statePayload, chunks.length, driveBackup);
+  return { ok: true, key, updatedAt, chunks: chunks.length, driveBackup, syncLog };
+}
+
+function appendSyncLogSafely_(statePayload, chunkCount, driveBackup) {
+  try {
+    const syncedAt = new Date();
+    const timezone = Session.getScriptTimeZone() || 'Etc/GMT';
+    const sheet = getSheet_(SYNC_LOG_SHEET_NAME, [
+      'Sincronizado ISO',
+      'Sincronizado',
+      'Estado actualizado ISO',
+      'Key',
+      'Año actual',
+      'Chunks',
+      'Backup Drive',
+      'Archivo actual',
+      'Archivo diario',
+      'URL actual',
+      'URL diario',
+      'Error'
+    ]);
+    sheet.appendRow([
+      syncedAt.toISOString(),
+      Utilities.formatDate(syncedAt, timezone, 'yyyy-MM-dd HH:mm:ss'),
+      statePayload.updatedAt || '',
+      statePayload.key || '',
+      statePayload.currentYear || '',
+      Number(chunkCount || 0),
+      driveBackup && driveBackup.ok ? 'OK' : 'ERROR',
+      driveBackup && driveBackup.currentFileName ? driveBackup.currentFileName : '',
+      driveBackup && driveBackup.dailyFileName ? driveBackup.dailyFileName : '',
+      driveBackup && driveBackup.currentFileUrl ? driveBackup.currentFileUrl : '',
+      driveBackup && driveBackup.dailyFileUrl ? driveBackup.dailyFileUrl : '',
+      driveBackup && driveBackup.error ? driveBackup.error : ''
+    ]);
+    return { ok: true, syncedAt: syncedAt.toISOString() };
+  } catch (error) {
+    return { ok: false, error: error.message || String(error) };
+  }
 }
 
 function saveDriveBackupSafely_(json, updatedAt) {

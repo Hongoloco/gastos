@@ -55,6 +55,7 @@
     }
     .hero-pill span { color:var(--muted); font-size:11px; font-weight:850; text-transform:uppercase; letter-spacing:.06em; }
     .hero-pill strong { color:var(--text); font-size:17px; line-height:1.15; }
+    .hero-pill small { color:var(--muted); font-size:11px; font-weight:750; line-height:1.2; }
     .badge {
       display:inline-flex; gap:8px; align-items:center; padding:7px 10px; border-radius:999px;
       background:rgba(45,212,191,.12); color:var(--accent-strong); border:1px solid rgba(45,212,191,.34);
@@ -834,7 +835,7 @@
       <div class="hero-stats" aria-label="Resumen de la herramienta">
         <div class="hero-pill"><span>Historial</span><strong id="historyRange">2019–2026</strong></div>
         <div class="hero-pill"><span>Servicios</span><strong>5 categorías</strong></div>
-        <div class="hero-pill"><span>Guardado</span><strong id="syncStateLabel">Local</strong></div>
+        <div class="hero-pill"><span>Guardado</span><strong id="syncStateLabel">Local</strong><small id="syncLastLabel">Última: --</small></div>
       </div>
     </section>
     <section class="card controls">
@@ -1252,6 +1253,7 @@ const STORE_KEY = "gastos_planilla_oficial_v2";
 const APPS_SCRIPT_API = "https://script.google.com/macros/s/AKfycbzRmlSy8TOtWIF55AvD7RhFwk4upA-bG8p3DLOD6N0e94QziIAMq8xVOQVJ0DJ4Wu9pNQ/exec";
 const SHEETS_SYNC_META_KEY = "gastos_sheets_sync_meta_v1";
 const SHEETS_SYNC_DEBOUNCE_MS = 1200;
+const SHEETS_SYNC_DAILY_MS = 24 * 60 * 60 * 1000;
 const MONTH_NAMES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
 const money = n => "$" + Math.round(Number(n || 0)).toLocaleString("es-UY");
 const moneyUyuExact = n => "$" + Number(n || 0).toLocaleString("es-UY", { minimumFractionDigits:2, maximumFractionDigits:2 });
@@ -1320,7 +1322,41 @@ function getSheetsSyncMeta() {
 function setSheetsSyncMeta(nextMeta) {
   const meta = { ...getSheetsSyncMeta(), ...nextMeta };
   localStorage.setItem(SHEETS_SYNC_META_KEY, JSON.stringify(meta));
+  updateSyncTimeLabels(meta);
   return meta;
+}
+
+function formatSyncDateTime(value) {
+  if (!value) return "--";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "--";
+  return date.toLocaleString("es-UY", {
+    year:"numeric",
+    month:"2-digit",
+    day:"2-digit",
+    hour:"2-digit",
+    minute:"2-digit"
+  });
+}
+
+function syncWaitMs(meta = getSheetsSyncMeta()) {
+  const lastSync = Date.parse(meta.lastSyncedAt || meta.remoteUpdatedAt || "");
+  if (!Number.isFinite(lastSync)) return 0;
+  return Math.max(0, SHEETS_SYNC_DAILY_MS - (Date.now() - lastSync));
+}
+
+function nextSyncAt(meta = getSheetsSyncMeta()) {
+  const lastSync = Date.parse(meta.lastSyncedAt || meta.remoteUpdatedAt || "");
+  if (!Number.isFinite(lastSync)) return "";
+  return new Date(lastSync + SHEETS_SYNC_DAILY_MS).toISOString();
+}
+
+function updateSyncTimeLabels(meta = getSheetsSyncMeta()) {
+  const lastLabel = document.getElementById("syncLastLabel");
+  if (!lastLabel) return;
+  const lastSync = meta.lastSyncedAt || meta.remoteUpdatedAt || "";
+  const prefix = meta.pending ? "Pendiente. Última" : "Última";
+  lastLabel.textContent = `${prefix}: ${formatSyncDateTime(lastSync)}`;
 }
 
 function buildSheetsSyncPayload(updatedAt = new Date().toISOString()) {
@@ -1340,6 +1376,7 @@ function buildSheetsSyncPayload(updatedAt = new Date().toISOString()) {
 function setSheetsSyncStatus(type = "local", message = "") {
   const label = document.getElementById("syncStateLabel");
   const btn = document.getElementById("syncSheetBtn");
+  const meta = getSheetsSyncMeta();
   const labels = {
     local:"Local",
     loading:"Cargando",
@@ -1353,21 +1390,26 @@ function setSheetsSyncStatus(type = "local", message = "") {
   if (btn) {
     btn.disabled = type === "syncing" || type === "loading";
     btn.textContent = type === "syncing" ? "Subiendo..." : type === "loading" ? "Cargando..." : "Sincronizar Google";
-    btn.title = message || "Sube los datos actuales a Google Sheets y crea el backup JSON en Drive";
+    const next = meta.pending ? ` Próxima automática: ${formatSyncDateTime(nextSyncAt(meta))}.` : "";
+    btn.title = (message || "Sube los datos actuales a Google Sheets y crea el backup JSON en Drive") + next;
   }
+  updateSyncTimeLabels(meta);
 }
 
 function markSheetsSyncPending() {
   if (!sheetsSyncReady) return;
-  setSheetsSyncMeta({ localUpdatedAt:new Date().toISOString(), pending:true });
-  setSheetsSyncStatus("pending", "Hay cambios guardados localmente pendientes de subir a Google.");
+  const meta = setSheetsSyncMeta({ localUpdatedAt:new Date().toISOString(), pending:true });
+  const waitMs = syncWaitMs(meta);
+  const next = waitMs ? nextSyncAt(meta) : new Date().toISOString();
+  setSheetsSyncStatus("pending", `Cambios guardados localmente. Próxima sincronización automática: ${formatSyncDateTime(next)}.`);
   scheduleSheetsSync();
 }
 
-function scheduleSheetsSync(delay = SHEETS_SYNC_DEBOUNCE_MS) {
+function scheduleSheetsSync(delay) {
   if (!sheetsSyncReady) return;
   clearTimeout(sheetsSyncTimer);
-  sheetsSyncTimer = setTimeout(() => syncStateToSheet(), delay);
+  const waitMs = typeof delay === "number" ? delay : syncWaitMs();
+  sheetsSyncTimer = setTimeout(() => syncStateToSheet(), Math.max(SHEETS_SYNC_DEBOUNCE_MS, waitMs));
 }
 
 function applySheetStatePayload(payload, remoteUpdatedAt) {
@@ -1420,8 +1462,14 @@ async function loadStateFromSheet() {
     }
     sheetsSyncReady = true;
     if (hasLocalState && (!remoteUpdatedAt || localUpdatedAt > remoteUpdatedAt || localMeta.pending)) {
-      setSheetsSyncStatus("pending", "Hay datos locales para subir a Google.");
-      await syncStateToSheet();
+      setSheetsSyncMeta({ pending:true });
+      const waitMs = syncWaitMs();
+      if (!remoteUpdatedAt || waitMs <= 0) {
+        await syncStateToSheet();
+      } else {
+        setSheetsSyncStatus("pending", `Hay datos locales para subir a Google. Próxima sincronización automática: ${formatSyncDateTime(nextSyncAt())}.`);
+        scheduleSheetsSync(waitMs);
+      }
       return;
     }
     setSheetsSyncMeta({ remoteUpdatedAt, pending:false });
@@ -1431,16 +1479,16 @@ async function loadStateFromSheet() {
     setSheetsSyncStatus("error", "No pude conectar con Google. Sigo usando el guardado local.");
   } finally {
     sheetsSyncReady = true;
+    updateSyncTimeLabels();
   }
 }
 
-async function syncStateToSheet() {
+async function syncStateToSheet(options = {}) {
   if (!sheetsSyncReady) return;
   if (sheetsSyncInFlight) { sheetsSyncAgain = true; return; }
   clearTimeout(sheetsSyncTimer);
   sheetsSyncInFlight = true;
-  const meta = getSheetsSyncMeta();
-  const updatedAt = meta.localUpdatedAt || new Date().toISOString();
+  const updatedAt = new Date().toISOString();
   const payload = buildSheetsSyncPayload(updatedAt);
   setSheetsSyncStatus("syncing", "Subiendo datos a Google Sheets y Drive.");
   try {
@@ -1451,18 +1499,20 @@ async function syncStateToSheet() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.ok === false) throw new Error(data.error || `HTTP ${res.status}`);
+    const syncedAt = data.syncLog?.syncedAt || new Date().toISOString();
     setSheetsSyncMeta({
       localUpdatedAt:data.updatedAt || updatedAt,
       remoteUpdatedAt:data.updatedAt || updatedAt,
-      lastSyncedAt:new Date().toISOString(),
+      lastSyncedAt:syncedAt,
+      lastManualSyncedAt:options.manual ? syncedAt : getSheetsSyncMeta().lastManualSyncedAt || "",
       pending:false
     });
     const driveBackup = data.driveBackup;
     if (driveBackup?.ok) {
-      setSheetsSyncStatus("ok", `Sincronizado con Sheets y Drive (${data.updatedAt || updatedAt}). Backup: ${driveBackup.currentFileName} / ${driveBackup.dailyFileName}.`);
+      setSheetsSyncStatus("ok", `Sincronizado con Sheets y Drive el ${formatSyncDateTime(syncedAt)}. Backup: ${driveBackup.currentFileName} / ${driveBackup.dailyFileName}.`);
     } else {
       const driveError = driveBackup?.error ? ` Error Drive: ${driveBackup.error}` : "";
-      setSheetsSyncStatus("sheetsOnly", `Sincronizado con Sheets (${data.updatedAt || updatedAt}), pero sin confirmar backup en Drive.${driveError}`);
+      setSheetsSyncStatus("sheetsOnly", `Sincronizado con Sheets el ${formatSyncDateTime(syncedAt)}, pero sin confirmar backup en Drive.${driveError}`);
     }
   } catch (error) {
     console.warn("No pude subir datos a Google:", error);
@@ -1472,7 +1522,7 @@ async function syncStateToSheet() {
     sheetsSyncInFlight = false;
     if (sheetsSyncAgain) {
       sheetsSyncAgain = false;
-      scheduleSheetsSync(350);
+      scheduleSheetsSync(options.manual ? 350 : undefined);
     }
   }
 }
@@ -4759,7 +4809,7 @@ function showHelpModal() {
       <p><b>Reparto del mes:</b> elegí un mes arriba y ajustá base UTE, fijos y porcentajes para ver cuánto corresponde a cada parte.</p>
       <p><b>Cobros:</b> además de marcar pagos recibidos, podés descontar una parte si vos le debés algo a esa persona.</p>
       <p><b>Streaming:</b> Netflix se calcula desde el plan de USD 17 y Spotify desde el plan familiar de USD 15. Ambos usan el dólar bancario venta de Uruguay.</p>
-      <p><b>Guardado en Google:</b> los cambios quedan primero en este navegador y luego se suben a Google Sheets; además se actualiza un backup JSON en la carpeta de Drive configurada.</p>
+      <p><b>Guardado en Google:</b> los cambios quedan primero en este navegador y la sincronización automática sube todo una vez por día. El botón Sincronizar Google fuerza una subida inmediata y registra fecha y hora.</p>
       <p><b>Exportar:</b> el botón CSV descarga el año visible para llevarlo a Excel o respaldarlo.</p>
       <p><b>Backup JSON:</b> guardá todo el estado para restaurarlo después en otro navegador o si se borra localStorage.</p>
       <p><b>Importar JSON:</b> pegá o cargá un backup para recuperar meses, cobros y configuración completa.</p>
@@ -4867,7 +4917,7 @@ document.getElementById("backupBtn").addEventListener("click", exportBackupJson)
 document.getElementById("importBtn").addEventListener("click", showImportModal);
 document.getElementById("syncSheetBtn").addEventListener("click", () => {
   setSheetsSyncMeta({ localUpdatedAt:new Date().toISOString(), pending:true });
-  syncStateToSheet();
+  syncStateToSheet({ manual:true });
 });
 document.getElementById("pdfPersonasBtn").addEventListener("click", showPersonasPdfModal);
 document.getElementById("pdfCobrosBtn").addEventListener("click", openCobrosPdfReport);
