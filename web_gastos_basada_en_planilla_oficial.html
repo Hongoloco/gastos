@@ -1509,7 +1509,8 @@ async function syncStateToSheet(options = {}) {
     });
     const driveBackup = data.driveBackup;
     if (driveBackup?.ok) {
-      setSheetsSyncStatus("ok", `Sincronizado con Sheets y Drive el ${formatSyncDateTime(syncedAt)}. Backup: ${driveBackup.currentFileName} / ${driveBackup.dailyFileName}.`);
+      const folderText = driveBackup.dateFolderName ? ` Carpeta: ${driveBackup.dateFolderName}.` : "";
+      setSheetsSyncStatus("ok", `Sincronizado con Sheets y Drive el ${formatSyncDateTime(syncedAt)}. Backup: ${driveBackup.currentFileName} / ${driveBackup.dailyFileName}.${folderText}`);
     } else {
       const driveError = driveBackup?.error ? ` Error Drive: ${driveBackup.error}` : "";
       setSheetsSyncStatus("sheetsOnly", `Sincronizado con Sheets el ${formatSyncDateTime(syncedAt)}, pero sin confirmar backup en Drive.${driveError}`);

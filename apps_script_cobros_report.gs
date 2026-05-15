@@ -190,8 +190,10 @@ function appendSyncLogSafely_(statePayload, chunkCount, driveBackup) {
       'Año actual',
       'Chunks',
       'Backup Drive',
+      'Carpeta fecha',
       'Archivo actual',
       'Archivo diario',
+      'URL carpeta fecha',
       'URL actual',
       'URL diario',
       'Error'
@@ -204,8 +206,10 @@ function appendSyncLogSafely_(statePayload, chunkCount, driveBackup) {
       statePayload.currentYear || '',
       Number(chunkCount || 0),
       driveBackup && driveBackup.ok ? 'OK' : 'ERROR',
+      driveBackup && driveBackup.dateFolderName ? driveBackup.dateFolderName : '',
       driveBackup && driveBackup.currentFileName ? driveBackup.currentFileName : '',
       driveBackup && driveBackup.dailyFileName ? driveBackup.dailyFileName : '',
+      driveBackup && driveBackup.dateFolderUrl ? driveBackup.dateFolderUrl : '',
       driveBackup && driveBackup.currentFileUrl ? driveBackup.currentFileUrl : '',
       driveBackup && driveBackup.dailyFileUrl ? driveBackup.dailyFileUrl : '',
       driveBackup && driveBackup.error ? driveBackup.error : ''
@@ -220,12 +224,17 @@ function saveDriveBackupSafely_(json, updatedAt) {
   if (!DRIVE_BACKUP_FOLDER_ID) return { ok: false, skipped: true, error: 'Missing Drive backup folder ID.' };
   try {
     const folder = DriveApp.getFolderById(DRIVE_BACKUP_FOLDER_ID);
+    const dateParts = driveBackupDateParts_(updatedAt);
+    const dateFolder = getOrCreateDriveFolder_(folder, dateParts.dateKey);
     const current = upsertDriveTextFile_(folder, DRIVE_BACKUP_CURRENT_FILE_NAME, json, updatedAt);
-    const dailyName = `${DRIVE_BACKUP_DAILY_PREFIX}${driveBackupDateKey_(updatedAt)}.json`;
-    const daily = upsertDriveTextFile_(folder, dailyName, json, updatedAt);
+    const dailyName = `${DRIVE_BACKUP_DAILY_PREFIX}${dateParts.dateKey}_${dateParts.timeKey}.json`;
+    const daily = upsertDriveTextFile_(dateFolder, dailyName, json, updatedAt);
     return {
       ok: true,
       folderId: DRIVE_BACKUP_FOLDER_ID,
+      dateFolderId: dateFolder.getId(),
+      dateFolderName: dateFolder.getName(),
+      dateFolderUrl: dateFolder.getUrl(),
       currentFileId: current.id,
       currentFileName: current.name,
       currentFileUrl: current.url,
@@ -252,15 +261,25 @@ function upsertDriveTextFile_(folder, name, content, updatedAt) {
   return { id: file.getId(), name: file.getName(), url: file.getUrl() };
 }
 
-function driveBackupDateKey_(updatedAt) {
+function getOrCreateDriveFolder_(parentFolder, name) {
+  const folders = parentFolder.getFoldersByName(name);
+  if (folders.hasNext()) return folders.next();
+  return parentFolder.createFolder(name);
+}
+
+function driveBackupDateParts_(updatedAt) {
   const date = new Date(updatedAt || new Date().toISOString());
   const safeDate = Number.isNaN(date.getTime()) ? new Date() : date;
   const timezone = Session.getScriptTimeZone() || 'Etc/GMT';
-  return Utilities.formatDate(safeDate, timezone, 'yyyy-MM-dd');
+  return {
+    dateKey: Utilities.formatDate(safeDate, timezone, 'yyyy-MM-dd'),
+    timeKey: Utilities.formatDate(safeDate, timezone, 'HH-mm-ss')
+  };
 }
 
 function probarBackupDrive() {
   const updatedAt = new Date().toISOString();
+  const dateParts = driveBackupDateParts_(updatedAt);
   const payload = {
     app: 'gastos_planilla_oficial_v2',
     test: true,
@@ -268,7 +287,8 @@ function probarBackupDrive() {
     message: 'Backup de prueba generado desde Apps Script.'
   };
   const folder = DriveApp.getFolderById(DRIVE_BACKUP_FOLDER_ID);
-  return upsertDriveTextFile_(folder, 'gastos_backup_prueba.json', JSON.stringify(payload, null, 2), updatedAt);
+  const dateFolder = getOrCreateDriveFolder_(folder, dateParts.dateKey);
+  return upsertDriveTextFile_(dateFolder, `gastos_backup_prueba_${dateParts.timeKey}.json`, JSON.stringify(payload, null, 2), updatedAt);
 }
 
 function getAppState_(key) {
