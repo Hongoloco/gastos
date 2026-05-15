@@ -1633,12 +1633,15 @@ function renderMonths() {
       const row = Number(e.target.dataset.row), key = e.target.dataset.key;
       const parsed = Number(e.target.value);
       const valid = Number.isFinite(parsed) && parsed >= 0;
+      const currentYear = getYear();
+      const month = currentYear?.months?.[row];
+      if (!month) return;
       e.target.classList.toggle('input-invalid', !valid);
       e.target.setAttribute('aria-invalid', String(!valid));
       e.target.title = valid ? '' : 'Usá un número mayor o igual a 0';
-      y.months[row][key] = valid ? parsed : 0;
-      y.months[row].total = totalMonth(y.months[row]);
-      document.getElementById(`total-${row}`).textContent = money(y.months[row].total);
+      month[key] = valid ? parsed : 0;
+      month.total = totalMonth(month);
+      document.getElementById(`total-${row}`).textContent = money(month.total);
       save(); renderKpis(); renderChart(); renderReparto();
     });
     const initial = Number(inp.value);
