@@ -267,6 +267,32 @@
     .rate-dot { width:8px; height:8px; border-radius:99px; background:var(--warn); box-shadow:0 0 0 3px rgba(251,191,36,.1); flex:0 0 auto; }
     .rate-status.ok .rate-dot { background:var(--accent); box-shadow:0 0 0 3px rgba(45,212,191,.1); }
     .rate-status.error .rate-dot { background:var(--danger); box-shadow:0 0 0 3px rgba(251,113,133,.1); }
+    .ute-diff-card {
+      margin-top:16px; padding:14px; border:1px solid rgba(249,115,22,.24); border-radius:10px;
+      background:linear-gradient(135deg, rgba(249,115,22,.11), rgba(251,191,36,.06));
+      display:grid; gap:12px;
+    }
+    .ute-diff-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    .ute-diff-head strong { display:block; color:var(--text); font-size:16px; line-height:1.2; }
+    .ute-diff-head small { display:block; color:var(--muted); font-size:12px; font-weight:750; margin-top:2px; }
+    .ute-diff-total {
+      flex:0 0 auto; color:var(--warn); font-size:18px; font-weight:950; font-variant-numeric:tabular-nums;
+      text-align:right; white-space:nowrap;
+    }
+    .ute-diff-total.ok { color:#4ade80; }
+    .ute-diff-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; }
+    .ute-diff-item {
+      min-width:0; padding:10px; border:1px solid var(--line-soft); border-radius:8px; background:rgba(9,14,19,.38);
+      display:grid; gap:3px;
+    }
+    .ute-diff-item span {
+      color:var(--muted); font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.06em;
+    }
+    .ute-diff-item strong { color:var(--text); font-size:20px; line-height:1.1; font-variant-numeric:tabular-nums; }
+    .ute-diff-item small { color:var(--muted); font-size:11.5px; line-height:1.3; }
+    .ute-diff-item.paola { border-left:3px solid var(--antel); }
+    .ute-diff-item.casa { border-left:3px solid var(--accent); }
+    .ute-diff-item.persona { border-left:3px solid #38bdf8; }
     .result-list { display:grid; gap:8px; margin-top:16px; }
     .line {
       display:flex; justify-content:space-between; align-items:center; gap:16px; padding:11px 12px; border-radius:8px;
@@ -360,13 +386,39 @@
     .tarjetas-card { border-color:rgba(45,212,191,.18); }
     .tarjetas-panel { border-color:rgba(56,189,248,.2); background:linear-gradient(180deg, rgba(15,28,39,.96), rgba(12,18,26,.98)); }
     .tarjetas-toolbar {
-      display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; margin-top:14px;
+      display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px; margin-top:14px;
     }
+    .tarjetas-card-switcher {
+      display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; margin-top:14px;
+    }
+    .tarjeta-switch {
+      display:flex; align-items:center; gap:10px; min-height:60px; padding:10px;
+      background:#121c25; color:var(--muted-strong); border-color:var(--line); box-shadow:none; text-align:left;
+    }
+    .tarjeta-switch:hover { background:#172533; }
+    .tarjeta-switch.active {
+      color:var(--text); border-color:color-mix(in srgb, var(--card-accent, var(--accent)), transparent 35%);
+      background:linear-gradient(135deg, color-mix(in srgb, var(--card-accent, var(--accent)), transparent 82%), rgba(15,28,39,.96));
+      box-shadow:0 12px 30px rgba(0,0,0,.18);
+    }
+    .tarjeta-switch-text { min-width:0; display:grid; gap:2px; }
+    .tarjeta-switch-text strong { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:1.1; }
+    .tarjeta-switch-text small { color:var(--muted); font-size:11px; font-weight:750; line-height:1.25; }
+    .tarjeta-logo {
+      flex:0 0 auto; width:44px; height:30px; display:grid; place-items:center;
+      border-radius:7px; font-size:11px; font-weight:950; letter-spacing:0; line-height:1;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.18), 0 8px 18px rgba(0,0,0,.22);
+    }
+    .tarjeta-logo-itau { background:#ff7a00; color:#082b7a; font-family:Arial, sans-serif; text-transform:none; }
+    .tarjeta-logo-oca { background:linear-gradient(135deg, #f8fafc 0 68%, #f59e0b 68%); color:#0f5fa8; font-family:Arial, sans-serif; }
+    .tarjeta-title { display:flex; align-items:center; gap:10px; min-width:0; }
+    .tarjeta-title h3, .tarjeta-title span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .tarjetas-kpis { grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); }
     .tarjetas-grid { grid-template-columns:minmax(0,1fr) minmax(340px,.48fr); }
     .tarjetas-settings-grid, .tarjetas-statements-grid, .tarjetas-cuotas-grid {
       display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; padding:18px 20px 22px;
     }
+    .tarjetas-settings-grid, .tarjetas-statements-grid { grid-template-columns:1fr; }
     .tarjeta-box {
       border:1px solid var(--line-soft); border-left:3px solid var(--accent);
       border-radius:9px; padding:14px; background:rgba(9,14,19,.38); display:grid; gap:12px;
@@ -406,6 +458,34 @@
     }
     .tarjetas-import-status {
       min-height:22px; font-size:12px; color:var(--muted); font-weight:700; line-height:1.4;
+    }
+    .tarjetas-action-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; padding:18px 20px 22px;
+    }
+    .tarjetas-action-item {
+      border:1px solid var(--line-soft); border-radius:8px; padding:13px;
+      background:rgba(9,14,19,.4); display:grid; gap:5px; min-height:112px;
+    }
+    .tarjetas-action-item span {
+      color:var(--muted); font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.06em;
+    }
+    .tarjetas-action-item strong { color:var(--text); font-size:19px; line-height:1.18; font-variant-numeric:tabular-nums; }
+    .tarjetas-action-item small { color:var(--muted); font-size:12px; line-height:1.35; }
+    .tarjetas-action-item.ok { border-color:rgba(34,197,94,.24); background:rgba(34,197,94,.06); }
+    .tarjetas-action-item.warn { border-color:rgba(251,191,36,.28); background:rgba(251,191,36,.07); }
+    .tarjetas-action-item.due { border-color:rgba(251,113,133,.32); background:rgba(251,113,133,.08); }
+    .tarjetas-action-message {
+      margin:0 20px 20px; padding:11px 13px; border-radius:8px; border:1px solid rgba(45,212,191,.2);
+      background:rgba(45,212,191,.07); color:var(--muted-strong); font-size:13px; font-weight:750; line-height:1.45;
+    }
+    .tarjetas-backup-actions { display:flex; flex-wrap:wrap; gap:10px; }
+    .tarjetas-scenario {
+      display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; align-items:end; padding:16px 20px 18px;
+    }
+    .tarjetas-scenario-result {
+      min-height:46px; display:grid; align-content:center; gap:2px; padding:10px 12px; border-radius:8px;
+      border:1px solid var(--line-soft); background:rgba(255,255,255,.04); color:var(--muted-strong);
+      font-size:12px; font-weight:750; line-height:1.35;
     }
     .tarjetas-zero-grid {
       display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; padding:0 20px 18px;
@@ -459,7 +539,8 @@
       .section-title p { text-align:left; }
       .actions button { flex:1 1 140px; }
       .tarjetas-grid, .tarjetas-settings-grid, .tarjetas-statements-grid, .tarjetas-cuotas-grid { grid-template-columns:1fr; }
-      .tarjetas-toolbar, .tarjetas-installment-form { grid-template-columns:1fr 1fr; }
+      .tarjetas-toolbar, .tarjetas-installment-form, .tarjetas-scenario { grid-template-columns:1fr 1fr; }
+      .tarjetas-card-switcher { grid-template-columns:1fr; }
       .tarjetas-installment-form button { grid-column:1/-1; }
       .tarjeta-installment-item { grid-template-columns:1fr 1fr; }
     }
@@ -471,7 +552,8 @@
       .control-grid { grid-template-columns:1fr; }
       .form-grid { grid-template-columns:1fr; }
       .streaming-grid { grid-template-columns:1fr; }
-      .tarjetas-toolbar, .tarjeta-form-grid, .tarjetas-installment-form, .tarjetas-review-grid { grid-template-columns:1fr; }
+      .ute-diff-grid { grid-template-columns:1fr; }
+      .tarjetas-toolbar, .tarjeta-form-grid, .tarjetas-installment-form, .tarjetas-review-grid, .tarjetas-scenario { grid-template-columns:1fr; }
       .tarjeta-installment-item { grid-template-columns:1fr; }
       .summary-grid { grid-template-columns:1fr; }
       .modal-actions button { flex:1 1 100%; }
@@ -748,11 +830,11 @@
     <section class="card hero-main">
       <div class="badge">📊 Basado en “GASTOS MENSUALES OFICIAL.xlsx”</div>
       <h1>Tus gastos claros, mes a mes</h1>
-      <p class="hero-copy">Registrá servicios, revisá tendencias y calculá el reparto familiar sin volver a pelearte con la planilla. Todo queda guardado en este navegador.</p>
+      <p class="hero-copy">Registrá servicios, revisá tendencias y calculá el reparto familiar sin volver a pelearte con la planilla. Todo queda guardado localmente y respaldado en Google.</p>
       <div class="hero-stats" aria-label="Resumen de la herramienta">
         <div class="hero-pill"><span>Historial</span><strong id="historyRange">2019–2026</strong></div>
         <div class="hero-pill"><span>Servicios</span><strong>5 categorías</strong></div>
-        <div class="hero-pill"><span>Guardado</span><strong>Local</strong></div>
+        <div class="hero-pill"><span>Guardado</span><strong id="syncStateLabel">Local</strong></div>
       </div>
     </section>
     <section class="card controls">
@@ -783,6 +865,7 @@
         <button class="secondary" id="exportMonthBtn">CSV mes</button>
         <button class="secondary" id="backupBtn">Backup JSON</button>
         <button class="secondary" id="importBtn">Importar JSON</button>
+        <button class="secondary" id="syncSheetBtn">Sincronizar Google</button>
         <button class="secondary" id="pdfPersonasBtn">PDF personas</button>
         <button class="secondary" id="pdfCobrosBtn">PDF cobros</button>
         <button class="secondary" id="mailCobrosBtn">Enviar mail</button>
@@ -895,6 +978,7 @@
         <div class="rate-status" id="rateStatus"><span class="rate-dot"></span><span>Dólar editable. Actualizalo desde la cotización bancaria cuando quieras.</span></div>
         <p class="hint" id="streamingHint"></p>
       </div>
+      <div class="ute-diff-card" id="uteDiffSummary"></div>
       <div class="result-list" id="reparto"></div>
       <div class="streaming-values-box" id="streaming-values-box">
         <div class="streaming-values-title">💵 Valor en pesos (dólar del 1° del mes)</div>
@@ -935,7 +1019,7 @@
 </main>
 
 <footer>
-  Los datos iniciales fueron tomados de las hojas “GASTOS CASA 2019” a “GASTOS CASA 2026”. Los cambios se guardan localmente en tu navegador.
+  Los datos iniciales fueron tomados de las hojas “GASTOS CASA 2019” a “GASTOS CASA 2026”. Los cambios se guardan localmente y se sincronizan con Google Sheets cuando la conexión está disponible.
 </footer>
 </div><!-- /#gastosPage -->
 
@@ -945,11 +1029,11 @@
     <section class="card hero-main">
       <div class="badge">Tarjetas de crédito</div>
       <h1>Estados, pagos y cuotas en un solo lugar</h1>
-      <p class="hero-copy">Controlá tus dos tarjetas, registrá pagos y proyectá cuotas futuras sin mezclarlo con los gastos de servicios.</p>
+      <p class="hero-copy">Elegí Itaú u OCA para ver solo sus estados, pagos y cuotas, sin mezclar tarjetas ni gastos de servicios.</p>
       <div class="hero-stats" aria-label="Resumen de tarjetas">
-        <div class="hero-pill"><span>Tarjetas</span><strong>2</strong></div>
-        <div class="hero-pill"><span>Monedas</span><strong>UYU + USD</strong></div>
-        <div class="hero-pill"><span>PDF</span><strong>Itaú local</strong></div>
+        <div class="hero-pill"><span>Tarjetas</span><strong id="tarjetasHeroCount">2</strong></div>
+        <div class="hero-pill"><span>Vista</span><strong id="tarjetasHeroScope">Activa</strong></div>
+        <div class="hero-pill"><span>PDF</span><strong>Itaú + OCA</strong></div>
       </div>
     </section>
     <section class="card controls tarjetas-panel">
@@ -957,7 +1041,15 @@
         <span>Periodo de tarjetas</span>
         <small>Guardado local</small>
       </div>
+      <div class="tarjetas-card-switcher" id="tarjetasCardSwitcher" aria-label="Tarjeta activa"></div>
       <div class="tarjetas-toolbar">
+        <div>
+          <label for="tarjetasScopeSelect">Vista</label>
+          <select id="tarjetasScopeSelect">
+            <option value="selected">Tarjeta activa</option>
+            <option value="all">Todas</option>
+          </select>
+        </div>
         <div>
           <label for="tarjetasYearSelect">Año</label>
           <select id="tarjetasYearSelect"></select>
@@ -977,6 +1069,10 @@
         <div class="actions">
           <button id="tarjetasPdfAnalyzeBtn" type="button">Analizar PDF</button>
           <button class="secondary" id="tarjetasManualFocusBtn" type="button">Carga manual</button>
+        </div>
+        <div class="tarjetas-backup-actions">
+          <button class="secondary" id="tarjetasBackupBtn" type="button">Backup tarjetas</button>
+          <button class="secondary" id="tarjetasImportBtn" type="button">Importar tarjetas</button>
         </div>
         <div class="tarjetas-import-status" id="tarjetasImportStatus">El PDF se procesa en este navegador y se guarda solo después de revisar.</div>
       </div>
@@ -1008,10 +1104,30 @@
     </div>
   </section>
 
+  <section class="card tarjetas-card" id="tarjetasActionSection">
+    <div class="section-title">
+      <h2>Qué hacer ahora</h2>
+      <p id="tarjetasActionScopeLabel">Resumen accionable del periodo.</p>
+    </div>
+    <div class="tarjetas-action-grid" id="tarjetasActionGrid"></div>
+    <div class="tarjetas-action-message" id="tarjetasActionMessage"></div>
+  </section>
+
   <section class="card tarjetas-card" id="tarjetasZeroSection">
     <div class="section-title">
       <h2>Plan para dejar en cero</h2>
       <p>Lo cargado en estados y cuotas se proyecta mes a mes, sin mezclar pesos con dólares.</p>
+    </div>
+    <div class="tarjetas-scenario">
+      <div>
+        <label for="tarjetasExtraUyu">Extra mensual UYU</label>
+        <input id="tarjetasExtraUyu" type="number" step="0.01" min="0" value="0" data-tarjetas-scenario="scenarioExtraUyu" />
+      </div>
+      <div>
+        <label for="tarjetasExtraUsd">Extra mensual USD</label>
+        <input id="tarjetasExtraUsd" type="number" step="0.01" min="0" value="0" data-tarjetas-scenario="scenarioExtraUsd" />
+      </div>
+      <div class="tarjetas-scenario-result" id="tarjetasScenarioResult">Sin extra mensual cargado.</div>
     </div>
     <div class="tarjetas-zero-grid" id="tarjetasZeroGrid"></div>
     <div class="tarjetas-table-wrap">
@@ -1032,8 +1148,8 @@
   <section class="grid tarjetas-grid">
     <div class="card tarjetas-card">
       <div class="section-title">
-        <h2>Mis tarjetas</h2>
-        <p>Nombres y moneda activa por tarjeta.</p>
+        <h2 id="tarjetasSettingsTitle">Tarjeta seleccionada</h2>
+        <p id="tarjetasSettingsHint">Nombre y moneda activa.</p>
       </div>
       <div class="tarjetas-settings-grid" id="tarjetasSettingsGrid"></div>
     </div>
@@ -1133,15 +1249,26 @@
 const originalData = {"2019": {"baseUte": 0, "months": [{"mes": "ENERO", "ute": 5081, "ose": 851, "antel": 1396, "netflix": 882, "spotify": 630, "total": 8840, "mama_ute": 1270.25, "raquel_ute": 1270.25, "paola_ute": 283.6666666666667, "mama_ose": 283.6666666666667, "raquel_ose": 465.3333333333333, "paola_ose": 465.3333333333333, "mama_antel": 220.5, "raquel_antel": 220.5, "paola_antel": 210, "mama_netflix": 0, "paola_netflix": 0, "paola_spotify": 0}, {"mes": "FEBRERO", "ute": 5399, "ose": 851, "antel": 1502, "netflix": 882, "spotify": 630, "total": 9264, "mama_ute": 1349.75, "raquel_ute": 1349.75, "paola_ute": 283.6666666666667, "mama_ose": 283.6666666666667, "raquel_ose": 500.6666666666667, "paola_ose": 500.6666666666667, "mama_antel": 220.5, "raquel_antel": 220.5, "paola_antel": 210, "mama_netflix": 0, "paola_netflix": 0, "paola_spotify": 0}, {"mes": "MARZO", "ute": 5810, "ose": 1276, "antel": 1556, "netflix": 882, "spotify": 630, "total": 10154, "mama_ute": 1452.5, "raquel_ute": 1452.5, "paola_ute": 425.3333333333333, "mama_ose": 425.3333333333333, "raquel_ose": 518.6666666666666, "paola_ose": 518.6666666666666, "mama_antel": 220.5, "raquel_antel": 220.5, "paola_antel": 210, "mama_netflix": 0, "paola_netflix": 0, "paola_spotify": 0}, {"mes": "ABRIL", "ute": 4635, "ose": 917, "antel": 1558, "netflix": 882, "spotify": 630, "total": 8622, "mama_ute": 1158.75, "raquel_ute": 1158.75, "paola_ute": 305.6666666666667, "mama_ose": 305.6666666666667, "raquel_ose": 519.3333333333334, "paola_ose": 519.3333333333334, "mama_antel": 220.5, "raquel_antel": 220.5, "paola_antel": 157.5, "mama_netflix": 0, "paola_netflix": 0, "paola_spotify": 0}, {"mes": "MAYO", "ute": 5383, "ose": 1256, "antel": 1594, "netflix": 882, "spotify": 630, "total": 9745, "mama_ute": 1345.75, "raquel_ute": 1345.75, "paola_ute": 418.6666666666667, "mama_ose": 418.6666666666667, "raquel_ose": 531.3333333333334, "paola_ose": 531.3333333333334, "mama_antel": 220.5, "raquel_antel": 220.5, "paola_antel": 157.5, "mama_netflix": 0, "paola_netflix": 0, "paola_spotify": 0}, {"mes": "JUNIO", "ute": 5267, "ose": 917, "antel": 1552, "netflix": 882, "spotify": 630, "total": 9248, "mama_ute": 1316.75, "raquel_ute": 1316.75, "paola_ute": 305.6666666666667, "mama_ose": 305.6666666666667, "raquel_ose": 517.3333333333334, "paola_ose": 517.3333333333334, "mama_antel": 220.5, "raquel_antel": 220.5, "paola_antel": 157.5, "mama_netflix": 0, "paola_netflix": 0, "paola_spotify": "RAQUEL"}, {"mes": "JULIO", "ute": 5525, "ose": 917, "antel": 1550, "netflix": 882, "spotify": 630, "total": 9504, "mama_ute": 1381.25, "raquel_ute": 1381.25, "paola_ute": 305.6666666666667, "mama_ose": 305.6666666666667, "raquel_ose": 516.6666666666666, "paola_ose": 516.6666666666666, "mama_antel": 220.5, "raquel_antel": 220.5, "paola_antel": 157.5, "mama_netflix": 0, "paola_netflix": "NOVIEMBRE", "paola_spotify": 1572.45}, {"mes": "AGOSTO", "ute": 6082, "ose": 917, "antel": 1526, "netflix": 882, "spotify": 630, "total": 10037, "mama_ute": 1520.5, "raquel_ute": 1520.5, "paola_ute": 305.6666666666667, "mama_ose": 305.6666666666667, "raquel_ose": 508.6666666666667, "paola_ose": 508.6666666666667, "mama_antel": 220.5, "raquel_antel": 220.5, "paola_antel": 157.5, "mama_netflix": 0, "paola_netflix": "DICIEMBRE", "paola_spotify": 1589}, {"mes": "SEPTIEMBRE", "ute": 6460, "ose": 917, "antel": 1543, "netflix": 882, "spotify": 630, "total": 10432, "mama_ute": 1615, "raquel_ute": 1615, "paola_ute": 305.6666666666667, "mama_ose": 305.6666666666667, "raquel_ose": 514.3333333333334, "paola_ose": 514.3333333333334, "mama_antel": 220.5, "raquel_antel": 220.5, "paola_antel": 157.5, "mama_netflix": 0, "paola_netflix": 0, "paola_spotify": 0}, {"mes": "OCTUBRE", "ute": 7262, "ose": 917, "antel": 1558, "netflix": 882, "spotify": 630, "total": 11249, "mama_ute": 1815.5, "raquel_ute": 1815.5, "paola_ute": 305.6666666666667, "mama_ose": 305.6666666666667, "raquel_ose": 519.3333333333334, "paola_ose": 519.3333333333334, "mama_antel": 220.5, "raquel_antel": 220.5, "paola_antel": 157.5, "mama_netflix": 0, "paola_netflix": 0, "paola_spotify": 0}, {"mes": "NOVIEMBRE", "ute": 4781, "ose": 917, "antel": 1548, "netflix": 882, "spotify": 630, "total": 8758, "mama_ute": 956.2, "raquel_ute": 956.2, "paola_ute": 229.25, "mama_ose": 229.25, "raquel_ose": 387, "paola_ose": 387, "mama_antel": 220.5, "raquel_antel": 220.5, "paola_antel": 157.5, "mama_netflix": 0, "paola_netflix": 0, "paola_spotify": 0}, {"mes": "DICIEMBRE", "ute": 4880, "ose": 917, "antel": 1535, "netflix": 882, "spotify": 630, "total": 8844, "mama_ute": 976, "raquel_ute": 976, "paola_ute": 229.25, "mama_ose": 229.25, "raquel_ose": 383.75, "paola_ose": 383.75, "mama_antel": 220.5, "raquel_antel": 220.5, "paola_antel": 157.5, "mama_netflix": 0, "paola_netflix": 0, "paola_spotify": 0}], "annual": {"ute": 66565, "ose": 11570, "antel": 18418, "netflix": 10584, "spotify": 7560, "total": 114697}, "divisors": {"ute": 4, "ose": 4, "antel": 4, "netflix": 3, "spotify": 4}}, "2020": {"baseUte": 0, "months": [{"mes": "ENERO", "ute": 3527, "ose": 917, "antel": 1581, "netflix": 882, "spotify": 630, "total": 7537, "mama_ute": 705.4, "raquel_ute": 705.4, "paola_ute": 705.4, "mama_ose": 229.25, "raquel_ose": 229.25, "paola_ose": 229.25, "mama_antel": 395.25, "raquel_antel": 395.25, "paola_antel": 395.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "FEBRERO", "ute": 4492, "ose": 1256, "antel": 1581, "netflix": 882, "spotify": 630, "total": 8841, "mama_ute": 898.4, "raquel_ute": 898.4, "paola_ute": 898.4, "mama_ose": 314, "raquel_ose": 314, "paola_ose": 314, "mama_antel": 395.25, "raquel_antel": 395.25, "paola_antel": 395.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "MARZO", "ute": 4745, "ose": 1256, "antel": 1539, "netflix": 882, "spotify": 630, "total": 9052, "mama_ute": 949, "raquel_ute": 949, "paola_ute": 949, "mama_ose": 314, "raquel_ose": 314, "paola_ose": 314, "mama_antel": 384.75, "raquel_antel": 384.75, "paola_antel": 384.75, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "ABRIL", "ute": 4258, "ose": 917, "antel": 1553, "netflix": 882, "spotify": 630, "total": 8240, "mama_ute": 851.6, "raquel_ute": 851.6, "paola_ute": 851.6, "mama_ose": 229.25, "raquel_ose": 229.25, "paola_ose": 229.25, "mama_antel": 388.25, "raquel_antel": 388.25, "paola_antel": 388.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "MAYO", "ute": 5617, "ose": 947, "antel": 1519, "netflix": 882, "spotify": 630, "total": 9595, "mama_ute": 1123.4, "raquel_ute": 1123.4, "paola_ute": 1123.4, "mama_ose": 236.75, "raquel_ose": 236.75, "paola_ose": 236.75, "mama_antel": 379.75, "raquel_antel": 379.75, "paola_antel": 379.75, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "JUNIO", "ute": 6065, "ose": 1015, "antel": 1678, "netflix": 882, "spotify": 630, "total": 10270, "mama_ute": 1213, "raquel_ute": 1213, "paola_ute": 1213, "mama_ose": 253.75, "raquel_ose": 253.75, "paola_ose": 253.75, "mama_antel": 419.5, "raquel_antel": 419.5, "paola_antel": 419.5, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "JULIO", "ute": 5890, "ose": 1015, "antel": 1678, "netflix": 882, "spotify": 630, "total": 10095, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1230, "mama_ose": 253.75, "raquel_ose": 253.75, "paola_ose": 253.75, "mama_antel": 419.5, "raquel_antel": 419.5, "paola_antel": 419.5, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "AGOSTO", "ute": 6107, "ose": 1015, "antel": 1695, "netflix": 882, "spotify": 630, "total": 10329, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1339, "mama_ose": 253.75, "raquel_ose": 253.75, "paola_ose": 253.75, "mama_antel": 423.75, "raquel_antel": 423.75, "paola_antel": 423.75, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "SEPTIEMBRE", "ute": 6445, "ose": 1015, "antel": 1682, "netflix": 882, "spotify": 630, "total": 10654, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1289, "mama_ose": 253.75, "raquel_ose": 253.75, "paola_ose": 253.75, "mama_antel": 420.5, "raquel_antel": 420.5, "paola_antel": 420.5, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "OCTUBRE", "ute": 6396, "ose": 1390, "antel": 1690, "netflix": 882, "spotify": 630, "total": 10988, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1279.2, "mama_ose": 347.5, "raquel_ose": 347.5, "paola_ose": 347.5, "mama_antel": 422.5, "raquel_antel": 422.5, "paola_antel": 422.5, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "NOVIEMBRE", "ute": 6154, "ose": 1390, "antel": 1684, "netflix": 882, "spotify": 630, "total": 10740, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1361, "mama_ose": 347.5, "raquel_ose": 347.5, "paola_ose": 347.5, "mama_antel": 421, "raquel_antel": 421, "paola_antel": 421, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "DICIEMBRE", "ute": 5899, "ose": 1390, "antel": 1680, "netflix": 882, "spotify": 630, "total": 10481, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1179.8, "mama_ose": 347.5, "raquel_ose": 347.5, "paola_ose": 347.5, "mama_antel": 420, "raquel_antel": 420, "paola_antel": 420, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}], "annual": {"ute": 65595, "ose": 13523, "antel": 19560, "netflix": 10584, "spotify": 7560, "total": 116822}, "divisors": {"ute": 5, "ose": 4, "antel": 4, "netflix": 5, "spotify": 4}}, "2021": {"baseUte": 0, "months": [{"mes": "ENERO", "ute": 4924, "ose": 1015, "antel": 1254, "netflix": 882, "spotify": 630, "total": 8705, "mama_ute": 984.8, "raquel_ute": 984.8, "paola_ute": 984.8, "mama_ose": 253.75, "raquel_ose": 253.75, "paola_ose": 253.75, "mama_antel": 313.5, "raquel_antel": 313.5, "paola_antel": 313.5, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "FEBRERO", "ute": 6339, "ose": 1081, "antel": 1657, "netflix": 882, "spotify": 630, "total": 10589, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1403, "mama_ose": 270.25, "raquel_ose": 270.25, "paola_ose": 270.25, "mama_antel": 414.25, "raquel_antel": 414.25, "paola_antel": 414.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "MARZO", "ute": 6296, "ose": 1081, "antel": 1867, "netflix": 882, "spotify": 630, "total": 10756, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1431, "mama_ose": 270.25, "raquel_ose": 270.25, "paola_ose": 270.25, "mama_antel": 466.75, "raquel_antel": 466.75, "paola_antel": 466.75, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "ABRIL", "ute": 5580, "ose": 1081, "antel": 1800, "netflix": 882, "spotify": 630, "total": 9973, "mama_ute": 1036, "raquel_ute": 1036, "paola_ute": 1234, "mama_ose": 270.25, "raquel_ose": 270.25, "paola_ose": 270.25, "mama_antel": 450, "raquel_antel": 450, "paola_antel": 450, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "MAYO", "ute": 6192, "ose": 1481, "antel": 1800, "netflix": 882, "spotify": 630, "total": 10985, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1379, "mama_ose": 370.25, "raquel_ose": 370.25, "paola_ose": 370.25, "mama_antel": 450, "raquel_antel": 450, "paola_antel": 450, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "JUNIO", "ute": 6001, "ose": 1081, "antel": 1598, "netflix": 882, "spotify": 630, "total": 10192, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1283, "mama_ose": 270.25, "raquel_ose": 270.25, "paola_ose": 270.25, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "JULIO", "ute": 7305, "ose": 1081, "antel": 1598, "netflix": 882, "spotify": 630, "total": 11496, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1935, "mama_ose": 270.25, "raquel_ose": 270.25, "paola_ose": 270.25, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "AGOSTO", "ute": 8047, "ose": 1081, "antel": 1598, "netflix": 882, "spotify": 630, "total": 12238, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 2306, "mama_ose": 270.25, "raquel_ose": 270.25, "paola_ose": 270.25, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "SEPTIEMBRE", "ute": 7707, "ose": 1481, "antel": 1668, "netflix": 882, "spotify": 630, "total": 12368, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 2137, "mama_ose": 370.25, "raquel_ose": 370.25, "paola_ose": 370.25, "mama_antel": 417, "raquel_antel": 417, "paola_antel": 417, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "OCTUBRE", "ute": 6892, "ose": 1081, "antel": 1598, "netflix": 882, "spotify": 630, "total": 11083, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1729, "mama_ose": 270.25, "raquel_ose": 270.25, "paola_ose": 270.25, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "NOVIEMBRE", "ute": 5650, "ose": 1481, "antel": 1598, "netflix": 882, "spotify": 630, "total": 10241, "mama_ute": 1090, "raquel_ute": 1090, "paola_ute": 1240, "mama_ose": 370.25, "raquel_ose": 370.25, "paola_ose": 370.25, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "DICIEMBRE", "ute": 5182, "ose": 1081, "antel": 1598, "netflix": 882, "spotify": 630, "total": 9373, "mama_ute": 1021, "raquel_ute": 1021, "paola_ute": 1100, "mama_ose": 270.25, "raquel_ose": 270.25, "paola_ose": 270.25, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}], "annual": {"ute": 76115, "ose": 14106, "antel": 19634, "netflix": 10584, "spotify": 7560, "total": 127999}, "divisors": {"ute": 5, "ose": 4, "antel": 4, "netflix": 5, "spotify": 4}}, "2022": {"baseUte": 6200, "months": [{"mes": "ENERO", "ute": 4525, "ose": 1081, "antel": 1598, "netflix": 762.68, "spotify": 630, "total": 8596.68, "mama_ute": 889, "raquel_ute": 889, "paola_ute": 969, "mama_ose": 270.25, "raquel_ose": 270.25, "paola_ose": 270.25, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 190.67, "paola_netflix": 190.67, "paola_spotify": 157.5}, {"mes": "FEBRERO", "ute": 6408, "ose": 1081, "antel": 1598, "netflix": 762.68, "spotify": 630, "total": 10479.68, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1656, "mama_ose": 270.25, "raquel_ose": 270.25, "paola_ose": 270.25, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 190.67, "paola_netflix": 190.67, "paola_spotify": 157.5}, {"mes": "MARZO", "ute": 6922, "ose": 1081, "antel": 1598, "netflix": 762.68, "spotify": 630, "total": 10993.68, "mama_ute": 1140, "raquel_ute": 1140, "paola_ute": 1634, "mama_ose": 270.25, "raquel_ose": 270.25, "paola_ose": 270.25, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 190.67, "paola_netflix": 190.67, "paola_spotify": 157.5}, {"mes": "ABRIL", "ute": 5721, "ose": 1570, "antel": 1598, "netflix": 762.68, "spotify": 630, "total": 10281.68, "mama_ute": 1044, "raquel_ute": 1044, "paola_ute": 1294, "mama_ose": 392.5, "raquel_ose": 392.5, "paola_ose": 392.5, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 190.67, "paola_netflix": 190.67, "paola_spotify": 157.5}, {"mes": "MAYO", "ute": 5628, "ose": 1146, "antel": 1598, "netflix": 762.68, "spotify": 630, "total": 9764.68, "mama_ute": 1026, "raquel_ute": 1026, "paola_ute": 1276, "mama_ose": 286.5, "raquel_ose": 286.5, "paola_ose": 286.5, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 190.67, "paola_netflix": 190.67, "paola_spotify": 157.5}, {"mes": "JUNIO", "ute": 5798, "ose": 1570, "antel": 1598, "netflix": 762.68, "spotify": 630, "total": 10358.68, "mama_ute": 1059, "raquel_ute": 1059, "paola_ute": 1309, "mama_ose": 392.5, "raquel_ose": 392.5, "paola_ose": 392.5, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 190.67, "paola_netflix": 190.67, "paola_spotify": 157.5}, {"mes": "JULIO", "ute": 7479, "ose": 1146, "antel": 1598, "netflix": 762.68, "spotify": 630, "total": 11615.68, "mama_ute": 1140, "raquel_ute": 1140, "paola_ute": 1947, "mama_ose": 286.5, "raquel_ose": 286.5, "paola_ose": 286.5, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 190.67, "paola_netflix": 190.67, "paola_spotify": 157.5}, {"mes": "AGOSTO", "ute": 7734, "ose": 1146, "antel": 1598, "netflix": 762.68, "spotify": 630, "total": 11870.68, "mama_ute": 1140, "raquel_ute": 1140, "paola_ute": 2150, "mama_ose": 286.5, "raquel_ose": 286.5, "paola_ose": 286.5, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 190.67, "paola_netflix": 190.67, "paola_spotify": 157.5}, {"mes": "SEPTIEMBRE", "ute": 7270, "ose": 1146, "antel": 1598, "netflix": 762.68, "spotify": 630, "total": 11406.68, "mama_ute": 1140, "raquel_ute": 1140, "paola_ute": 2006, "mama_ose": 286.5, "raquel_ose": 286.5, "paola_ose": 286.5, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 190.67, "paola_netflix": 190.67, "paola_spotify": 157.5}, {"mes": "OCTUBRE", "ute": 7106, "ose": 1146, "antel": 1598, "netflix": 762.68, "spotify": 630, "total": 11242.68, "mama_ute": 1140, "raquel_ute": 1140, "paola_ute": 2007, "mama_ose": 286.5, "raquel_ose": 286.5, "paola_ose": 286.5, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 190.67, "paola_netflix": 190.67, "paola_spotify": 157.5}, {"mes": "NOVIEMBRE", "ute": 6450, "ose": 1146, "antel": 1598, "netflix": 762.68, "spotify": 630, "total": 10586.68, "mama_ute": 1140, "raquel_ute": 1140, "paola_ute": 1482, "mama_ose": 286.5, "raquel_ose": 286.5, "paola_ose": 286.5, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 190.67, "paola_netflix": 190.67, "paola_spotify": 157.5}, {"mes": "DICIEMBRE", "ute": 5973, "ose": 1146, "antel": 1598, "netflix": 762.68, "spotify": 630, "total": 10109.68, "mama_ute": 1094, "raquel_ute": 1094, "paola_ute": 1323, "mama_ose": 286.5, "raquel_ose": 286.5, "paola_ose": 286.5, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 190.67, "paola_netflix": 190.67, "paola_spotify": 157.5}], "annual": {"ute": 77014, "ose": 14405, "antel": 19176, "netflix": 9152.160000000002, "spotify": 7560, "total": 127307.16}, "divisors": {"ute": 5, "ose": 4, "antel": 4, "netflix": 5, "spotify": 4}}, "2023": {"baseUte": 6417, "months": [{"mes": "ENERO", "ute": 5902, "ose": 1146, "antel": 1598, "netflix": 882, "spotify": 630, "total": 10158, "mama_ute": 1080, "raquel_ute": 1080, "paola_ute": 1309, "mama_ose": 286.5, "raquel_ose": 286.5, "paola_ose": 286.5, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "FEBRERO", "ute": 6568, "ose": 1177, "antel": 1598, "netflix": 882, "spotify": 630, "total": 10855, "mama_ute": 1140, "raquel_ute": 1140, "paola_ute": 1491, "mama_ose": 294.25, "raquel_ose": 294.25, "paola_ose": 294.25, "mama_antel": 399.5, "raquel_antel": 399.5, "paola_antel": 399.5, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "MARZO", "ute": 7560, "ose": 1223, "antel": 1640, "netflix": 882, "spotify": 630, "total": 11935, "mama_ute": 1200, "raquel_ute": 1200, "paola_ute": 1910, "mama_ose": 305.75, "raquel_ose": 305.75, "paola_ose": 305.75, "mama_antel": 410, "raquel_antel": 410, "paola_antel": 410, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "ABRIL", "ute": 6153, "ose": 1223, "antel": 1640, "netflix": 882, "spotify": 630, "total": 10528, "mama_ute": 1200, "raquel_ute": 1200, "paola_ute": 1284, "mama_ose": 305.75, "raquel_ose": 305.75, "paola_ose": 305.75, "mama_antel": 410, "raquel_antel": 410, "paola_antel": 410, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "MAYO", "ute": 6886, "ose": 1223, "antel": 1640, "netflix": 882, "spotify": 630, "total": 11261, "mama_ute": 1200, "raquel_ute": 1200, "paola_ute": 1574, "mama_ose": 305.75, "raquel_ose": 305.75, "paola_ose": 305.75, "mama_antel": 410, "raquel_antel": 410, "paola_antel": 410, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "JUNIO", "ute": 5704, "ose": 1223, "antel": 1640, "netflix": 882, "spotify": 630, "total": 10079, "mama_ute": 1000, "raquel_ute": 1000, "paola_ute": 1310, "mama_ose": 305.75, "raquel_ose": 305.75, "paola_ose": 305.75, "mama_antel": 410, "raquel_antel": 410, "paola_antel": 410, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "JULIO", "ute": 6173, "ose": 1223, "antel": 1640, "netflix": 882, "spotify": 630, "total": 10548, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1408, "mama_ose": 305.75, "raquel_ose": 305.75, "paola_ose": 305.75, "mama_antel": 410, "raquel_antel": 410, "paola_antel": 410, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "AGOSTO", "ute": 7195, "ose": 1223, "antel": 1640, "netflix": 882, "spotify": 630, "total": 11570, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1794, "mama_ose": 305.75, "raquel_ose": 305.75, "paola_ose": 305.75, "mama_antel": 410, "raquel_antel": 410, "paola_antel": 410, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "SEPTIEMBRE", "ute": 7615, "ose": 1223, "antel": 1653, "netflix": 882, "spotify": 630, "total": 12003, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 2005, "mama_ose": 305.75, "raquel_ose": 305.75, "paola_ose": 305.75, "mama_antel": 413.25, "raquel_antel": 413.25, "paola_antel": 413.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "OCTUBRE", "ute": 6956, "ose": 1223, "antel": 1640, "netflix": 882, "spotify": 630, "total": 11331, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1676, "mama_ose": 305.75, "raquel_ose": 305.75, "paola_ose": 305.75, "mama_antel": 410, "raquel_antel": 410, "paola_antel": 410, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "NOVIEMBRE", "ute": 5789, "ose": 1223, "antel": 1640, "netflix": 882, "spotify": 630, "total": 10164, "mama_ute": 1000, "raquel_ute": 1000, "paola_ute": 1346, "mama_ose": 305.75, "raquel_ose": 305.75, "paola_ose": 305.75, "mama_antel": 410, "raquel_antel": 410, "paola_antel": 410, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "DICIEMBRE", "ute": 6414, "ose": 1223, "antel": 1641, "netflix": 882, "spotify": 630, "total": 10790, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1488, "mama_ose": 305.75, "raquel_ose": 305.75, "paola_ose": 305.75, "mama_antel": 410.25, "raquel_antel": 410.25, "paola_antel": 410.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}], "annual": {"ute": 78915, "ose": 14553, "antel": 19610, "netflix": 10584, "spotify": 7560, "total": 131222}, "divisors": {"ute": 5, "ose": 4, "antel": 4, "netflix": 5, "spotify": 4}}, "2024": {"baseUte": 6400, "months": [{"mes": "ENERO", "ute": 5810, "ose": 1223, "antel": 1641, "netflix": 882, "spotify": 630, "total": 10186, "mama_ute": 1000, "raquel_ute": 1000, "paola_ute": 1354, "mama_ose": 305.75, "raquel_ose": 305.75, "paola_ose": 305.75, "mama_antel": 410.25, "raquel_antel": 410.25, "paola_antel": 410.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "FEBRERO", "ute": 7492, "ose": 1285, "antel": 1641, "netflix": 882, "spotify": 630, "total": 11930, "mama_ute": 1150, "raquel_ute": 1150, "paola_ute": 1814, "mama_ose": 321.25, "raquel_ose": 321.25, "paola_ose": 321.25, "mama_antel": 410.25, "raquel_antel": 410.25, "paola_antel": 410.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "MARZO", "ute": 7948, "ose": 1285, "antel": 1733, "netflix": 882, "spotify": 630, "total": 12478, "mama_ute": 1150, "raquel_ute": 1150, "paola_ute": 1800, "mama_ose": 321.25, "raquel_ose": 321.25, "paola_ose": 321.25, "mama_antel": 433.25, "raquel_antel": 433.25, "paola_antel": 433.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "ABRIL", "ute": 7124, "ose": 1290, "antel": 1733, "netflix": 882, "spotify": 630, "total": 11659, "mama_ute": 1000, "raquel_ute": 1000, "paola_ute": 1791, "mama_ose": 322.5, "raquel_ose": 322.5, "paola_ose": 322.5, "mama_antel": 433.25, "raquel_antel": 433.25, "paola_antel": 433.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "MAYO", "ute": 6353, "ose": 1290, "antel": 1733, "netflix": 882, "spotify": 630, "total": 10888, "mama_ute": 900, "raquel_ute": 900, "paola_ute": 1601, "mama_ose": 322.5, "raquel_ose": 322.5, "paola_ose": 322.5, "mama_antel": 433.25, "raquel_antel": 433.25, "paola_antel": 433.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "JUNIO", "ute": 6929, "ose": 1290, "antel": 1733, "netflix": 882, "spotify": 630, "total": 11464, "mama_ute": 1100, "raquel_ute": 1100, "paola_ute": 1659, "mama_ose": 322.5, "raquel_ose": 322.5, "paola_ose": 322.5, "mama_antel": 433.25, "raquel_antel": 433.25, "paola_antel": 433.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "JULIO", "ute": 7713, "ose": 1290, "antel": 1733, "netflix": 882, "spotify": 630, "total": 12248, "mama_ute": 1150, "raquel_ute": 1150, "paola_ute": 1936, "mama_ose": 322.5, "raquel_ose": 322.5, "paola_ose": 322.5, "mama_antel": 433.25, "raquel_antel": 433.25, "paola_antel": 433.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "AGOSTO", "ute": 7793, "ose": 1290, "antel": 1733, "netflix": 882, "spotify": 630, "total": 12328, "mama_ute": 1150, "raquel_ute": 1150, "paola_ute": 2031, "mama_ose": 322.5, "raquel_ose": 322.5, "paola_ose": 322.5, "mama_antel": 433.25, "raquel_antel": 433.25, "paola_antel": 433.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "SEPTIEMBRE", "ute": 8539, "ose": 1290, "antel": 1733, "netflix": 882, "spotify": 630, "total": 13074, "mama_ute": 1150, "raquel_ute": 1150, "paola_ute": 2437, "mama_ose": 322.5, "raquel_ose": 322.5, "paola_ose": 322.5, "mama_antel": 433.25, "raquel_antel": 433.25, "paola_antel": 433.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "OCTUBRE", "ute": 8188, "ose": 1290, "antel": 1639, "netflix": 882, "spotify": 630, "total": 12629, "mama_ute": 1150, "raquel_ute": 1150, "paola_ute": 2178, "mama_ose": 322.5, "raquel_ose": 322.5, "paola_ose": 322.5, "mama_antel": 409.75, "raquel_antel": 409.75, "paola_antel": 409.75, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "NOVIEMBRE", "ute": 6955, "ose": 1290, "antel": 771, "netflix": 882, "spotify": 630, "total": 10528, "mama_ute": 1150, "raquel_ute": 1150, "paola_ute": 1645, "mama_ose": 322.5, "raquel_ose": 322.5, "paola_ose": 322.5, "mama_antel": 192.75, "raquel_antel": 192.75, "paola_antel": 192.75, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "DICIEMBRE", "ute": 7485, "ose": 1290, "antel": 771, "netflix": 882, "spotify": 630, "total": 11058, "mama_ute": 1150, "raquel_ute": 1150, "paola_ute": 1911, "mama_ose": 322.5, "raquel_ose": 322.5, "paola_ose": 322.5, "mama_antel": 192.75, "raquel_antel": 192.75, "paola_antel": 192.75, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}], "annual": {"ute": 88329, "ose": 15403, "antel": 18594, "netflix": 10584, "spotify": 7560, "total": 140470}, "divisors": {"ute": 5, "ose": 4, "antel": 4, "netflix": 5, "spotify": 4}}, "2025": {"baseUte": 6600, "months": [{"mes": "ENERO", "ute": 7237, "ose": 1290, "antel": 803, "netflix": 882, "spotify": 630, "total": 10842, "mama_ute": 1150, "raquel_ute": 1150, "paola_ute": 1786, "mama_ose": 322.5, "raquel_ose": 322.5, "paola_ose": 322.5, "mama_antel": 200.75, "raquel_antel": 200.75, "paola_antel": 200.75, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "FEBRERO", "ute": 6593, "ose": 1317, "antel": 1762, "netflix": 882, "spotify": 630, "total": 11184, "mama_ute": 1000, "raquel_ute": 1000, "paola_ute": 1631, "mama_ose": 329.25, "raquel_ose": 329.25, "paola_ose": 329.25, "mama_antel": 440.5, "raquel_antel": 440.5, "paola_antel": 440.5, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "MARZO", "ute": 9723, "ose": 1317, "antel": 1820, "netflix": 882, "spotify": 630, "total": 14372, "mama_ute": 1350, "raquel_ute": 1350, "paola_ute": 3167, "mama_ose": 329.25, "raquel_ose": 329.25, "paola_ose": 329.25, "mama_antel": 455, "raquel_antel": 455, "paola_antel": 455, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "ABRIL", "ute": 8718, "ose": 1519, "antel": 1820, "netflix": 882, "spotify": 630, "total": 13569, "mama_ute": 1300, "raquel_ute": 1300, "paola_ute": 2704, "mama_ose": 379.75, "raquel_ose": 379.75, "paola_ose": 379.75, "mama_antel": 455, "raquel_antel": 455, "paola_antel": 455, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "MAYO", "ute": 7979, "ose": 1519, "antel": 1820, "netflix": 882, "spotify": 630, "total": 12830, "mama_ute": 1200, "raquel_ute": 1200, "paola_ute": 2279, "mama_ose": 379.75, "raquel_ose": 379.75, "paola_ose": 379.75, "mama_antel": 455, "raquel_antel": 455, "paola_antel": 455, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "JUNIO", "ute": 7527, "ose": 1891, "antel": 1820, "netflix": 882, "spotify": 630, "total": 12750, "mama_ute": 1200, "raquel_ute": 1200, "paola_ute": 2049, "mama_ose": 472.75, "raquel_ose": 472.75, "paola_ose": 472.75, "mama_antel": 455, "raquel_antel": 455, "paola_antel": 455, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "JULIO", "ute": 8335, "ose": 1891, "antel": 1820, "netflix": 882, "spotify": 630, "total": 13558, "mama_ute": 1200, "raquel_ute": 1200, "paola_ute": 2635, "mama_ose": 472.75, "raquel_ose": 472.75, "paola_ose": 472.75, "mama_antel": 455, "raquel_antel": 455, "paola_antel": 455, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "AGOSTO", "ute": 9002, "ose": 1891, "antel": 1820, "netflix": 882, "spotify": 630, "total": 14225, "mama_ute": 1200, "raquel_ute": 1200, "paola_ute": 3002, "mama_ose": 472.75, "raquel_ose": 472.75, "paola_ose": 472.75, "mama_antel": 455, "raquel_antel": 455, "paola_antel": 455, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "SEPTIEMBRE", "ute": 8906, "ose": 1891, "antel": 1820, "netflix": 882, "spotify": 630, "total": 14129, "mama_ute": 1200, "raquel_ute": 1200, "paola_ute": 2900, "mama_ose": 472.75, "raquel_ose": 472.75, "paola_ose": 472.75, "mama_antel": 455, "raquel_antel": 455, "paola_antel": 455, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "OCTUBRE", "ute": 8205, "ose": 1381, "antel": 1825, "netflix": 882, "spotify": 630, "total": 12923, "mama_ute": 1200, "raquel_ute": 1200, "paola_ute": 2363, "mama_ose": 345.25, "raquel_ose": 345.25, "paola_ose": 345.25, "mama_antel": 456.25, "raquel_antel": 456.25, "paola_antel": 456.25, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "NOVIEMBRE", "ute": 7453, "ose": 1891, "antel": 1820, "netflix": 882, "spotify": 630, "total": 12676, "mama_ute": 1200, "raquel_ute": 1200, "paola_ute": 2003, "mama_ose": 472.75, "raquel_ose": 472.75, "paola_ose": 472.75, "mama_antel": 455, "raquel_antel": 455, "paola_antel": 455, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}, {"mes": "DICIEMBRE", "ute": 6794, "ose": 1891, "antel": 1820, "netflix": 882, "spotify": 630, "total": 12017, "mama_ute": 1000, "raquel_ute": 1000, "paola_ute": 1682, "mama_ose": 472.75, "raquel_ose": 472.75, "paola_ose": 472.75, "mama_antel": 455, "raquel_antel": 455, "paola_antel": 455, "mama_netflix": 220.5, "paola_netflix": 220.5, "paola_spotify": 157.5}], "annual": {"ute": 96472, "ose": 19689, "antel": 20770, "netflix": 10584, "spotify": 7560, "total": 155075}, "divisors": {"ute": 5, "ose": 4, "antel": 4, "netflix": 4, "spotify": 4}}, "2026": {"baseUte": 6870, "months": [{"mes": "ENERO", "ute": 6505, "ose": 1891, "antel": 1820, "netflix": 882, "spotify": 630, "total": 11728, "mama_ute": 900, "raquel_ute": 900, "paola_ute": 1688, "mama_ose": 472.75, "raquel_ose": 472.75, "paola_ose": 472.75, "mama_antel": 455, "raquel_antel": 455, "paola_antel": 455, "mama_netflix": 0, "paola_netflix": 294, "paola_spotify": 105}, {"mes": "FEBRERO", "ute": 9520, "ose": 1939, "antel": 1820, "netflix": 882, "spotify": 630, "total": 14791, "mama_ute": 1300, "raquel_ute": 1300, "paola_ute": 2458, "mama_ose": 484.75, "raquel_ose": 484.75, "paola_ose": 484.75, "mama_antel": 455, "raquel_antel": 455, "paola_antel": 455, "mama_netflix": 0, "paola_netflix": 294, "paola_spotify": 105}, {"mes": "MARZO", "ute": 9390, "ose": 2015, "antel": 1893, "netflix": 882, "spotify": 630, "total": 14810, "mama_ute": 1300, "raquel_ute": 1300, "paola_ute": 2684, "mama_ose": 503.75, "raquel_ose": 503.75, "paola_ose": 503.75, "mama_antel": 473.25, "raquel_antel": 473.25, "paola_antel": 473.25, "mama_netflix": 0, "paola_netflix": 294, "paola_spotify": 105}, {"mes": "ABRIL", "ute": 7239, "ose": 1498, "antel": 1893, "netflix": 882, "spotify": 630, "total": 12142, "mama_ute": 1300, "raquel_ute": 1300, "paola_ute": 1629, "mama_ose": 374.5, "raquel_ose": 374.5, "paola_ose": 374.5, "mama_antel": 473.25, "raquel_antel": 473.25, "paola_antel": 473.25, "mama_netflix": 0, "paola_netflix": 294, "paola_spotify": 105}, {"mes": "MAYO", "ute": 7826, "ose": 1498, "antel": 1893, "netflix": 882, "spotify": 630, "total": 12729, "mama_ute": 1300, "raquel_ute": 1300, "paola_ute": 1902, "mama_ose": 374.5, "raquel_ose": 374.5, "paola_ose": 374.5, "mama_antel": 473.25, "raquel_antel": 473.25, "paola_antel": 473.25, "mama_netflix": 0, "paola_netflix": 294, "paola_spotify": 105}, {"mes": "JUNIO", "ute": 0, "ose": 0, "antel": 0, "netflix": 882, "spotify": 630, "total": 1512, "mama_ute": 0, "raquel_ute": 0, "paola_ute": 0, "mama_ose": 0, "raquel_ose": 0, "paola_ose": 0, "mama_antel": 0, "raquel_antel": 0, "paola_antel": 0, "mama_netflix": 0, "paola_netflix": 294, "paola_spotify": 105}, {"mes": "JULIO", "ute": 0, "ose": 0, "antel": 0, "netflix": 882, "spotify": 630, "total": 1512, "mama_ute": 0, "raquel_ute": 0, "paola_ute": 0, "mama_ose": 0, "raquel_ose": 0, "paola_ose": 0, "mama_antel": 0, "raquel_antel": 0, "paola_antel": 0, "mama_netflix": 0, "paola_netflix": 294, "paola_spotify": 105}, {"mes": "AGOSTO", "ute": 0, "ose": 0, "antel": 0, "netflix": 882, "spotify": 630, "total": 1512, "mama_ute": 0, "raquel_ute": 0, "paola_ute": 0, "mama_ose": 0, "raquel_ose": 0, "paola_ose": 0, "mama_antel": 0, "raquel_antel": 0, "paola_antel": 0, "mama_netflix": 0, "paola_netflix": 294, "paola_spotify": 105}, {"mes": "SEPTIEMBRE", "ute": 0, "ose": 0, "antel": 0, "netflix": 882, "spotify": 630, "total": 1512, "mama_ute": 0, "raquel_ute": 0, "paola_ute": 0, "mama_ose": 0, "raquel_ose": 0, "paola_ose": 0, "mama_antel": 0, "raquel_antel": 0, "paola_antel": 0, "mama_netflix": 0, "paola_netflix": 294, "paola_spotify": 105}, {"mes": "OCTUBRE", "ute": 0, "ose": 0, "antel": 0, "netflix": 882, "spotify": 630, "total": 1512, "mama_ute": 0, "raquel_ute": 0, "paola_ute": 0, "mama_ose": 0, "raquel_ose": 0, "paola_ose": 0, "mama_antel": 0, "raquel_antel": 0, "paola_antel": 0, "mama_netflix": 0, "paola_netflix": 294, "paola_spotify": 105}, {"mes": "NOVIEMBRE", "ute": 0, "ose": 0, "antel": 0, "netflix": 882, "spotify": 630, "total": 1512, "mama_ute": 0, "raquel_ute": 0, "paola_ute": 0, "mama_ose": 0, "raquel_ose": 0, "paola_ose": 0, "mama_antel": 0, "raquel_antel": 0, "paola_antel": 0, "mama_netflix": 0, "paola_netflix": 294, "paola_spotify": 105}, {"mes": "DICIEMBRE", "ute": 0, "ose": 0, "antel": 0, "netflix": 882, "spotify": 630, "total": 1512, "mama_ute": 0, "raquel_ute": 0, "paola_ute": 0, "mama_ose": 0, "raquel_ose": 0, "paola_ose": 0, "mama_antel": 0, "raquel_antel": 0, "paola_antel": 0, "mama_netflix": 0, "paola_netflix": 294, "paola_spotify": 105}], "annual": {"ute": 40480, "ose": 8841, "antel": 9319, "netflix": 10584, "spotify": 7560, "total": 76784}, "divisors": {"ute": 5, "ose": 4, "antel": 4, "netflix": 3, "spotify": 6}}};
 let bcuMonthlyRates = {"2019":{"01":{"rate":32.425,"date":"2019-01-02","source":"BCU DLS.PROMED.FONDO"},"02":{"rate":32.467,"date":"2019-02-01","source":"BCU DLS.PROMED.FONDO"},"03":{"rate":32.66,"date":"2019-03-01","source":"BCU DLS.PROMED.FONDO"},"04":{"rate":33.424,"date":"2019-04-01","source":"BCU DLS.PROMED.FONDO"},"05":{"rate":35.101,"date":"2019-05-02","source":"BCU DLS.PROMED.FONDO"},"06":{"rate":35.182,"date":"2019-06-03","source":"BCU DLS.PROMED.FONDO"},"07":{"rate":35.09,"date":"2019-07-01","source":"BCU DLS.PROMED.FONDO"},"08":{"rate":34.595,"date":"2019-08-01","source":"BCU DLS.PROMED.FONDO"},"09":{"rate":36.797,"date":"2019-09-02","source":"BCU DLS.PROMED.FONDO"},"10":{"rate":37.016,"date":"2019-10-01","source":"BCU DLS.PROMED.FONDO"},"11":{"rate":37.422,"date":"2019-11-01","source":"BCU DLS.PROMED.FONDO"},"12":{"rate":37.69,"date":"2019-12-02","source":"BCU DLS.PROMED.FONDO"}},"2020":{"01":{"rate":37.194,"date":"2020-01-02","source":"BCU DLS.PROMED.FONDO"},"02":{"rate":37.568,"date":"2020-02-03","source":"BCU DLS.PROMED.FONDO"},"03":{"rate":39.191,"date":"2020-03-02","source":"BCU DLS.PROMED.FONDO"},"04":{"rate":44.003,"date":"2020-04-01","source":"BCU DLS.PROMED.FONDO"},"05":{"rate":42.744,"date":"2020-05-04","source":"BCU DLS.PROMED.FONDO"},"06":{"rate":43.312,"date":"2020-06-01","source":"BCU DLS.PROMED.FONDO"},"07":{"rate":42.175,"date":"2020-07-01","source":"BCU DLS.PROMED.FONDO"},"08":{"rate":42.655,"date":"2020-08-03","source":"BCU DLS.PROMED.FONDO"},"09":{"rate":42.502,"date":"2020-09-01","source":"BCU DLS.PROMED.FONDO"},"10":{"rate":42.533,"date":"2020-10-01","source":"BCU DLS.PROMED.FONDO"},"11":{"rate":42.826,"date":"2020-11-03","source":"BCU DLS.PROMED.FONDO"},"12":{"rate":42.39,"date":"2020-12-01","source":"BCU DLS.PROMED.FONDO"}},"2021":{"01":{"rate":42.16,"date":"2021-01-04","source":"BCU DLS.PROMED.FONDO"},"02":{"rate":42.27,"date":"2021-02-01","source":"BCU DLS.PROMED.FONDO"},"03":{"rate":43.15,"date":"2021-03-01","source":"BCU DLS.PROMED.FONDO"},"04":{"rate":44.219,"date":"2021-04-05","source":"BCU DLS.PROMED.FONDO"},"05":{"rate":43.867,"date":"2021-05-03","source":"BCU DLS.PROMED.FONDO"},"06":{"rate":43.68,"date":"2021-06-01","source":"BCU DLS.PROMED.FONDO"},"07":{"rate":43.655,"date":"2021-07-01","source":"BCU DLS.PROMED.FONDO"},"08":{"rate":43.57,"date":"2021-08-02","source":"BCU DLS.PROMED.FONDO"},"09":{"rate":42.541,"date":"2021-09-01","source":"BCU DLS.PROMED.FONDO"},"10":{"rate":42.942,"date":"2021-10-01","source":"BCU DLS.PROMED.FONDO"},"11":{"rate":44.175,"date":"2021-11-01","source":"BCU DLS.PROMED.FONDO"},"12":{"rate":44.14,"date":"2021-12-01","source":"BCU DLS.PROMED.FONDO"}},"2022":{"01":{"rate":44.614,"date":"2022-01-03","source":"BCU DLS.PROMED.FONDO"},"02":{"rate":43.907,"date":"2022-02-01","source":"BCU DLS.PROMED.FONDO"},"03":{"rate":42.715,"date":"2022-03-02","source":"BCU DLS.PROMED.FONDO"},"04":{"rate":41.119,"date":"2022-04-01","source":"BCU DLS.PROMED.FONDO"},"05":{"rate":40.926,"date":"2022-05-02","source":"BCU DLS.PROMED.FONDO"},"06":{"rate":40.033,"date":"2022-06-01","source":"BCU DLS.PROMED.FONDO"},"07":{"rate":39.955,"date":"2022-07-01","source":"BCU DLS.PROMED.FONDO"},"08":{"rate":40.663,"date":"2022-08-01","source":"BCU DLS.PROMED.FONDO"},"09":{"rate":40.794,"date":"2022-09-01","source":"BCU DLS.PROMED.FONDO"},"10":{"rate":41.212,"date":"2022-10-03","source":"BCU DLS.PROMED.FONDO"},"11":{"rate":40.532,"date":"2022-11-01","source":"BCU DLS.PROMED.FONDO"},"12":{"rate":39.072,"date":"2022-12-01","source":"BCU DLS.PROMED.FONDO"}},"2023":{"01":{"rate":39.795,"date":"2023-01-02","source":"BCU DLS.PROMED.FONDO"},"02":{"rate":38.696,"date":"2023-02-01","source":"BCU DLS.PROMED.FONDO"},"03":{"rate":38.897,"date":"2023-03-01","source":"BCU DLS.PROMED.FONDO"},"04":{"rate":38.567,"date":"2023-04-03","source":"BCU DLS.PROMED.FONDO"},"05":{"rate":39.015,"date":"2023-05-02","source":"BCU DLS.PROMED.FONDO"},"06":{"rate":38.799,"date":"2023-06-01","source":"BCU DLS.PROMED.FONDO"},"07":{"rate":37.455,"date":"2023-07-03","source":"BCU DLS.PROMED.FONDO"},"08":{"rate":37.496,"date":"2023-08-01","source":"BCU DLS.PROMED.FONDO"},"09":{"rate":37.676,"date":"2023-09-01","source":"BCU DLS.PROMED.FONDO"},"10":{"rate":38.721,"date":"2023-10-02","source":"BCU DLS.PROMED.FONDO"},"11":{"rate":40.019,"date":"2023-11-01","source":"BCU DLS.PROMED.FONDO"},"12":{"rate":38.974,"date":"2023-12-01","source":"BCU DLS.PROMED.FONDO"}},"2024":{"01":{"rate":39.092,"date":"2024-01-02","source":"BCU DLS.PROMED.FONDO"},"02":{"rate":39.074,"date":"2024-02-01","source":"BCU DLS.PROMED.FONDO"},"03":{"rate":38.927,"date":"2024-03-01","source":"BCU DLS.PROMED.FONDO"},"04":{"rate":37.857,"date":"2024-04-01","source":"BCU DLS.PROMED.FONDO"},"05":{"rate":38.194,"date":"2024-05-02","source":"BCU DLS.PROMED.FONDO"},"06":{"rate":38.786,"date":"2024-06-03","source":"BCU DLS.PROMED.FONDO"},"07":{"rate":40.027,"date":"2024-07-01","source":"BCU DLS.PROMED.FONDO"},"08":{"rate":40.348,"date":"2024-08-01","source":"BCU DLS.PROMED.FONDO"},"09":{"rate":40.296,"date":"2024-09-02","source":"BCU DLS.PROMED.FONDO"},"10":{"rate":41.884,"date":"2024-10-01","source":"BCU DLS.PROMED.FONDO"},"11":{"rate":41.589,"date":"2024-11-01","source":"BCU DLS.PROMED.FONDO"},"12":{"rate":43.183,"date":"2024-12-02","source":"BCU DLS.PROMED.FONDO"}},"2025":{"01":{"rate":43.9,"date":"2025-01-02","source":"BCU DLS.PROMED.FONDO"},"02":{"rate":43.495,"date":"2025-02-03","source":"BCU DLS.PROMED.FONDO"},"03":{"rate":42.594,"date":"2025-03-05","source":"BCU DLS.PROMED.FONDO"},"04":{"rate":42.226,"date":"2025-04-01","source":"BCU DLS.PROMED.FONDO"},"05":{"rate":41.933,"date":"2025-05-02","source":"BCU DLS.PROMED.FONDO"},"06":{"rate":41.584,"date":"2025-06-02","source":"BCU DLS.PROMED.FONDO"},"07":{"rate":40.046,"date":"2025-07-01","source":"BCU DLS.PROMED.FONDO"},"08":{"rate":40.132,"date":"2025-08-01","source":"BCU DLS.PROMED.FONDO"},"09":{"rate":40.007,"date":"2025-09-01","source":"BCU DLS.PROMED.FONDO"},"10":{"rate":39.875,"date":"2025-10-01","source":"BCU DLS.PROMED.FONDO"},"11":{"rate":39.758,"date":"2025-11-03","source":"BCU DLS.PROMED.FONDO"},"12":{"rate":39.324,"date":"2025-12-01","source":"BCU DLS.PROMED.FONDO"}},"2026":{"01":{"rate":38.00,"date":"2026-01","source":"Promedio mensual Yahoo Finance"},"02":{"rate":38.06,"date":"2026-02","source":"Promedio mensual Yahoo Finance"},"03":{"rate":39.45,"date":"2026-03","source":"Promedio mensual Yahoo Finance"},"04":{"rate":39.61,"date":"2026-04","source":"Promedio mensual Yahoo Finance"},"05":{"rate":39.62,"date":"2026-05","source":"Promedio mensual Yahoo Finance"}}};
 const STORE_KEY = "gastos_planilla_oficial_v2";
+const APPS_SCRIPT_API = "https://script.google.com/macros/s/AKfycbzRmlSy8TOtWIF55AvD7RhFwk4upA-bG8p3DLOD6N0e94QziIAMq8xVOQVJ0DJ4Wu9pNQ/exec";
+const SHEETS_SYNC_META_KEY = "gastos_sheets_sync_meta_v1";
+const SHEETS_SYNC_DEBOUNCE_MS = 1200;
 const MONTH_NAMES = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
 const money = n => "$" + Math.round(Number(n || 0)).toLocaleString("es-UY");
 const moneyUyuExact = n => "$" + Number(n || 0).toLocaleString("es-UY", { minimumFractionDigits:2, maximumFractionDigits:2 });
 const moneyUsd = n => "US$" + Number(n || 0).toLocaleString("es-UY", { minimumFractionDigits:2, maximumFractionDigits:2 });
 const TARJETAS_STORE_KEY = "tarjetas_credito_v1";
+const TARJETA_BRANDS = {
+  card_1:{ key:"itau", defaultName:"Itaú", logo:"Itaú", accent:"#ff7a00" },
+  card_2:{ key:"oca", defaultName:"OCA", logo:"OCA", accent:"#0f5fa8" }
+};
 let tarjetasState = loadTarjetasState();
 let tarjetasPendingImport = null;
 let state = loadState();
 let years = [];
+let sheetsSyncReady = false;
+let sheetsSyncTimer = null;
+let sheetsSyncInFlight = false;
+let sheetsSyncAgain = false;
 
 const yearSelect = document.getElementById("yearSelect");
 const monthSelect = document.getElementById("monthSelect");
@@ -1186,12 +1313,177 @@ function setCobrosStatus(message, isError = false) {
   status.style.color = isError ? "#fb7185" : "#86efac";
 }
 
+function getSheetsSyncMeta() {
+  try { return JSON.parse(localStorage.getItem(SHEETS_SYNC_META_KEY) || "{}") || {}; } catch { return {}; }
+}
+
+function setSheetsSyncMeta(nextMeta) {
+  const meta = { ...getSheetsSyncMeta(), ...nextMeta };
+  localStorage.setItem(SHEETS_SYNC_META_KEY, JSON.stringify(meta));
+  return meta;
+}
+
+function buildSheetsSyncPayload(updatedAt = new Date().toISOString()) {
+  return {
+    app:"gastos_planilla_oficial_v2",
+    key:STORE_KEY,
+    updatedAt,
+    currentYear:yearSelect?.value || String(new Date().getFullYear()),
+    state,
+    bcuMonthlyRates,
+    tarjetasState,
+    mesesCerrados:getMesesCerrados(),
+    cobrosPagos:getStoredCobrosPagos()
+  };
+}
+
+function setSheetsSyncStatus(type = "local", message = "") {
+  const label = document.getElementById("syncStateLabel");
+  const btn = document.getElementById("syncSheetBtn");
+  const labels = {
+    local:"Local",
+    loading:"Cargando",
+    syncing:"Subiendo",
+    ok:"Google OK",
+    sheetsOnly:"Sheets OK",
+    pending:"Pendiente",
+    error:"Error Google"
+  };
+  if (label) label.textContent = labels[type] || labels.local;
+  if (btn) {
+    btn.disabled = type === "syncing" || type === "loading";
+    btn.textContent = type === "syncing" ? "Subiendo..." : type === "loading" ? "Cargando..." : "Sincronizar Google";
+    btn.title = message || "Sube los datos actuales a Google Sheets y crea el backup JSON en Drive";
+  }
+}
+
+function markSheetsSyncPending() {
+  if (!sheetsSyncReady) return;
+  setSheetsSyncMeta({ localUpdatedAt:new Date().toISOString(), pending:true });
+  setSheetsSyncStatus("pending", "Hay cambios guardados localmente pendientes de subir a Google.");
+  scheduleSheetsSync();
+}
+
+function scheduleSheetsSync(delay = SHEETS_SYNC_DEBOUNCE_MS) {
+  if (!sheetsSyncReady) return;
+  clearTimeout(sheetsSyncTimer);
+  sheetsSyncTimer = setTimeout(() => syncStateToSheet(), delay);
+}
+
+function applySheetStatePayload(payload, remoteUpdatedAt) {
+  if (!payload?.state || typeof payload.state !== "object") return false;
+  state = sanitizeState(payload.state);
+  if (payload.bcuMonthlyRates && typeof payload.bcuMonthlyRates === "object") {
+    bcuMonthlyRates = structuredClone(payload.bcuMonthlyRates);
+  }
+  if (payload.tarjetasState && typeof payload.tarjetasState === "object") {
+    tarjetasState = sanitizeTarjetasState(payload.tarjetasState);
+    localStorage.setItem(TARJETAS_STORE_KEY, JSON.stringify(tarjetasState));
+  }
+  if (payload.mesesCerrados && typeof payload.mesesCerrados === "object") {
+    localStorage.setItem(MESES_CERRADOS_KEY, JSON.stringify(payload.mesesCerrados));
+  }
+  if (payload.cobrosPagos && typeof payload.cobrosPagos === "object") {
+    restoreStoredCobrosPagos(payload.cobrosPagos);
+  }
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  setSheetsSyncMeta({
+    localUpdatedAt:remoteUpdatedAt,
+    remoteUpdatedAt,
+    lastSyncedAt:new Date().toISOString(),
+    pending:false
+  });
+  refreshYearOptions(payload.currentYear && state[payload.currentYear] ? payload.currentYear : yearSelect.value);
+  renderMonths();
+  renderReparto();
+  renderTarjetas();
+  renderCobros();
+  renderDeudaBanner();
+  actualizarBtnCerrarMes();
+  return true;
+}
+
+async function loadStateFromSheet() {
+  setSheetsSyncStatus("loading", "Buscando datos guardados en Google Sheets.");
+  const localMeta = getSheetsSyncMeta();
+  const hasLocalState = Boolean(localStorage.getItem(STORE_KEY));
+  try {
+    const res = await fetch(`${APPS_SCRIPT_API}?action=getState&key=${encodeURIComponent(STORE_KEY)}&t=${Date.now()}`, { cache:"no-store" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) throw new Error(data.error || `HTTP ${res.status}`);
+    const remoteUpdatedAt = data.updatedAt || "";
+    const localUpdatedAt = localMeta.localUpdatedAt || "";
+    if (data.payload?.state && (!hasLocalState || !localUpdatedAt || remoteUpdatedAt > localUpdatedAt)) {
+      applySheetStatePayload(data.payload, remoteUpdatedAt);
+      setSheetsSyncStatus("sheetsOnly", `Datos cargados desde Sheets (${remoteUpdatedAt}).`);
+      return;
+    }
+    sheetsSyncReady = true;
+    if (hasLocalState && (!remoteUpdatedAt || localUpdatedAt > remoteUpdatedAt || localMeta.pending)) {
+      setSheetsSyncStatus("pending", "Hay datos locales para subir a Google.");
+      await syncStateToSheet();
+      return;
+    }
+    setSheetsSyncMeta({ remoteUpdatedAt, pending:false });
+    setSheetsSyncStatus(remoteUpdatedAt ? "sheetsOnly" : "local", remoteUpdatedAt ? `Sincronizado con Sheets (${remoteUpdatedAt}).` : "Todavia no hay estado guardado en Sheets.");
+  } catch (error) {
+    console.warn("No pude cargar datos desde Sheets:", error);
+    setSheetsSyncStatus("error", "No pude conectar con Google. Sigo usando el guardado local.");
+  } finally {
+    sheetsSyncReady = true;
+  }
+}
+
+async function syncStateToSheet() {
+  if (!sheetsSyncReady) return;
+  if (sheetsSyncInFlight) { sheetsSyncAgain = true; return; }
+  clearTimeout(sheetsSyncTimer);
+  sheetsSyncInFlight = true;
+  const meta = getSheetsSyncMeta();
+  const updatedAt = meta.localUpdatedAt || new Date().toISOString();
+  const payload = buildSheetsSyncPayload(updatedAt);
+  setSheetsSyncStatus("syncing", "Subiendo datos a Google Sheets y Drive.");
+  try {
+    const res = await fetch(APPS_SCRIPT_API, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body:JSON.stringify({ action:"saveState", ...payload })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) throw new Error(data.error || `HTTP ${res.status}`);
+    setSheetsSyncMeta({
+      localUpdatedAt:data.updatedAt || updatedAt,
+      remoteUpdatedAt:data.updatedAt || updatedAt,
+      lastSyncedAt:new Date().toISOString(),
+      pending:false
+    });
+    const driveBackup = data.driveBackup;
+    if (driveBackup?.ok) {
+      setSheetsSyncStatus("ok", `Sincronizado con Sheets y Drive (${data.updatedAt || updatedAt}). Backup: ${driveBackup.currentFileName} / ${driveBackup.dailyFileName}.`);
+    } else {
+      const driveError = driveBackup?.error ? ` Error Drive: ${driveBackup.error}` : "";
+      setSheetsSyncStatus("sheetsOnly", `Sincronizado con Sheets (${data.updatedAt || updatedAt}), pero sin confirmar backup en Drive.${driveError}`);
+    }
+  } catch (error) {
+    console.warn("No pude subir datos a Google:", error);
+    setSheetsSyncMeta({ pending:true });
+    setSheetsSyncStatus("error", "No pude subir a Google. Queda pendiente y se reintenta al próximo cambio.");
+  } finally {
+    sheetsSyncInFlight = false;
+    if (sheetsSyncAgain) {
+      sheetsSyncAgain = false;
+      scheduleSheetsSync(350);
+    }
+  }
+}
+
 ensureFutureYears();
 refreshYearOptions(String(new Date().getFullYear()));
 
-function save() {
+function save(options = {}) {
   state = sanitizeState(state);
   localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  if (!options.skipSheetSync) markSheetsSyncPending();
 }
 
 function toFiniteMoney(value, fallback = 0) {
@@ -1739,6 +2031,7 @@ function renderReparto() {
   const pctMi = Number(document.getElementById("pctMiCasa").value || 0) / 100;
   const pctPaola = Number(document.getElementById("pctPaola").value || 0) / 100;
   const div = Math.max(1, Number(document.getElementById("divServicios").value || 4));
+  const numMiCasa = Math.max(1, Number(document.getElementById("numMiCasa").value || 2));
   const ute = Number(m.ute || 0);
   const basePart = Math.min(ute, base);
   const excedente = Math.max(0, ute - base);
@@ -1748,6 +2041,8 @@ function renderReparto() {
   const basePorPersona = baseSinFijos / 3;
   const miCasaExtra = excedente * pctMi;
   const paolaExtra = excedente * pctPaola;
+  const miCasaPerPerson = miCasaExtra / numMiCasa;
+  const miCasaPersonLabel = numMiCasa === 2 ? "Ale/Vero c/u" : "Por persona";
   const oseParte = Number(m.ose || 0) / div;
   const antelParte = Number(m.antel || 0) / div;
   const netflixDiv = Math.max(1, y.divisors?.netflix || 3);
@@ -1768,7 +2063,7 @@ function renderReparto() {
     ["Mamá UTE fijo", money(mamaUte)],
     ["Raquel UTE fijo", money(raquelUte)],
     ["Paola/Vero/Ale - base÷3", money(basePorPersona)],
-    ["Mi casa - excedente", money(miCasaExtra)],
+    ["Casa Ale+Vero - excedente", money(miCasaExtra)],
     ["Paola - excedente", money(paolaExtra)],
     ["OSE: 4 casas (Mamá, Raquel, Paola, Vero+Ale÷2)", money(Number(m.ose || 0) / 4), "ose"],
     ["ANTEL / 4 (Mamá,Paola,Vero,Ale)", money(antelParte), "antel"],
@@ -1781,6 +2076,36 @@ function renderReparto() {
       <strong>${r[1]}</strong>
     </div>
   `).join("");
+  const uteDiffSummary = document.getElementById("uteDiffSummary");
+  if (uteDiffSummary) {
+    const sinExcedente = excedente <= 0;
+    uteDiffSummary.innerHTML = `
+      <div class="ute-diff-head">
+        <div>
+          <strong>Diferencia UTE</strong>
+          <small>${m.mes}: UTE ${money(ute)} vs base ${money(base)}. Solo excedente, sin la base.</small>
+        </div>
+        <div class="ute-diff-total${sinExcedente ? " ok" : ""}">${sinExcedente ? "Sin excedente" : money(excedente)}</div>
+      </div>
+      <div class="ute-diff-grid">
+        <div class="ute-diff-item paola">
+          <span>A cobrar a Paola</span>
+          <strong>${money(paolaExtra)}</strong>
+          <small>${Math.round(pctPaola * 100)}% del excedente UTE</small>
+        </div>
+        <div class="ute-diff-item casa">
+          <span>Casa Ale+Vero</span>
+          <strong>${money(miCasaExtra)}</strong>
+          <small>${Math.round(pctMi * 100)}% del excedente UTE</small>
+        </div>
+        <div class="ute-diff-item persona">
+          <span>${miCasaPersonLabel}</span>
+          <strong>${money(miCasaPerPerson)}</strong>
+          <small>Casa Ale+Vero dividido entre ${numMiCasa}</small>
+        </div>
+      </div>
+    `;
+  }
   renderKpis();
   renderPersonas();
   renderStreamingValues();
@@ -2063,12 +2388,44 @@ function donutClick(idx) {
   if (wrap._activeIdx !== null) donutHover(idx); else donutLeave();
 }
 
-const COBROS_API = "https://script.google.com/macros/s/AKfycbzRmlSy8TOtWIF55AvD7RhFwk4upA-bG8p3DLOD6N0e94QziIAMq8xVOQVJ0DJ4Wu9pNQ/exec";
+const COBROS_API = APPS_SCRIPT_API;
 const COBROS_REPORT_EMAIL = "ale21rock@gmail.com";
 const COBROS_DESCUENTO_SUFFIX = "__descuento";
 
 // Cache local para no re-fetch innecesario
 let cobrosCache = {}; // key: "year_month" -> { Nombre: monto }
+
+function getStoredCobrosPagos() {
+  const result = {};
+  try {
+    Object.keys(localStorage).forEach(key => {
+      const match = key.match(/^cobros_pagos_(\d{4})_(\d{1,2})$/);
+      if (!match) return;
+      const value = JSON.parse(localStorage.getItem(key) || "{}") || {};
+      result[`${match[1]}_${match[2]}`] = value;
+    });
+  } catch {
+    return result;
+  }
+  Object.keys(cobrosCache || {}).forEach(key => {
+    result[key] = { ...(result[key] || {}), ...(cobrosCache[key] || {}) };
+  });
+  return result;
+}
+
+function restoreStoredCobrosPagos(cobrosPagos) {
+  Object.entries(cobrosPagos || {}).forEach(([key, pagos]) => {
+    if (!pagos || typeof pagos !== "object") return;
+    const match = String(key).match(/^(\d{4})_(\d{1,2})$/);
+    if (!match) return;
+    cobrosCache[key] = pagos;
+    localStorage.setItem(`cobros_pagos_${match[1]}_${match[2]}`, JSON.stringify(pagos));
+  });
+}
+
+function hasCobrosEntries(pagos) {
+  return Boolean(pagos && typeof pagos === "object" && Object.keys(pagos).length);
+}
 
 function cobrosDescuentoKey(nombre) {
   return `${nombre}${COBROS_DESCUENTO_SUFFIX}`;
@@ -2086,6 +2443,12 @@ async function cobrosCargarPagos(year, monthIdx, forceRefresh = false) {
   const key = `${year}_${monthIdx}`;
   // Si no fuerza refresh y está en cache, devolver cache
   if (!forceRefresh && cobrosCache[key]) return cobrosCache[key];
+  let localPagos = {};
+  try {
+    localPagos = JSON.parse(localStorage.getItem(`cobros_pagos_${year}_${monthIdx}`) || "{}") || {};
+  } catch {
+    localPagos = {};
+  }
   
   // Siempre intentar traer de Sheets primero
   let success = false;
@@ -2094,9 +2457,13 @@ async function cobrosCargarPagos(year, monthIdx, forceRefresh = false) {
     const res = await fetch(url, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
-      cobrosCache[key] = data || {};
+      const remotePagos = data || {};
+      cobrosCache[key] = !hasCobrosEntries(remotePagos) && hasCobrosEntries(localPagos) ? localPagos : remotePagos;
       // Guardar en localStorage también para backup
       localStorage.setItem(`cobros_pagos_${year}_${monthIdx}`, JSON.stringify(cobrosCache[key]));
+      if (!hasCobrosEntries(remotePagos) && hasCobrosEntries(localPagos)) {
+        syncLocalCobrosPagosToSheet(year, monthIdx, localPagos);
+      }
       success = true;
     }
   } catch (e) {
@@ -2113,6 +2480,13 @@ async function cobrosCargarPagos(year, monthIdx, forceRefresh = false) {
   }
   
   return cobrosCache[key];
+}
+
+async function syncLocalCobrosPagosToSheet(year, monthIdx, pagos) {
+  await Promise.all(Object.entries(pagos || {}).map(([nombre, monto]) => {
+    const url = `${COBROS_API}?action=set&year=${year}&month=${monthIdx}&nombre=${encodeURIComponent(nombre)}&monto=${encodeURIComponent(monto)}`;
+    return fetch(url).catch(() => null);
+  }));
 }
 
 async function cobrosSavePago(year, monthIdx, nombre, monto) {
@@ -2544,7 +2918,10 @@ function exportBackupJson() {
     exportedAt: new Date().toISOString(),
     currentYear: yearSelect.value,
     state,
-    bcuMonthlyRates
+    bcuMonthlyRates,
+    tarjetasState,
+    mesesCerrados:getMesesCerrados(),
+    cobrosPagos:getStoredCobrosPagos()
   };
   downloadTextFile(
     `gastos_backup_${yearSelect.value}_${new Date().toISOString().slice(0,10)}.json`,
@@ -2831,12 +3208,26 @@ function restoreStateFromObject(source) {
   if (source.bcuMonthlyRates && typeof source.bcuMonthlyRates === 'object') {
     bcuMonthlyRates = structuredClone(source.bcuMonthlyRates);
   }
+  if (source.tarjetasState && typeof source.tarjetasState === 'object') {
+    tarjetasState = sanitizeTarjetasState(source.tarjetasState);
+    saveTarjetasState();
+  }
+  if (source.mesesCerrados && typeof source.mesesCerrados === 'object') {
+    localStorage.setItem(MESES_CERRADOS_KEY, JSON.stringify(source.mesesCerrados));
+  }
+  if (source.cobrosPagos && typeof source.cobrosPagos === 'object') {
+    restoreStoredCobrosPagos(source.cobrosPagos);
+  }
   const year = String(source.currentYear || yearSelect.value || years.at(-1));
   state = cleaned;
   save();
   refreshYearOptions(cleaned[year] ? year : years.at(-1));
   renderMonths();
   renderReparto();
+  renderTarjetas();
+  renderCobros();
+  renderDeudaBanner();
+  actualizarBtnCerrarMes();
   maybeRefreshDollarRate();
 }
 
@@ -2871,15 +3262,72 @@ function showImportModal() {
   });
 }
 
+function exportTarjetasBackupJson() {
+  const payload = {
+    app:"tarjetas_credito_v1",
+    exportedAt:new Date().toISOString(),
+    currentYear:tarjetasState.selectedYear,
+    currentMonth:tarjetasState.selectedMonth,
+    tarjetasState
+  };
+  downloadTextFile(
+    `tarjetas_backup_${tarjetasState.selectedYear}_${String(Number(tarjetasState.selectedMonth || 0) + 1).padStart(2, "0")}_${new Date().toISOString().slice(0,10)}.json`,
+    JSON.stringify(payload, null, 2),
+    "application/json;charset=utf-8"
+  );
+}
+
+function restoreTarjetasStateFromObject(source) {
+  if (!source || typeof source !== "object") throw new Error("El archivo no tiene un formato válido.");
+  const candidate = source.tarjetasState && typeof source.tarjetasState === "object" ? source.tarjetasState : source;
+  tarjetasState = sanitizeTarjetasState(candidate);
+  saveTarjetasState();
+  renderTarjetas();
+}
+
+function showTarjetasImportModal() {
+  openModal("Importar tarjetas", `
+    <div class="import-area">
+      <p>Pegá un respaldo JSON de tarjetas o cargá un archivo. Esto reemplaza solo la pestaña Tarjetas guardada en este navegador.</p>
+      <input type="file" id="tarjetasImportFileInput" accept="application/json,.json,.txt">
+      <textarea id="tarjetasImportTextArea" spellcheck="false" placeholder="Pegá aquí el JSON del respaldo de tarjetas"></textarea>
+      <div class="hint">Acepta respaldos de la pestaña Tarjetas o un backup general que incluya <b>tarjetasState</b>.</div>
+    </div>
+  `, [
+    { text:"Cancelar", variant:"secondary", onClick:closeModal },
+    { text:"Importar tarjetas", variant:"danger", onClick:() => {
+      try {
+        const raw = document.getElementById("tarjetasImportTextArea")?.value?.trim();
+        if (!raw) throw new Error("Pegá un JSON o cargá un archivo primero.");
+        restoreTarjetasStateFromObject(JSON.parse(raw));
+        closeModal();
+      } catch (error) {
+        alert(error.message || "No pude importar el respaldo de tarjetas.");
+      }
+    }}
+  ]);
+  const fileInput = document.getElementById("tarjetasImportFileInput");
+  const textArea = document.getElementById("tarjetasImportTextArea");
+  fileInput?.addEventListener("change", async () => {
+    const file = fileInput.files?.[0];
+    if (!file || !textArea) return;
+    textArea.value = await file.text();
+  });
+}
+
 // ── Tarjetas de crédito ─────────────────────────────────────────────────────
 function defaultTarjetasState() {
   const now = new Date();
   return {
     selectedYear:String(now.getFullYear()),
     selectedMonth:now.getMonth(),
+    selectedCardId:"card_1",
+    viewMode:"selected",
+    scenarioExtraUyu:0,
+    scenarioExtraUsd:0,
     cards:[
-      { id:"card_1", name:"Tarjeta 1", usd:true },
-      { id:"card_2", name:"Tarjeta 2", usd:true }
+      { id:"card_1", name:TARJETA_BRANDS.card_1.defaultName, usd:true, brand:"itau" },
+      { id:"card_2", name:TARJETA_BRANDS.card_2.defaultName, usd:true, brand:"oca" }
     ],
     entries:{},
     installments:[]
@@ -2902,15 +3350,27 @@ function sanitizeTarjetasState(source) {
     .slice(0, 2)
     .map((card, index) => ({
       id:String(card?.id || base.cards[index]?.id || `card_${index + 1}`),
-      name:String(card?.name || base.cards[index]?.name || `Tarjeta ${index + 1}`),
-      usd:card?.usd !== false
+      name:normalizeTarjetaName(card?.name, index, base),
+      usd:card?.usd !== false,
+      brand:String(card?.brand || base.cards[index]?.brand || "")
     }));
-  while (clean.cards.length < 2) clean.cards.push(base.cards[clean.cards.length]);
+  while (clean.cards.length < 2) clean.cards.push({ ...base.cards[clean.cards.length] });
   clean.entries = source?.entries && typeof source.entries === "object" ? source.entries : {};
   clean.installments = Array.isArray(source?.installments) ? source.installments.map(sanitizeInstallment).filter(Boolean) : [];
   clean.selectedYear = String(clean.selectedYear || new Date().getFullYear());
   clean.selectedMonth = Math.min(11, Math.max(0, Number(clean.selectedMonth || 0)));
+  clean.selectedCardId = clean.cards.some(card => card.id === clean.selectedCardId) ? clean.selectedCardId : clean.cards[0].id;
+  clean.viewMode = clean.viewMode === "all" ? "all" : "selected";
+  clean.scenarioExtraUyu = roundMoneyValue(Math.max(0, Number(clean.scenarioExtraUyu || 0)));
+  clean.scenarioExtraUsd = roundMoneyValue(Math.max(0, Number(clean.scenarioExtraUsd || 0)));
   return clean;
+}
+
+function normalizeTarjetaName(name, index, base) {
+  const fallback = base.cards[index]?.name || `Tarjeta ${index + 1}`;
+  const raw = String(name || fallback).trim();
+  if (!raw || /^Tarjeta\s+[12]$/i.test(raw)) return fallback;
+  return raw;
 }
 
 function sanitizeInstallment(item) {
@@ -2934,6 +3394,7 @@ function sanitizeInstallment(item) {
 
 function saveTarjetasState() {
   localStorage.setItem(TARJETAS_STORE_KEY, JSON.stringify(tarjetasState));
+  markSheetsSyncPending();
 }
 
 function newTarjetaId() {
@@ -2976,6 +3437,60 @@ function getTarjetaCard(cardId) {
   return tarjetasState.cards.find(card => card.id === cardId) || tarjetasState.cards[0];
 }
 
+function getSelectedTarjetaCardId() {
+  if (!tarjetasState.cards.some(card => card.id === tarjetasState.selectedCardId)) {
+    tarjetasState.selectedCardId = tarjetasState.cards[0]?.id || "card_1";
+  }
+  return tarjetasState.selectedCardId;
+}
+
+function getSelectedTarjetaCard() {
+  return getTarjetaCard(getSelectedTarjetaCardId());
+}
+
+function isTarjetasAllScope() {
+  return tarjetasState.viewMode === "all";
+}
+
+function selectedTarjetaCards() {
+  if (isTarjetasAllScope()) return tarjetasState.cards;
+  const card = getSelectedTarjetaCard();
+  return card ? [card] : [];
+}
+
+function tarjetaScopeLabel() {
+  return isTarjetasAllScope() ? "Todas las tarjetas" : getSelectedTarjetaCard()?.name || "Tarjeta activa";
+}
+
+function isTarjetaCardInScope(cardId) {
+  const scopedIds = new Set(selectedTarjetaCards().map(card => String(card.id)));
+  return scopedIds.has(String(cardId));
+}
+
+function getTarjetaBrand(card) {
+  const byId = TARJETA_BRANDS[card?.id];
+  if (byId) return byId;
+  return Object.values(TARJETA_BRANDS).find(item => item.key === card?.brand) || {
+    key:"generic",
+    defaultName:card?.name || "Tarjeta",
+    logo:"TC",
+    accent:"#2dd4bf"
+  };
+}
+
+function tarjetaLogoHtml(card) {
+  const brand = getTarjetaBrand(card);
+  return `<span class="tarjeta-logo tarjeta-logo-${escapeHtml(brand.key)}" aria-hidden="true">${escapeHtml(brand.logo)}</span>`;
+}
+
+function setSelectedTarjetaCard(cardId, options = {}) {
+  if (!tarjetasState.cards.some(card => card.id === cardId)) return;
+  tarjetasState.selectedCardId = cardId;
+  if (!options.keepScope) tarjetasState.viewMode = "selected";
+  saveTarjetasState();
+  renderTarjetas();
+}
+
 function tarjetaMonthAbs(year, month) {
   return Number(year) * 12 + Number(month || 0);
 }
@@ -2997,14 +3512,21 @@ function renderTarjetas() {
   renderTarjetasProjection();
   renderTarjetasZeroPlan();
   renderTarjetasKpis();
+  renderTarjetasActionSummary();
 }
 
 function renderTarjetasControls() {
   const yearSel = document.getElementById("tarjetasYearSelect");
   const monthSel = document.getElementById("tarjetasMonthSelect");
+  const scopeSel = document.getElementById("tarjetasScopeSelect");
   const startYearSel = document.getElementById("cuotaStartYear");
   const startMonthSel = document.getElementById("cuotaStartMonth");
   const cardSelects = ["tarjetasImportCardSelect", "cuotaCardSelect"].map(id => document.getElementById(id)).filter(Boolean);
+  const selectedCard = getSelectedTarjetaCard();
+  renderTarjetasCardSwitcher();
+  if (scopeSel) scopeSel.value = tarjetasState.viewMode;
+  setText("tarjetasHeroCount", String(tarjetasState.cards.length));
+  setText("tarjetasHeroScope", isTarjetasAllScope() ? "Todas" : selectedCard.name);
   const yearOptions = (years.length ? years : sortedYearKeys(state)).map(y =>
     `<option value="${y}"${String(y) === String(tarjetasState.selectedYear) ? " selected" : ""}>${y}</option>`
   ).join("");
@@ -3027,21 +3549,50 @@ function renderTarjetasControls() {
   }
   const cardOptions = tarjetasState.cards.map(card => `<option value="${escapeHtml(card.id)}">${escapeHtml(card.name)}</option>`).join("");
   cardSelects.forEach(sel => {
-    const previous = sel.value;
     sel.innerHTML = cardOptions;
-    if (previous && tarjetasState.cards.some(card => card.id === previous)) sel.value = previous;
+    sel.value = selectedCard.id;
   });
   const periodLabel = document.getElementById("tarjetasPeriodLabel");
-  if (periodLabel) periodLabel.textContent = `${MONTH_NAMES[tarjetasState.selectedMonth]} ${tarjetasState.selectedYear}`;
+  if (periodLabel) periodLabel.textContent = `${tarjetaScopeLabel()} - ${MONTH_NAMES[tarjetasState.selectedMonth]} ${tarjetasState.selectedYear}`;
+  setText("tarjetasSettingsTitle", isTarjetasAllScope() ? "Todas las tarjetas" : "Tarjeta seleccionada");
+  setText("tarjetasSettingsHint", isTarjetasAllScope() ? "Nombre y moneda activa por tarjeta." : "Nombre y moneda activa.");
+  const extraUyu = document.getElementById("tarjetasExtraUyu");
+  const extraUsd = document.getElementById("tarjetasExtraUsd");
+  if (extraUyu && document.activeElement !== extraUyu) extraUyu.value = tarjetasState.scenarioExtraUyu || 0;
+  if (extraUsd && document.activeElement !== extraUsd) extraUsd.value = tarjetasState.scenarioExtraUsd || 0;
+}
+
+function renderTarjetasCardSwitcher() {
+  const switcher = document.getElementById("tarjetasCardSwitcher");
+  if (!switcher) return;
+  const selectedId = getSelectedTarjetaCardId();
+  switcher.innerHTML = tarjetasState.cards.map(card => {
+    const entry = getTarjetaEntry(card.id);
+    const totals = tarjetaEntryTotals(entry);
+    const status = tarjetaStatus(entry);
+    const brand = getTarjetaBrand(card);
+    return `<button
+      class="tarjeta-switch ${card.id === selectedId ? "active" : ""}"
+      type="button"
+      data-card-select="${escapeHtml(card.id)}"
+      style="--card-accent:${escapeHtml(brand.accent)}"
+      aria-pressed="${card.id === selectedId ? "true" : "false"}">
+        ${tarjetaLogoHtml(card)}
+        <span class="tarjeta-switch-text">
+          <strong>${escapeHtml(card.name)}</strong>
+          <small>${escapeHtml(status.label)} - falta ${formatTarjetasMoneyPair(totals.faltaUyu, totals.faltaUsd)}</small>
+        </span>
+    </button>`;
+  }).join("");
 }
 
 function renderTarjetasSettings() {
   const grid = document.getElementById("tarjetasSettingsGrid");
   if (!grid) return;
-  grid.innerHTML = tarjetasState.cards.map((card, index) => `
+  grid.innerHTML = selectedTarjetaCards().map(card => `
     <div class="tarjeta-box">
       <div class="tarjeta-box-head">
-        <h3>Tarjeta ${index + 1}</h3>
+        <div class="tarjeta-title">${tarjetaLogoHtml(card)}<h3>${escapeHtml(card.name)}</h3></div>
         <span class="tarjeta-status">Activa</span>
       </div>
       <div>
@@ -3059,14 +3610,14 @@ function renderTarjetasSettings() {
 function renderTarjetasStatements() {
   const grid = document.getElementById("tarjetasStatementsGrid");
   if (!grid) return;
-  grid.innerHTML = tarjetasState.cards.map(card => {
+  grid.innerHTML = selectedTarjetaCards().map(card => {
     const entry = getTarjetaEntry(card.id);
     const totals = tarjetaEntryTotals(entry);
     const status = tarjetaStatus(entry);
     return `
       <div class="tarjeta-box">
         <div class="tarjeta-box-head">
-          <h3>${escapeHtml(card.name)}</h3>
+          <div class="tarjeta-title">${tarjetaLogoHtml(card)}<h3>${escapeHtml(card.name)}</h3></div>
           <span class="tarjeta-status ${status.className}">${status.label}</span>
         </div>
         <div class="tarjeta-form-grid">
@@ -3125,7 +3676,8 @@ function tarjetaStatus(entry) {
 }
 
 function renderTarjetasKpis() {
-  const entries = tarjetasState.cards.map(card => getTarjetaEntry(card.id));
+  const activeCard = getSelectedTarjetaCard();
+  const entries = selectedTarjetaCards().map(card => getTarjetaEntry(card.id));
   const sum = field => entries.reduce((acc, entry) => acc + Number(entry[field] || 0), 0);
   const totals = entries.map(tarjetaEntryTotals);
   const faltaUyu = totals.reduce((acc, item) => acc + item.faltaUyu, 0);
@@ -3140,12 +3692,123 @@ function renderTarjetasKpis() {
   const summary = document.getElementById("tarjetasMonthSummary");
   if (summary) {
     summary.innerHTML = `
+      <div class="line"><span>Vista</span><strong style="display:flex;align-items:center;gap:8px">${isTarjetasAllScope() ? "Todas las tarjetas" : `${tarjetaLogoHtml(activeCard)} ${escapeHtml(activeCard.name)}`}</strong></div>
       <div class="line"><span>Total contado</span><strong>${moneyUyuExact(sum("totalUyu"))} / ${moneyUsd(sum("totalUsd"))}</strong></div>
       <div class="line"><span>Pagado</span><strong>${moneyUyuExact(sum("paidUyu"))} / ${moneyUsd(sum("paidUsd"))}</strong></div>
       <div class="line"><span>Falta pagar</span><strong>${moneyUyuExact(faltaUyu)} / ${moneyUsd(faltaUsd)}</strong></div>
       <div class="line"><span>Mínimos pendientes</span><strong>${moneyUyuExact(faltaMinUyu)} / ${moneyUsd(faltaMinUsd)}</strong></div>
     `;
   }
+}
+
+function getTarjetasScenario() {
+  return {
+    extraUyu:roundMoneyValue(Math.max(0, Number(tarjetasState.scenarioExtraUyu || 0))),
+    extraUsd:roundMoneyValue(Math.max(0, Number(tarjetasState.scenarioExtraUsd || 0)))
+  };
+}
+
+function tarjetaDueInfo(entries) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const pending = entries
+    .map(item => {
+      const totals = tarjetaEntryTotals(item.entry);
+      if (!item.entry.dueDate || (!totals.faltaUyu && !totals.faltaUsd)) return null;
+      const due = new Date(`${item.entry.dueDate}T00:00:00`);
+      if (Number.isNaN(due.getTime())) return null;
+      const days = Math.round((due.getTime() - today.getTime()) / 86400000);
+      return { ...item, due, days, totals };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.due - b.due);
+  if (!pending.length) {
+    return { value:"Sin vencimientos", detail:"No hay saldos pendientes con fecha cargada.", className:"ok" };
+  }
+  const next = pending[0];
+  const cardName = next.card?.name || "Tarjeta";
+  if (next.days < 0) {
+    return { value:formatInputDate(next.entry.dueDate), detail:`${cardName}: vencida hace ${Math.abs(next.days)} día${Math.abs(next.days) === 1 ? "" : "s"}.`, className:"due" };
+  }
+  if (next.days === 0) {
+    return { value:"Vence hoy", detail:`${cardName}: pagá contado o mínimo hoy.`, className:"due" };
+  }
+  if (next.days <= 3) {
+    return { value:`En ${next.days} día${next.days === 1 ? "" : "s"}`, detail:`${cardName}: vence el ${formatInputDate(next.entry.dueDate)}.`, className:"warn" };
+  }
+  return { value:formatInputDate(next.entry.dueDate), detail:`${cardName}: faltan ${next.days} días.`, className:"ok" };
+}
+
+function estimateTarjetasPayoff(openTotals, selectedAbs, scenario = getTarjetasScenario()) {
+  const futureCommitment = sumTarjetasInstallmentsFromAbs(selectedAbs + 1);
+  const result = {
+    uyu:estimateTarjetaCurrencyPayoff(futureCommitment.uyu, scenario.extraUyu, selectedAbs, "UYU"),
+    usd:estimateTarjetaCurrencyPayoff(futureCommitment.usd, scenario.extraUsd, selectedAbs, "USD"),
+    currentPending:openTotals.faltaUyu || openTotals.faltaUsd
+  };
+  return result;
+}
+
+function estimateTarjetaCurrencyPayoff(initialFuture, extra, selectedAbs, currency) {
+  let remaining = roundMoneyValue(initialFuture || 0);
+  if (!remaining) return { months:0, label:"Sin cuotas futuras" };
+  for (let offset = 1; offset <= 120; offset++) {
+    const monthly = sumTarjetasInstallmentsForAbs(selectedAbs + offset);
+    const scheduled = currency === "USD" ? monthly.usd : monthly.uyu;
+    remaining = roundMoneyValue(Math.max(0, remaining - scheduled - Number(extra || 0)));
+    if (!remaining) return { months:offset, label:`${offset} mes${offset === 1 ? "" : "es"}` };
+  }
+  return { months:120, label:"Más de 10 años" };
+}
+
+function tarjetasPayoffLabel(payoff) {
+  const parts = [];
+  if (payoff.uyu.months) parts.push(`UYU: ${payoff.uyu.label}`);
+  if (payoff.usd.months) parts.push(`USD: ${payoff.usd.label}`);
+  return parts.join(" | ") || "Sin cuotas futuras";
+}
+
+function renderTarjetasActionSummary() {
+  const grid = document.getElementById("tarjetasActionGrid");
+  const message = document.getElementById("tarjetasActionMessage");
+  const scopeLabel = document.getElementById("tarjetasActionScopeLabel");
+  if (!grid || !message) return;
+  const openTotals = tarjetasOpenTotals();
+  const { year, month } = selectedTarjetaPeriod();
+  const selectedAbs = tarjetaMonthAbs(year, month);
+  const scenario = getTarjetasScenario();
+  const due = tarjetaDueInfo(openTotals.entries);
+  const payoff = estimateTarjetasPayoff(openTotals, selectedAbs, scenario);
+  const hasExtra = scenario.extraUyu || scenario.extraUsd;
+  if (scopeLabel) scopeLabel.textContent = `${tarjetaScopeLabel()} - ${MONTH_NAMES[month]} ${year}.`;
+  grid.innerHTML = `
+    ${tarjetasActionMetric("Próximo vencimiento", due.value, due.detail, due.className)}
+    ${tarjetasActionMetric("Pagar contado ahora", formatTarjetasMoneyPair(openTotals.faltaUyu, openTotals.faltaUsd), "Objetivo principal para no financiar el estado.", openTotals.faltaUyu || openTotals.faltaUsd ? "warn" : "ok")}
+    ${tarjetasActionMetric("Mínimo de emergencia", formatTarjetasMoneyPair(openTotals.faltaMinUyu, openTotals.faltaMinUsd), "Piso si no llegás al contado completo.", openTotals.faltaMinUyu || openTotals.faltaMinUsd ? "warn" : "ok")}
+    ${tarjetasActionMetric("Con extra mensual", hasExtra ? tarjetasPayoffLabel(payoff) : "Sin extra cargado", hasExtra ? `Extra: ${formatTarjetasMoneyPair(scenario.extraUyu, scenario.extraUsd)} por mes.` : "Cargá un extra abajo para estimar cuándo quedás en cero.", hasExtra ? "ok" : "")}
+  `;
+  message.textContent = buildTarjetasActionMessage(openTotals, due, payoff, scenario);
+  const result = document.getElementById("tarjetasScenarioResult");
+  if (result) {
+    result.innerHTML = hasExtra
+      ? `<strong>${escapeHtml(tarjetasPayoffLabel(payoff))}</strong><span>Extra mensual: ${escapeHtml(formatTarjetasMoneyPair(scenario.extraUyu, scenario.extraUsd))}</span>`
+      : `<strong>Sin extra mensual</strong><span>La proyección usa solo estados y cuotas cargadas.</span>`;
+  }
+}
+
+function tarjetasActionMetric(label, value, detail, className = "") {
+  return `<div class="tarjetas-action-item ${escapeHtml(className)}">
+    <span>${escapeHtml(label)}</span>
+    <strong>${escapeHtml(value)}</strong>
+    <small>${escapeHtml(detail)}</small>
+  </div>`;
+}
+
+function buildTarjetasActionMessage(openTotals, due, payoff, scenario) {
+  if (due.className === "due") return `${due.detail} El pago recomendado es ${formatTarjetasMoneyPair(openTotals.faltaUyu, openTotals.faltaUsd)} para quedar al día.`;
+  if (openTotals.faltaUyu || openTotals.faltaUsd) return `La prioridad es cubrir el contado pendiente (${formatTarjetasMoneyPair(openTotals.faltaUyu, openTotals.faltaUsd)}) antes del vencimiento.`;
+  if (scenario.extraUyu || scenario.extraUsd) return `Con el extra mensual cargado, la proyección visible queda en cero en ${tarjetasPayoffLabel(payoff)}.`;
+  return "No hay saldo contado pendiente en el periodo elegido. Mantené cargadas las cuotas nuevas para que la proyección siga siendo útil.";
 }
 
 function renderTarjetasZeroPlan() {
@@ -3162,6 +3825,9 @@ function renderTarjetasZeroPlan() {
     uyu:openTotals.faltaUyu + futureCommitment.uyu,
     usd:openTotals.faltaUsd + futureCommitment.usd
   };
+  const scenario = getTarjetasScenario();
+  const hasScenarioExtra = scenario.extraUyu || scenario.extraUsd;
+  const scenarioBalance = { uyu:futureCommitment.uyu, usd:futureCommitment.usd };
   const peak = tarjetasInstallmentPeak(selectedAbs);
   const endAbs = tarjetasLastInstallmentAbs(selectedAbs);
   const monthsToShow = Math.min(24, Math.max(6, endAbs - selectedAbs + 1));
@@ -3174,10 +3840,24 @@ function renderTarjetasZeroPlan() {
   body.innerHTML = Array.from({ length:monthsToShow }, (_, offset) => {
     const abs = selectedAbs + offset;
     const monthly = sumTarjetasInstallmentsForAbs(abs);
-    const remainingAfter = sumTarjetasInstallmentsFromAbs(abs + 1);
-    const suggested = offset === 0
-      ? { uyu:openTotals.faltaUyu, usd:openTotals.faltaUsd }
-      : monthly;
+    const scheduledRemainingAfter = sumTarjetasInstallmentsFromAbs(abs + 1);
+    let suggested;
+    let remainingAfter;
+    if (offset === 0) {
+      suggested = { uyu:openTotals.faltaUyu, usd:openTotals.faltaUsd };
+      remainingAfter = { ...scenarioBalance };
+    } else if (hasScenarioExtra) {
+      suggested = {
+        uyu:Math.min(scenarioBalance.uyu, monthly.uyu + scenario.extraUyu),
+        usd:Math.min(scenarioBalance.usd, monthly.usd + scenario.extraUsd)
+      };
+      scenarioBalance.uyu = roundMoneyValue(Math.max(0, scenarioBalance.uyu - suggested.uyu));
+      scenarioBalance.usd = roundMoneyValue(Math.max(0, scenarioBalance.usd - suggested.usd));
+      remainingAfter = { ...scenarioBalance };
+    } else {
+      suggested = monthly;
+      remainingAfter = scheduledRemainingAfter;
+    }
     const note = tarjetasZeroPlanNote(offset, monthly, openTotals, currentInstallments);
     return `<tr>
       <td>${monthLabelFromAbs(abs)}</td>
@@ -3201,7 +3881,7 @@ function tarjetasZeroMetric(label, value, detail) {
 }
 
 function tarjetasOpenTotals() {
-  const entries = tarjetasState.cards.map(card => ({
+  const entries = selectedTarjetaCards().map(card => ({
     card,
     entry:getTarjetaEntry(card.id)
   }));
@@ -3225,8 +3905,13 @@ function tarjetasOpenTotals() {
   });
 }
 
+function tarjetaInstallmentsForSelectedCard() {
+  const fallbackId = getSelectedTarjetaCardId();
+  return tarjetasState.installments.filter(item => isTarjetaCardInScope(item.cardId || fallbackId));
+}
+
 function sumTarjetasInstallmentsForAbs(abs) {
-  return tarjetasState.installments.reduce((acc, item) => {
+  return tarjetaInstallmentsForSelectedCard().reduce((acc, item) => {
     const startAbs = tarjetaMonthAbs(item.startYear, item.startMonth);
     const endAbs = startAbs + Number(item.total || 1) - 1;
     if (abs < startAbs || abs > endAbs) return acc;
@@ -3237,7 +3922,7 @@ function sumTarjetasInstallmentsForAbs(abs) {
 }
 
 function sumTarjetasInstallmentsFromAbs(fromAbs) {
-  return tarjetasState.installments.reduce((acc, item) => {
+  return tarjetaInstallmentsForSelectedCard().reduce((acc, item) => {
     const startAbs = tarjetaMonthAbs(item.startYear, item.startMonth);
     const endAbs = startAbs + Number(item.total || 1) - 1;
     const firstAbs = Math.max(fromAbs, startAbs);
@@ -3251,7 +3936,7 @@ function sumTarjetasInstallmentsFromAbs(fromAbs) {
 }
 
 function tarjetasLastInstallmentAbs(selectedAbs) {
-  return tarjetasState.installments.reduce((maxAbs, item) => {
+  return tarjetaInstallmentsForSelectedCard().reduce((maxAbs, item) => {
     const startAbs = tarjetaMonthAbs(item.startYear, item.startMonth);
     const endAbs = startAbs + Number(item.total || 1) - 1;
     return endAbs >= selectedAbs ? Math.max(maxAbs, endAbs) : maxAbs;
@@ -3359,6 +4044,7 @@ function updateTarjetaEntryFromInput(input) {
   saveTarjetasState();
   renderTarjetasKpis();
   renderTarjetasZeroPlan();
+  renderTarjetasActionSummary();
 }
 
 function updateTarjetaCardFromInput(input) {
@@ -3371,21 +4057,32 @@ function updateTarjetaCardFromInput(input) {
   renderTarjetasControls();
 }
 
+function updateTarjetasScenarioFromInput(input) {
+  const field = input.dataset.tarjetasScenario;
+  if (!field) return;
+  tarjetasState[field] = roundMoneyValue(Math.max(0, Number(input.value || 0)));
+  saveTarjetasState();
+  renderTarjetasZeroPlan();
+  renderTarjetasActionSummary();
+}
+
 function renderTarjetasInstallments() {
   const list = document.getElementById("tarjetasInstallmentList");
   if (!list) return;
-  if (!tarjetasState.installments.length) {
-    list.innerHTML = `<p class="hint">Todavía no hay cuotas cargadas.</p>`;
+  const activeCard = getSelectedTarjetaCard();
+  const visibleInstallments = tarjetaInstallmentsForSelectedCard();
+  if (!visibleInstallments.length) {
+    list.innerHTML = `<p class="hint">Todavía no hay cuotas cargadas para ${escapeHtml(tarjetaScopeLabel() || activeCard.name)}.</p>`;
     return;
   }
   const selectedAbs = tarjetaMonthAbs(tarjetasState.selectedYear, tarjetasState.selectedMonth);
-  list.innerHTML = sortedTarjetaInstallmentsByRemaining(tarjetasState.installments, selectedAbs).map(item => {
+  list.innerHTML = sortedTarjetaInstallmentsByRemaining(visibleInstallments, selectedAbs).map(item => {
     const card = getTarjetaCard(item.cardId);
     const progress = tarjetaInstallmentProgress(item, selectedAbs);
     return `<div class="tarjeta-installment-item">
       <div>
         <div class="tarjeta-installment-title">${escapeHtml(item.description)}</div>
-        <div class="tarjeta-installment-meta">${escapeHtml(card?.name || "Tarjeta")} · desde ${MONTH_NAMES[item.startMonth]} ${item.startYear}</div>
+        <div class="tarjeta-installment-meta">${escapeHtml(card?.name || "Tarjeta")} - desde ${MONTH_NAMES[item.startMonth]} ${item.startYear}</div>
       </div>
       <strong>${item.currency === "USD" ? moneyUsd(item.amount) : moneyUyuExact(item.amount)}</strong>
       <span class="tarjeta-installment-meta">${progress.current}/${item.total} · ${escapeHtml(progress.label)}</span>
@@ -3423,6 +4120,39 @@ function tarjetaRemainingLabel(remaining) {
   return Number(remaining) === 1 ? "Falta 1" : `Faltan ${remaining}`;
 }
 
+function normalizeInstallmentText(value) {
+  return String(value || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tarjetaInstallmentFingerprint(item) {
+  const startAbs = tarjetaMonthAbs(item.startYear, item.startMonth);
+  return [
+    item.cardId || getSelectedTarjetaCardId(),
+    normalizeInstallmentText(item.description),
+    item.currency === "USD" ? "USD" : "UYU",
+    Number(item.amount || 0).toFixed(2),
+    Number(item.current || 1),
+    Number(item.total || 1),
+    startAbs
+  ].join("|");
+}
+
+function hasTarjetaInstallmentDuplicate(candidate) {
+  const fingerprint = tarjetaInstallmentFingerprint(candidate);
+  return tarjetasState.installments.some(item => tarjetaInstallmentFingerprint(item) === fingerprint);
+}
+
+function addTarjetaInstallment(candidate) {
+  const clean = sanitizeInstallment(candidate);
+  if (!clean || hasTarjetaInstallmentDuplicate(clean)) return false;
+  tarjetasState.installments.push(clean);
+  return true;
+}
+
 function addTarjetaInstallmentFromForm() {
   const description = document.getElementById("cuotaDescription")?.value?.trim();
   const amount = Number(document.getElementById("cuotaAmount")?.value || 0);
@@ -3432,9 +4162,11 @@ function addTarjetaInstallmentFromForm() {
     alert("Completá descripción e importe de la cuota.");
     return;
   }
-  tarjetasState.installments.push(sanitizeInstallment({
+  const cardId = document.getElementById("cuotaCardSelect")?.value || getSelectedTarjetaCardId();
+  tarjetasState.selectedCardId = cardId;
+  const added = addTarjetaInstallment({
     id:newTarjetaId(),
-    cardId:document.getElementById("cuotaCardSelect")?.value || tarjetasState.cards[0].id,
+    cardId,
     description,
     currency:document.getElementById("cuotaCurrency")?.value || "UYU",
     amount,
@@ -3443,12 +4175,17 @@ function addTarjetaInstallmentFromForm() {
     startYear:Number(document.getElementById("cuotaStartYear")?.value || tarjetasState.selectedYear),
     startMonth:Number(document.getElementById("cuotaStartMonth")?.value || tarjetasState.selectedMonth),
     createdAt:new Date().toISOString()
-  }));
+  });
+  if (!added) {
+    alert("Esa cuota ya parece estar cargada para esta tarjeta.");
+    return;
+  }
   ["cuotaDescription", "cuotaAmount"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
   saveTarjetasState();
   renderTarjetasInstallments();
   renderTarjetasProjection();
   renderTarjetasZeroPlan();
+  renderTarjetasActionSummary();
 }
 
 function renderTarjetasProjection() {
@@ -3460,7 +4197,7 @@ function renderTarjetasProjection() {
     const abs = tarjetaMonthAbs(year, month) + offset;
     const rowYear = Math.floor(abs / 12);
     const rowMonth = abs % 12;
-    const activeItems = sortedTarjetaInstallmentsByRemaining(tarjetasState.installments.filter(item => {
+    const activeItems = sortedTarjetaInstallmentsByRemaining(tarjetaInstallmentsForSelectedCard().filter(item => {
       const startAbs = tarjetaMonthAbs(item.startYear, item.startMonth);
       return abs >= startAbs && abs < startAbs + Number(item.total || 1);
     }), abs);
@@ -3483,14 +4220,15 @@ function renderTarjetasProjection() {
 async function handleTarjetasPdfImport() {
   const status = document.getElementById("tarjetasImportStatus");
   const file = document.getElementById("tarjetasPdfInput")?.files?.[0];
-  const cardId = document.getElementById("tarjetasImportCardSelect")?.value || tarjetasState.cards[0].id;
+  const cardId = document.getElementById("tarjetasImportCardSelect")?.value || getSelectedTarjetaCardId();
   if (!file) { if (status) status.textContent = "Elegí un PDF primero."; return; }
   if (!window.pdfjsLib) { if (status) status.textContent = "No se pudo cargar pdf.js. Usá la carga manual."; return; }
   try {
+    tarjetasState.selectedCardId = cardId;
     status.textContent = "Analizando PDF localmente...";
     pdfjsLib.GlobalWorkerOptions.workerSrc ||= "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
     const lines = await extractPdfTextLines(file);
-    const parsed = parseItauPdfLines(lines);
+    const parsed = parseTarjetaPdfLines(lines, getTarjetaCard(cardId));
     parsed.sourceFile = file.name;
     tarjetasPendingImport = { cardId, parsed };
     if (!parsed.hasUsefulText) {
@@ -3498,7 +4236,7 @@ async function handleTarjetasPdfImport() {
       document.getElementById("tarjetasManualSection")?.scrollIntoView({ behavior:"smooth", block:"start" });
       return;
     }
-    status.textContent = `Detecté ${parsed.installments.length} cuotas. Revisá antes de guardar.`;
+    status.textContent = `Detecté ${parsed.installments.length} cuotas (${parsed.parserName || "parser automático"}). Revisá antes de guardar.`;
     showTarjetasPdfReviewModal(cardId, parsed);
   } catch (error) {
     console.warn("No se pudo analizar el PDF de tarjeta:", error);
@@ -3582,6 +4320,35 @@ function uniquePdfLines(lines) {
     });
 }
 
+function parseTarjetaPdfLines(lines, card) {
+  const cleanLines = lines.map(line => line.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const brand = getTarjetaBrand(card);
+  const isOcaPdf = looksLikeOcaPdf(cleanLines);
+  const isItauPdf = looksLikeItauPdf(cleanLines);
+  if (isOcaPdf) return parseOcaPdfLines(cleanLines);
+  if (isItauPdf) return parseItauPdfLines(cleanLines);
+  if (brand.key === "oca") return parseOcaPdfLines(cleanLines);
+  if (brand.key === "itau") return parseItauPdfLines(cleanLines);
+  if (looksLikeItauLayout(cleanLines)) return parseItauPdfLines(cleanLines);
+  const itau = parseItauPdfLines(cleanLines);
+  const oca = parseOcaPdfLines(cleanLines);
+  const itauScore = Number(Boolean(itau.totalUyu || itau.totalUsd)) + itau.installments.length;
+  const ocaScore = Number(Boolean(oca.totalUyu || oca.totalUsd)) + oca.installments.length;
+  return ocaScore > itauScore ? oca : itau;
+}
+
+function looksLikeItauPdf(lines) {
+  return lines.some(line => /ita[uú]|banco\s+ita[uú]|tarjeta\s+ita[uú]/i.test(line));
+}
+
+function looksLikeItauLayout(lines) {
+  return lines.some(line => /saldo\s+contado/i.test(line));
+}
+
+function looksLikeOcaPdf(lines) {
+  return lines.some(line => /\boca\b|oca\s+card|ocacard|oca\s+s\.?a\.?/i.test(line));
+}
+
 function parseItauPdfLines(lines) {
   const cleanLines = lines.map(line => line.replace(/\s+/g, " ").trim()).filter(Boolean);
   const joined = cleanLines.join("\n");
@@ -3593,6 +4360,7 @@ function parseItauPdfLines(lines) {
   const minimums = parseItauMinimums(cleanLines, saldoAmounts);
   const installments = parseItauInstallments(cleanLines);
   return {
+    parserName:"Itaú",
     hasUsefulText:Boolean(saldoAmounts.length || paymentLines.length || installments.length),
     statementDate:dateToInput(dates[0] || ""),
     dueDate:dateToInput(dates[1] || ""),
@@ -3606,6 +4374,101 @@ function parseItauPdfLines(lines) {
     installments,
     rawLineCount:cleanLines.length
   };
+}
+
+function parseOcaPdfLines(lines) {
+  const cleanLines = lines.map(line => line.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const joined = cleanLines.join("\n");
+  const dates = [...joined.matchAll(/\b\d{1,2}\/\d{1,2}\/(?:\d{2}|\d{4})\b/g)].map(match => match[0]);
+  const totals = findOcaAmountsNearLabel(cleanLines, /total\s+a\s+pagar|saldo\s+(?:actual|contado)|importe\s+a\s+pagar|total\s+(?:estado|cuenta)|pago\s+contado/i);
+  const minimums = findOcaAmountsNearLabel(cleanLines, /pago\s+m[ií]nimo|m[ií]nimo\s+a\s+pagar|importe\s+m[ií]nimo|m[ií]nimo/i);
+  const payments = sumOcaPayments(cleanLines);
+  const installments = parseGenericInstallments(cleanLines, "Cuota OCA");
+  return {
+    parserName:"OCA",
+    hasUsefulText:Boolean(totals.uyu || totals.usd || minimums.uyu || minimums.usd || payments.uyu || payments.usd || installments.length),
+    statementDate:findDateNearLabel(cleanLines, /fecha\s+(?:de\s+)?(?:emisi[oó]n|estado)|estado\s+de\s+cuenta|fecha\s+estado/i) || dateToInput(dates[0] || ""),
+    dueDate:findDateNearLabel(cleanLines, /vencimiento|vence|pago\s+hasta|fecha\s+l[ií]mite|limite\s+de\s+pago/i) || dateToInput(dates[1] || ""),
+    closeDate:findDateNearLabel(cleanLines, /cierre|fecha\s+de\s+cierre|pr[oó]ximo\s+cierre/i) || dateToInput(dates[2] || ""),
+    totalUyu:roundMoneyValue(totals.uyu || 0),
+    totalUsd:roundMoneyValue(totals.usd || 0),
+    minUyu:roundMoneyValue(minimums.uyu || 0),
+    minUsd:roundMoneyValue(minimums.usd || 0),
+    paidUyu:roundMoneyValue(payments.uyu || 0),
+    paidUsd:roundMoneyValue(payments.usd || 0),
+    installments,
+    rawLineCount:cleanLines.length
+  };
+}
+
+function findDateNearLabel(lines, labelRegex) {
+  for (let index = 0; index < lines.length; index++) {
+    if (!labelRegex.test(lines[index])) continue;
+    const chunk = lines.slice(index, index + 4).join(" ");
+    const match = chunk.match(/\b\d{1,2}\/\d{1,2}\/(?:\d{2}|\d{4})\b/);
+    if (match) return dateToInput(match[0]);
+  }
+  return "";
+}
+
+function findOcaAmountsNearLabel(lines, labelRegex) {
+  for (let index = 0; index < lines.length; index++) {
+    if (!labelRegex.test(lines[index])) continue;
+    const pair = inferCurrencyPairFromLines(lines.slice(index, index + 5));
+    if (pair.uyu || pair.usd) return pair;
+  }
+  return { uyu:0, usd:0 };
+}
+
+function inferCurrencyPairFromLines(lines) {
+  const result = { uyu:0, usd:0 };
+  const untagged = [];
+  lines.forEach(line => {
+    extractMoneyEntries(line).forEach(entry => {
+      if (entry.currency === "USD" && !result.usd) result.usd = Math.abs(entry.amount);
+      else if (entry.currency === "UYU" && !result.uyu) result.uyu = Math.abs(entry.amount);
+      else untagged.push(Math.abs(entry.amount));
+    });
+  });
+  if (!result.uyu && !result.usd && untagged.length >= 2) {
+    result.uyu = untagged[0];
+    result.usd = untagged[1];
+  } else {
+    if (!result.uyu && untagged.length) result.uyu = untagged[0];
+    if (!result.usd && untagged.length > 1) result.usd = untagged[1];
+  }
+  return result;
+}
+
+function extractMoneyEntries(line) {
+  const text = String(line || "");
+  const regex = /(US\$|U\$S|USD|\$U|UYU|\$)?\s*(-?\d{1,3}(?:\.\d{3})*,\d{2}|-?\d+,\d{2})/gi;
+  const entries = [];
+  let match;
+  while ((match = regex.exec(text))) {
+    const rawCurrency = String(match[1] || "").toUpperCase();
+    let currency = "";
+    if (/US\$|U\$S|USD/.test(rawCurrency)) currency = "USD";
+    else if (/\$U|UYU|\$/.test(rawCurrency)) currency = "UYU";
+    else if (/d[oó]lares|usd|us\$|u\$s/i.test(text)) currency = "USD";
+    else if (/pesos|uyu|\$u/i.test(text)) currency = "UYU";
+    entries.push({ amount:parseUyAmount(match[2]), currency });
+  }
+  return entries.filter(entry => Number.isFinite(entry.amount));
+}
+
+function sumOcaPayments(lines) {
+  const seen = new Set();
+  return lines.reduce((acc, line) => {
+    if (!/pago|pagos|d[eé]bito|debito/i.test(line) || /m[ií]nimo|vencimiento|fecha|total\s+a\s+pagar/i.test(line)) return acc;
+    const pair = inferCurrencyPairFromLines([line]);
+    const key = `${line}_${pair.uyu}_${pair.usd}`;
+    if (seen.has(key)) return acc;
+    seen.add(key);
+    acc.uyu += Math.abs(pair.uyu || 0);
+    acc.usd += Math.abs(pair.usd || 0);
+    return acc;
+  }, { uyu:0, usd:0 });
 }
 
 function findItauAmountsNearLabel(lines, labelRegex) {
@@ -3644,9 +4507,10 @@ function parseUyAmount(value) {
 }
 
 function dateToInput(date) {
-  const match = String(date || "").match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
+  const match = String(date || "").match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
   if (!match) return "";
-  return `20${match[3]}-${match[2]}-${match[1]}`;
+  const year = match[3].length === 2 ? `20${match[3]}` : match[3];
+  return `${year}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")}`;
 }
 
 function parseItauMinimums(lines, saldoAmounts = []) {
@@ -3702,6 +4566,10 @@ function decodeMinimumFromVaLine(line, totalCents) {
 }
 
 function parseItauInstallments(lines) {
+  return parseGenericInstallments(lines, "Cuota Itaú");
+}
+
+function parseGenericInstallments(lines, fallbackDescription = "Cuota") {
   const results = [];
   const seen = new Set();
   lines.forEach(line => {
@@ -3713,14 +4581,16 @@ function parseItauInstallments(lines) {
     const amount = amounts[amounts.length - 1] || 0;
     if (!amount) return;
     let description = line
+      .replace(/^\s*\d{1,2}\/\d{1,2}\/(?:\d{2}|\d{4})\s+/, "")
       .replace(/^\s*\d{2}\s+\d{2}\s+\d{2}\s+/, "")
       .replace(cuota[0], "")
       .replace(/-?\d{1,3}(?:\.\d{3})*,\d{2}|-?\d+,\d{2}/g, "")
       .replace(/\b\d{4,}\b/g, "")
       .replace(/\[(?:UYU|USD)\]/g, "")
+      .replace(/US\$|U\$S|USD|\$U|UYU|\$/gi, "")
       .replace(/\s+/g, " ")
       .trim();
-    description = description || "Cuota Itaú";
+    description = description || fallbackDescription;
     const key = `${description}_${cuota[1]}_${cuota[2]}_${amount}`;
     if (seen.has(key)) return;
     seen.add(key);
@@ -3731,7 +4601,7 @@ function parseItauInstallments(lines) {
     results.push({
       id:newTarjetaId(),
       description,
-      currency:/\[USD\]/.test(line) ? "USD" : "UYU",
+      currency:/\[USD\]|US\$|U\$S|USD|d[oó]lares/i.test(line) ? "USD" : "UYU",
       amount:roundMoneyValue(amount),
       current,
       total,
@@ -3785,7 +4655,7 @@ function showTarjetasPdfReviewModal(cardId, parsed) {
         </table>
       </div>
     </div>
-    <p class="hint">Archivo: ${escapeHtml(parsed.sourceFile || "")}. Nada se guarda hasta confirmar.</p>
+    <p class="hint">Archivo: ${escapeHtml(parsed.sourceFile || "")}. Lectura: ${escapeHtml(parsed.parserName || "automática")}. Nada se guarda hasta confirmar.</p>
   `, [
     { text:"Cancelar", variant:"secondary", onClick:closeModal },
     { text:"Guardar importación", onClick:saveTarjetasPdfReview }
@@ -3803,6 +4673,7 @@ function reviewInput(field, label, type, value) {
 function saveTarjetasPdfReview() {
   if (!tarjetasPendingImport) return;
   const { cardId, parsed } = tarjetasPendingImport;
+  tarjetasState.selectedCardId = cardId;
   const entry = getTarjetaEntry(cardId);
   ["statementDate", "closeDate", "dueDate", "notes"].forEach(field => {
     const input = document.querySelector(`[data-review-entry="${field}"]`);
@@ -3814,16 +4685,18 @@ function saveTarjetasPdfReview() {
   });
   entry.sourceFile = parsed.sourceFile || "";
   entry.importedAt = new Date().toISOString();
+  let addedInstallments = 0;
+  let skippedInstallments = 0;
   document.querySelectorAll("[data-review-installment]").forEach(row => {
     if (!row.querySelector('[data-review-field="include"]')?.checked) return;
     const current = Number(row.querySelector('[data-review-field="current"]')?.value || 1);
     const total = Math.max(1, Number(row.querySelector('[data-review-field="total"]')?.value || 1));
     const { year, month } = selectedTarjetaPeriod();
     const startAbs = tarjetaMonthAbs(year, month) - Math.max(1, current) + 1;
-    tarjetasState.installments.push(sanitizeInstallment({
+    const added = addTarjetaInstallment({
       id:newTarjetaId(),
       cardId,
-      description:row.querySelector('[data-review-field="description"]')?.value || "Cuota Itaú",
+      description:row.querySelector('[data-review-field="description"]')?.value || `Cuota ${parsed.parserName || ""}`.trim(),
       currency:row.querySelector('[data-review-field="currency"]')?.value || "UYU",
       amount:row.querySelector('[data-review-field="amount"]')?.value || 0,
       current,
@@ -3832,12 +4705,16 @@ function saveTarjetasPdfReview() {
       startMonth:startAbs % 12,
       sourceFile:parsed.sourceFile || "",
       createdAt:new Date().toISOString()
-    }));
+    });
+    if (added) addedInstallments++;
+    else skippedInstallments++;
   });
   tarjetasPendingImport = null;
   saveTarjetasState();
   closeModal();
   renderTarjetas();
+  const status = document.getElementById("tarjetasImportStatus");
+  if (status) status.textContent = `Importación guardada: ${addedInstallments} cuotas nuevas${skippedInstallments ? `, ${skippedInstallments} duplicadas omitidas` : ""}.`;
 }
 
 function escapeHtml(value) {
@@ -3882,7 +4759,7 @@ function showHelpModal() {
       <p><b>Reparto del mes:</b> elegí un mes arriba y ajustá base UTE, fijos y porcentajes para ver cuánto corresponde a cada parte.</p>
       <p><b>Cobros:</b> además de marcar pagos recibidos, podés descontar una parte si vos le debés algo a esa persona.</p>
       <p><b>Streaming:</b> Netflix se calcula desde el plan de USD 17 y Spotify desde el plan familiar de USD 15. Ambos usan el dólar bancario venta de Uruguay.</p>
-      <p><b>Guardado local:</b> los cambios quedan en este navegador con localStorage. No se suben a internet ni modifican la planilla Excel original.</p>
+      <p><b>Guardado en Google:</b> los cambios quedan primero en este navegador y luego se suben a Google Sheets; además se actualiza un backup JSON en la carpeta de Drive configurada.</p>
       <p><b>Exportar:</b> el botón CSV descarga el año visible para llevarlo a Excel o respaldarlo.</p>
       <p><b>Backup JSON:</b> guardá todo el estado para restaurarlo después en otro navegador o si se borra localStorage.</p>
       <p><b>Importar JSON:</b> pegá o cargá un backup para recuperar meses, cobros y configuración completa.</p>
@@ -3988,6 +4865,10 @@ document.getElementById("exportBtn").addEventListener("click", exportCSV);
 document.getElementById("exportMonthBtn").addEventListener("click", exportCSVMonth);
 document.getElementById("backupBtn").addEventListener("click", exportBackupJson);
 document.getElementById("importBtn").addEventListener("click", showImportModal);
+document.getElementById("syncSheetBtn").addEventListener("click", () => {
+  setSheetsSyncMeta({ localUpdatedAt:new Date().toISOString(), pending:true });
+  syncStateToSheet();
+});
 document.getElementById("pdfPersonasBtn").addEventListener("click", showPersonasPdfModal);
 document.getElementById("pdfCobrosBtn").addEventListener("click", openCobrosPdfReport);
 document.getElementById("mailCobrosBtn").addEventListener("click", openCobrosMailDraft);
@@ -4010,9 +4891,29 @@ document.getElementById("tarjetasMonthSelect")?.addEventListener("change", e => 
   saveTarjetasState();
   renderTarjetas();
 });
+document.getElementById("tarjetasScopeSelect")?.addEventListener("change", e => {
+  tarjetasState.viewMode = e.target.value === "all" ? "all" : "selected";
+  saveTarjetasState();
+  renderTarjetas();
+});
 document.getElementById("tarjetasPdfAnalyzeBtn")?.addEventListener("click", handleTarjetasPdfImport);
 document.getElementById("tarjetasManualFocusBtn")?.addEventListener("click", () => {
   document.getElementById("tarjetasManualSection")?.scrollIntoView({ behavior:"smooth", block:"start" });
+});
+document.getElementById("tarjetasBackupBtn")?.addEventListener("click", exportTarjetasBackupJson);
+document.getElementById("tarjetasImportBtn")?.addEventListener("click", showTarjetasImportModal);
+document.getElementById("tarjetasCardSwitcher")?.addEventListener("click", e => {
+  const button = e.target?.closest?.("[data-card-select]");
+  if (button) setSelectedTarjetaCard(button.dataset.cardSelect);
+});
+document.getElementById("tarjetasImportCardSelect")?.addEventListener("change", e => {
+  setSelectedTarjetaCard(e.target.value, { keepScope:true });
+});
+document.getElementById("cuotaCardSelect")?.addEventListener("change", e => {
+  setSelectedTarjetaCard(e.target.value, { keepScope:true });
+});
+["tarjetasExtraUyu", "tarjetasExtraUsd"].forEach(id => {
+  document.getElementById(id)?.addEventListener("input", e => updateTarjetasScenarioFromInput(e.target));
 });
 document.getElementById("tarjetasSettingsGrid")?.addEventListener("input", e => {
   if (e.target?.dataset?.cardConfig) updateTarjetaCardFromInput(e.target);
@@ -4040,6 +4941,7 @@ document.getElementById("tarjetasInstallmentList")?.addEventListener("click", e 
   renderTarjetasInstallments();
   renderTarjetasProjection();
   renderTarjetasZeroPlan();
+  renderTarjetasActionSummary();
 });
 modalCloseBtn.addEventListener("click", closeModal);
 modalBackdrop.addEventListener("click", e => {
@@ -4071,6 +4973,7 @@ renderMonths();
 renderReparto();
 renderTarjetas();
 maybeRefreshDollarRate();
+loadStateFromSheet();
 
 // ── Deuda banner ─────────────────────────────────────────────────────────────
 async function renderDeudaBanner() {
