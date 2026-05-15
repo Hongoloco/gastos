@@ -148,6 +148,7 @@ function saveAppState_(payload) {
     bcuMonthlyRates: payload.bcuMonthlyRates || {},
     tarjetasState: payload.tarjetasState || {},
     mesesCerrados: payload.mesesCerrados || {},
+    cierresMensuales: payload.cierresMensuales || {},
     cobrosPagos: payload.cobrosPagos || {}
   };
   const json = JSON.stringify(statePayload);

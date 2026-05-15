@@ -875,7 +875,7 @@
         <button class="secondary" onclick="window.print()">PDF / imprimir</button>
         <button class="secondary" id="historialBtn">📅 Historial</button>
         <button class="secondary" id="compararBtn">⚖️ Comparar</button>
-        <button class="secondary" id="btn-cerrar-mes" onclick="toggleCerrarMes()">🔒 Cerrar mes</button>
+        <button class="secondary" id="btn-cerrar-mes" onclick="toggleCerrarMes()">🔒 Cerrar y respaldar</button>
         <button class="danger" id="resetBtn">Restaurar año</button>
       </div>
     </section>
@@ -1369,6 +1369,7 @@ function buildSheetsSyncPayload(updatedAt = new Date().toISOString()) {
     bcuMonthlyRates,
     tarjetasState,
     mesesCerrados:getMesesCerrados(),
+    cierresMensuales:getMesesCerradosSnapshots(),
     cobrosPagos:getStoredCobrosPagos()
   };
 }
@@ -1424,6 +1425,9 @@ function applySheetStatePayload(payload, remoteUpdatedAt) {
   }
   if (payload.mesesCerrados && typeof payload.mesesCerrados === "object") {
     localStorage.setItem(MESES_CERRADOS_KEY, JSON.stringify(payload.mesesCerrados));
+  }
+  if (payload.cierresMensuales && typeof payload.cierresMensuales === "object") {
+    localStorage.setItem(MESES_CERRADOS_SNAPSHOTS_KEY, JSON.stringify(payload.cierresMensuales));
   }
   if (payload.cobrosPagos && typeof payload.cobrosPagos === "object") {
     restoreStoredCobrosPagos(payload.cobrosPagos);
@@ -2972,6 +2976,7 @@ function exportBackupJson() {
     bcuMonthlyRates,
     tarjetasState,
     mesesCerrados:getMesesCerrados(),
+    cierresMensuales:getMesesCerradosSnapshots(),
     cobrosPagos:getStoredCobrosPagos()
   };
   downloadTextFile(
@@ -3265,6 +3270,9 @@ function restoreStateFromObject(source) {
   }
   if (source.mesesCerrados && typeof source.mesesCerrados === 'object') {
     localStorage.setItem(MESES_CERRADOS_KEY, JSON.stringify(source.mesesCerrados));
+  }
+  if (source.cierresMensuales && typeof source.cierresMensuales === 'object') {
+    localStorage.setItem(MESES_CERRADOS_SNAPSHOTS_KEY, JSON.stringify(source.cierresMensuales));
   }
   if (source.cobrosPagos && typeof source.cobrosPagos === 'object') {
     restoreStoredCobrosPagos(source.cobrosPagos);
@@ -4809,6 +4817,7 @@ function showHelpModal() {
       <p><b>Vista por mes:</b> arriba podés elegir ver todo el año o solo el mes seleccionado para que la tabla no quede apretada.</p>
       <p><b>Reparto del mes:</b> elegí un mes arriba y ajustá base UTE, fijos y porcentajes para ver cuánto corresponde a cada parte.</p>
       <p><b>Cobros:</b> además de marcar pagos recibidos, podés descontar una parte si vos le debés algo a esa persona.</p>
+      <p><b>Cerrar mes:</b> guarda una foto del mes, bloquea la edición y fuerza un backup en Google Drive en ese momento.</p>
       <p><b>Streaming:</b> Netflix se calcula desde el plan de USD 17 y Spotify desde el plan familiar de USD 15. Ambos usan el dólar bancario venta de Uruguay.</p>
       <p><b>Guardado en Google:</b> los cambios quedan primero en este navegador y la sincronización automática sube todo una vez por día. El botón Sincronizar Google fuerza una subida inmediata y registra fecha y hora.</p>
       <p><b>Exportar:</b> el botón CSV descarga el año visible para llevarlo a Excel o respaldarlo.</p>
@@ -5085,8 +5094,12 @@ async function renderDeudaBanner() {
 
 // ── Cerrar mes ────────────────────────────────────────────────────────────────
 const MESES_CERRADOS_KEY = 'gastos_meses_cerrados';
+const MESES_CERRADOS_SNAPSHOTS_KEY = 'gastos_meses_cerrados_snapshots';
 function getMesesCerrados() {
   try { return JSON.parse(localStorage.getItem(MESES_CERRADOS_KEY) || '{}'); } catch { return {}; }
+}
+function getMesesCerradosSnapshots() {
+  try { return JSON.parse(localStorage.getItem(MESES_CERRADOS_SNAPSHOTS_KEY) || '{}'); } catch { return {}; }
 }
 function mesesCerradosKey(year, monthIdx) { return `${year}_${monthIdx}`; }
 function isMesCerrado() {
@@ -5094,24 +5107,165 @@ function isMesCerrado() {
   const monthIdx = Number(document.getElementById('monthSelect').value || 0);
   return !!getMesesCerrados()[mesesCerradosKey(year, monthIdx)];
 }
-function toggleCerrarMes() {
+
+function buildCobrosClosureRows(year, monthIdx, pagos) {
+  const y = state[String(year)];
+  if (!y) return [];
+  const personas = calculatePersonasForMonth(y, Number(monthIdx || 0));
+  return ["Mamá", "Raquel", "Paola"].map(nombre => {
+    const persona = personas.find(item => item.nombre === nombre);
+    const monto = roundMoneyValue(persona?.total || 0);
+    const estado = cobrosEstadoPersona(monto, pagos || {}, nombre);
+    return { nombre, total:monto, ...estado };
+  }).filter(row => row.total > 0);
+}
+
+function buildSpotifyClosureRows(year, monthIdx, pagos) {
+  const y = state[String(year)];
+  const idx = Number(monthIdx || 0);
+  if (!y || (idx !== 5 && idx !== 11)) return [];
+  const divisor = y.divisors?.spotify || 6;
+  const start = idx === 5 ? 0 : 6;
+  const acum = y.months.slice(start, idx + 1).reduce((sum, month) => sum + Number(month?.spotify || 0), 0);
+  const total = roundMoneyValue(acum / divisor);
+  return ["Mauro", "Nico", "Fausto"].map(nombre => {
+    const key = `spotify_${nombre}`;
+    const pagado = pagos?.[key] !== undefined;
+    return {
+      nombre,
+      key,
+      total,
+      pagado:pagado ? total : 0,
+      restante:pagado ? 0 : total
+    };
+  });
+}
+
+function buildMonthClosureSnapshot(year, monthIdx, pagos, closedAt = new Date().toISOString()) {
+  const y = state[String(year)];
+  const idx = Number(monthIdx || 0);
+  const month = y?.months?.[idx] || {};
+  const personas = y ? calculatePersonasForMonth(y, idx) : [];
+  const cobros = buildCobrosClosureRows(year, idx, pagos);
+  const spotify = buildSpotifyClosureRows(year, idx, pagos);
+  const allRows = [...cobros, ...spotify];
+  const services = serviceKeys.reduce((acc, key) => {
+    acc[key] = roundMoneyValue(month[key] || 0);
+    return acc;
+  }, {});
+  return {
+    version:1,
+    year:String(year),
+    monthIdx:idx,
+    monthName:month.mes || MONTH_NAMES[idx] || "",
+    closedAt,
+    services,
+    total:roundMoneyValue(totalMonth(month)),
+    personas:personas.map(persona => ({
+      nombre:persona.nombre,
+      total:roundMoneyValue(persona.total),
+      ute:roundMoneyValue(persona.ute),
+      ose:roundMoneyValue(persona.ose),
+      antel:roundMoneyValue(persona.antel),
+      netflix:roundMoneyValue(persona.netflix),
+      spotify:roundMoneyValue(persona.spotify)
+    })),
+    cobros,
+    spotify,
+    totals:{
+      totalCobrar:roundMoneyValue(allRows.reduce((sum, row) => sum + Number(row.total || 0), 0)),
+      totalPagado:roundMoneyValue(allRows.reduce((sum, row) => sum + Number(row.pagado || 0), 0)),
+      totalPendiente:roundMoneyValue(allRows.reduce((sum, row) => sum + Number(row.restante || 0), 0))
+    }
+  };
+}
+
+function saveMesCerradoSnapshot(snapshot) {
+  const key = mesesCerradosKey(snapshot.year, snapshot.monthIdx);
+  const snapshots = getMesesCerradosSnapshots();
+  snapshots[key] = snapshot;
+  localStorage.setItem(MESES_CERRADOS_SNAPSHOTS_KEY, JSON.stringify(snapshots));
+}
+
+function removeMesCerrado(year, monthIdx) {
+  const key = mesesCerradosKey(year, monthIdx);
+  const cerrados = getMesesCerrados();
+  delete cerrados[key];
+  localStorage.setItem(MESES_CERRADOS_KEY, JSON.stringify(cerrados));
+  const snapshots = getMesesCerradosSnapshots();
+  if (snapshots[key]) {
+    snapshots[key].reopenedAt = new Date().toISOString();
+    localStorage.setItem(MESES_CERRADOS_SNAPSHOTS_KEY, JSON.stringify(snapshots));
+  }
+}
+
+async function cerrarMesYRespaldar(year, monthIdx) {
+  const key = mesesCerradosKey(year, monthIdx);
+  const closedAt = new Date().toISOString();
+  const pagos = await cobrosCargarPagos(year, monthIdx);
+  const snapshot = buildMonthClosureSnapshot(year, monthIdx, pagos, closedAt);
+  const cerrados = getMesesCerrados();
+  cerrados[key] = closedAt;
+  localStorage.setItem(MESES_CERRADOS_KEY, JSON.stringify(cerrados));
+  saveMesCerradoSnapshot(snapshot);
+  actualizarBtnCerrarMes();
+  closeModal();
+  setSheetsSyncMeta({ localUpdatedAt:closedAt, pending:true, lastMonthClosedAt:closedAt });
+  setSheetsSyncStatus("syncing", `Cerrando ${snapshot.monthName} ${year} y respaldando en Google.`);
+  await syncStateToSheet({ manual:true, reason:"month-close" });
+}
+
+async function reabrirMesYRespaldar(year, monthIdx) {
+  removeMesCerrado(year, monthIdx);
+  actualizarBtnCerrarMes();
+  closeModal();
+  const updatedAt = new Date().toISOString();
+  setSheetsSyncMeta({ localUpdatedAt:updatedAt, pending:true });
+  setSheetsSyncStatus("syncing", "Reabriendo mes y respaldando el cambio en Google.");
+  await syncStateToSheet({ manual:true, reason:"month-reopen" });
+}
+
+async function toggleCerrarMes() {
   const year = yearSelect.value;
   const monthIdx = Number(document.getElementById('monthSelect').value || 0);
   const key = mesesCerradosKey(year, monthIdx);
   const cerrados = getMesesCerrados();
   if (cerrados[key]) {
-    delete cerrados[key];
-  } else {
-    cerrados[key] = new Date().toISOString();
+    const snapshot = getMesesCerradosSnapshots()[key];
+    openModal("Reabrir mes cerrado", `
+      <p>Este mes está cerrado${snapshot?.closedAt ? ` desde <b>${formatDateTime(snapshot.closedAt)}</b>` : ""}. Si lo reabrís, vas a poder editarlo otra vez y se respaldará el cambio en Google.</p>
+    `, [
+      { text:"Cancelar", variant:"secondary", onClick:closeModal },
+      { text:"Reabrir mes", variant:"danger", onClick:() => reabrirMesYRespaldar(year, monthIdx) }
+    ]);
+    return;
   }
-  localStorage.setItem(MESES_CERRADOS_KEY, JSON.stringify(cerrados));
-  actualizarBtnCerrarMes();
+  const pagos = await cobrosCargarPagos(year, monthIdx);
+  const snapshot = buildMonthClosureSnapshot(year, monthIdx, pagos);
+  openModal(`Cerrar ${snapshot.monthName} ${year}`, `
+    <div class="summary-grid">
+      <div class="summary-item"><span>Total mes</span><strong>${money(snapshot.total)}</strong></div>
+      <div class="summary-item"><span>Pendiente cobros</span><strong>${money(snapshot.totals.totalPendiente)}</strong></div>
+      <div class="summary-item"><span>Pagado/descontado</span><strong>${money(snapshot.totals.totalPagado)}</strong></div>
+      <div class="summary-item"><span>Backup</span><strong>Drive</strong></div>
+    </div>
+    <p class="hint">Voy a guardar una foto de este mes, marcarlo como cerrado y forzar una sincronización con Google ahora.</p>
+  `, [
+    { text:"Cancelar", variant:"secondary", onClick:closeModal },
+    { text:"Cerrar y respaldar", onClick:() => cerrarMesYRespaldar(year, monthIdx) }
+  ]);
 }
 function actualizarBtnCerrarMes() {
   const btn = document.getElementById('btn-cerrar-mes');
   if (!btn) return;
   const cerrado = isMesCerrado();
-  btn.textContent = cerrado ? '🔓 Mes cerrado' : '🔒 Cerrar mes';
+  const year = yearSelect.value;
+  const monthIdx = Number(document.getElementById('monthSelect').value || 0);
+  const snapshot = getMesesCerradosSnapshots()[mesesCerradosKey(year, monthIdx)];
+  btn.textContent = cerrado ? '🔓 Reabrir mes' : '🔒 Cerrar y respaldar';
+  btn.title = cerrado && snapshot?.closedAt
+    ? `Cerrado el ${formatDateTime(snapshot.closedAt)}. Click para reabrir.`
+    : 'Cierra el mes, guarda una foto y fuerza backup en Google.';
   btn.classList.toggle('cerrado', cerrado);
   // Mostrar badge en el selector de mes
   const label = document.querySelector('label[for="monthSelect"]');
