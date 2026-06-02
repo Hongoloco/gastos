@@ -485,3 +485,140 @@ function jsonResponse_(payload) {
   output.setMimeType(ContentService.MimeType.JSON);
   return output;
 }
+
+/**
+ * Función para actualizar automáticamente el dólar el día 1 de cada mes.
+ * Debe ser llamada por un trigger de tiempo en Google Apps Script.
+ * Para configurar: Apps Script → Triggers → Crear nuevo trigger
+ *   - Función: autoDollarUpdate
+ *   - Evento: Trigger basado en tiempo > Cada día > 06:00-07:00
+ */
+function autoDollarUpdate() {
+  try {
+    const now = new Date();
+    // Solo ejecutar entre el día 1-3 del mes
+    if (now.getDate() > 3) {
+      Logger.log('Actualización saltada: no es el inicio del mes');
+      return;
+    }
+
+    // Obtener estado actual
+    const stateData = getAppState_(DEFAULT_STATE_KEY);
+    if (!stateData.ok || !stateData.payload || !stateData.payload.state) {
+      Logger.log('No hay estado guardado para actualizar');
+      return;
+    }
+
+    const payload = stateData.payload;
+    const state = payload.state || {};
+    const currentYear = String(now.getFullYear());
+    const currentMonthIdx = now.getMonth(); // 0-based
+    const currentMonth = String(currentMonthIdx + 1).padStart(2, '0');
+    
+    const yearData = state[currentYear];
+    if (!yearData || !yearData.months) {
+      Logger.log(`No hay datos para ${currentYear}`);
+      return;
+    }
+
+    const globalNetflixUsd = Number(yearData.streaming?.netflixUsd || 17);
+    const globalSpotifyUsd = Number(yearData.streaming?.spotifyUsd || 15);
+    
+    let changed = false;
+    const bcuRates = payload.bcuMonthlyRates || {};
+    if (!bcuRates[currentYear]) bcuRates[currentYear] = {};
+
+    // Traer cotización del BROU para el día 1 del mes actual
+    const dateStr = `${currentYear}-${currentMonth}-01`;
+    const bcuResult = fetchBCURate_(dateStr);
+    
+    if (bcuResult && bcuResult.rate > 0) {
+      const rate = roundMoneyValue_(bcuResult.rate);
+      const month = yearData.months[currentMonthIdx];
+      
+      if (month) {
+        const netflixUsd = month.netflixUsd || globalNetflixUsd;
+        const spotifyUsd = month.spotifyUsd || globalSpotifyUsd;
+        
+        // Solo actualizar si no estaban ya aplicados
+        if (Number(month.netflix || 0) === 0 && Number(month.spotify || 0) === 0) {
+          month.netflix = roundMoneyValue_(netflixUsd * rate);
+          month.spotify = roundMoneyValue_(spotifyUsd * rate);
+          month.usdUyu = rate;
+          month.netflixUsd = netflixUsd;
+          month.spotifyUsd = spotifyUsd;
+          month.total = ['ute', 'ose', 'antel', 'netflix', 'spotify']
+            .reduce((s, k) => s + Number(month[k] || 0), 0);
+          changed = true;
+        }
+      }
+      
+      // Guardar tasa BCU
+      bcuRates[currentYear][currentMonth] = {
+        rate: rate,
+        date: bcuResult.date || dateStr,
+        source: 'BCU'
+      };
+    }
+
+    if (changed) {
+      payload.bcuMonthlyRates = bcuRates;
+      payload.updatedAt = new Date().toISOString();
+      saveAppState_(payload);
+      Logger.log(`✓ Dólar actualizado para ${currentMonth}/${currentYear}: $${bcuResult.rate}`);
+    } else {
+      Logger.log('No hubo cambios que guardar');
+    }
+  } catch (error) {
+    Logger.log(`Error en autoDollarUpdate: ${error.message}`);
+  }
+}
+
+/**
+ * Trae la cotización del BROU para una fecha específica.
+ * API: https://tipocambio.bcu.gub.uy/api/Tc/get
+ */
+function fetchBCURate_(dateStr) {
+  try {
+    // Probar esa fecha y los 4 días siguientes (por feriados/fines de semana)
+    for (let i = 0; i <= 4; i++) {
+      const d = new Date(dateStr + 'T12:00:00Z');
+      d.setUTCDate(d.getUTCDate() + i);
+      
+      const dd = String(d.getUTCDate()).padStart(2, '0');
+      const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const yyyy = d.getUTCFullYear();
+      
+      try {
+        const url = `https://tipocambio.bcu.gub.uy/api/Tc/get?FechaDesde=${yyyy}-${mm}-${dd}&FechaHasta=${yyyy}-${mm}-${dd}&Moneda=2222`;
+        const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+        
+        if (response.getResponseCode() !== 200) continue;
+        
+        const data = JSON.parse(response.getContentText());
+        const venta = Number(data?.Tclist?.[0]?.Venta || data?.tclist?.[0]?.Venta || 0);
+        
+        if (venta > 0) {
+          return {
+            rate: venta,
+            date: `${yyyy}-${mm}-${dd}`,
+            source: 'BCU'
+          };
+        }
+      } catch (e) {
+        // Continuar con siguiente fecha
+      }
+    }
+    return null;
+  } catch (error) {
+    Logger.log(`Error fetching BCU rate: ${error.message}`);
+    return null;
+  }
+}
+
+/**
+ * Helper para redondear valores monetarios.
+ */
+function roundMoneyValue_(value) {
+  return Math.round(Number(value || 0) * 100) / 100;
+}
