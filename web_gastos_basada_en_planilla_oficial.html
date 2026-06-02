@@ -1722,8 +1722,9 @@ function applyBcuRatesToState() {
     const globalSpotifyUsd = Number(y.streaming?.spotifyUsd || 15);
     for (const [monthKey, data] of Object.entries(months)) {
       const idx = parseInt(monthKey, 10) - 1;
-      // En el año actual, no aplicar ni el mes actual ni meses futuros por adelantado.
-      if (year === realYear && idx >= realMonthIdx) continue;
+      // En el año actual, no aplicar meses futuros (solo mes actual y pasados).
+      // Netflix y Spotify se aplican a partir del 1ro del mes actual.
+      if (year === realYear && idx > realMonthIdx) continue;
       const m = y.months[idx];
       if (!m) continue;
       const netflixUsd = m.netflixUsd || globalNetflixUsd;
@@ -1922,9 +1923,9 @@ async function updateDollarRate() {
   }
 }
 function shouldRefreshDollarRate() {
-  // Actualiza automáticamente solo el día 1 de cada mes (no todos los días)
+  // Actualiza automáticamente durante los primeros 3 días del mes
   const now = new Date();
-  if (now.getDate() !== 1) return false;
+  if (now.getDate() > 3) return false;
 
   // Siempre verifica el año real actual, no el año que se está viendo
   const currentYearState = state[String(new Date().getFullYear())];
@@ -1932,8 +1933,7 @@ function shouldRefreshDollarRate() {
   if (!updatedAt) return true;
   const lastUpdate = new Date(updatedAt);
   return lastUpdate.getFullYear() !== now.getFullYear()
-    || lastUpdate.getMonth() !== now.getMonth()
-    || lastUpdate.getDate() !== 1;
+    || lastUpdate.getMonth() !== now.getMonth();
 }
 function maybeRefreshDollarRate() {
   if (shouldRefreshDollarRate()) updateDollarRate();
