@@ -1707,40 +1707,19 @@ function applyBcuRatesToState() {
   for (const [year, months] of Object.entries(bcuMonthlyRates)) {
     const y = state[year];
     if (!y) continue;
-    if (year === realYear) {
-      for (let idx = realMonthIdx + 1; idx < y.months.length; idx++) {
-        const m = y.months[idx];
-        if (!m) continue;
-        if (Number(m.netflix || 0) !== 0 || Number(m.spotify || 0) !== 0 || Number(m.usdUyu || 0) !== 0) {
-          m.netflix = 0;
-          m.spotify = 0;
-          m.usdUyu = 0;
-          m.total = totalMonth(m);
-          changed = true;
-        }
-      }
-    }
-    const globalNetflixUsd = Number(y.streaming?.netflixUsd || 17);
-    const globalSpotifyUsd = Number(y.streaming?.spotifyUsd || 15);
     for (const [monthKey, data] of Object.entries(months)) {
       const idx = parseInt(monthKey, 10) - 1;
-      // En el año actual, no aplicar meses futuros (solo mes actual y pasados).
-      // Netflix y Spotify se aplican a partir del 1ro del mes actual.
       if (year === realYear && idx > realMonthIdx) continue;
       const m = y.months[idx];
       if (!m) continue;
-      const netflixUsd = m.netflixUsd || globalNetflixUsd;
-      const spotifyUsd = m.spotifyUsd || globalSpotifyUsd;
-      const expectedNetflix = roundMoneyValue(netflixUsd * data.rate);
-      const expectedSpotify = roundMoneyValue(spotifyUsd * data.rate);
-      if (m.usdUyu !== data.rate || m.netflix !== expectedNetflix || m.spotify !== expectedSpotify) {
-        m.usdUyu = data.rate;
-        m.netflixUsd = netflixUsd;
-        m.spotifyUsd = spotifyUsd;
-        m.netflix = expectedNetflix;
-        m.spotify = expectedSpotify;
-        m.total = totalMonth(m);
-        changed = true;
+      changed = applyStreamingRateToMonth(y, m, data.rate, { storeRate:true }) || changed;
+    }
+    if (year === realYear) {
+      const forecastRate = latestKnownStreamingRate(y, realMonthIdx);
+      for (let idx = realMonthIdx + 1; idx < y.months.length; idx++) {
+        const m = y.months[idx];
+        if (!m) continue;
+        changed = applyStreamingRateToMonth(y, m, forecastRate, { storeRate:false }) || changed;
       }
     }
   }
@@ -1914,6 +1893,10 @@ async function updateDollarRate() {
         if (!bcuMonthlyRates[currentYear]) bcuMonthlyRates[currentYear] = {};
         bcuMonthlyRates[currentYear][mk] = { rate: monthRate, date: result?.date || dateStr, source: result?.source || 'BROU' };
       }
+      const forecastRate = latestKnownStreamingRate(currentYearState, currentMonthIdx);
+      for (let mi = currentMonthIdx + 1; mi < currentYearState.months.length; mi++) {
+        applyStreamingRateToMonth(currentYearState, currentYearState.months[mi], forecastRate, { storeRate:false });
+      }
     }
     save();
     renderMonths();
@@ -1942,6 +1925,35 @@ function monthStreamingMatchesRate(yearData, month, rate) {
   return Number(month.usdUyu || 0) === expected.usdUyu
     && Number(month.netflix || 0) === expected.netflix
     && Number(month.spotify || 0) === expected.spotify;
+}
+function latestKnownStreamingRate(yearData, limitIdx) {
+  const months = Array.isArray(yearData?.months) ? yearData.months : [];
+  for (let idx = Math.min(Number(limitIdx || 0), months.length - 1); idx >= 0; idx--) {
+    const rate = Number(months[idx]?.usdUyu || 0);
+    if (rate) return rate;
+  }
+  return Number(yearData?.streaming?.usdUyu || 0);
+}
+function applyStreamingRateToMonth(yearData, month, rate, options = {}) {
+  if (!month || !Number(rate || 0)) return false;
+  const expected = getStreamingExpectation(yearData, month, rate);
+  const expectedUsdUyu = options.storeRate === false ? 0 : expected.usdUyu;
+  if (
+    Number(month.usdUyu || 0) === expectedUsdUyu &&
+    Number(month.netflix || 0) === expected.netflix &&
+    Number(month.spotify || 0) === expected.spotify &&
+    Number(month.netflixUsd || 0) === expected.netflixUsd &&
+    Number(month.spotifyUsd || 0) === expected.spotifyUsd
+  ) {
+    return false;
+  }
+  month.usdUyu = expectedUsdUyu;
+  month.netflixUsd = expected.netflixUsd;
+  month.spotifyUsd = expected.spotifyUsd;
+  month.netflix = expected.netflix;
+  month.spotify = expected.spotify;
+  month.total = totalMonth(month);
+  return true;
 }
 function shouldRefreshDollarRate() {
   const now = new Date();
