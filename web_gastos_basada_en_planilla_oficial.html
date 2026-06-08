@@ -147,10 +147,11 @@
     .grid { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(360px,.65fr); gap:22px; align-items:stretch; }
     .grid-full { grid-column: 1 / -1; }
     .table-card { background:linear-gradient(180deg, rgba(16,29,38,.98), rgba(10,16,23,.98)); border-color:rgba(56,189,248,.18); }
-    .chart-card { background:linear-gradient(180deg, rgba(21,24,36,.98), rgba(12,16,24,.98)); border-color:rgba(167,139,250,.2); }
+    .chart-card { background:linear-gradient(180deg, rgba(21,24,36,.98), rgba(12,16,24,.98)); border-color:rgba(167,139,250,.2); overflow:hidden; min-width:0; }
     .section-title { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:20px 20px 0; }
     .section-title h2 { margin:0; font-size:20px; line-height:1.15; }
     .section-title p { font-size:13px; text-align:right; }
+    .chart-title-actions { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; min-width:0; }
     .actions { display:flex; gap:10px; flex-wrap:wrap; }
     button {
       border:1px solid rgba(45,212,191,.22); border-radius:8px; padding:11px 14px; cursor:pointer; color:#041512; font-weight:850;
@@ -219,19 +220,20 @@
     .service-head { display:inline-flex; align-items:center; gap:7px; }
     .service-head .brand-icon { width:17px; height:17px; }
     .chart {
-      height:290px; padding:44px 18px 34px; display:flex; align-items:end; gap:10px;
-      border-top:1px solid transparent;
+      --chart-bar-max:158;
+      height:240px; padding:32px 18px 30px; display:flex; align-items:end; gap:8px;
+      border-top:1px solid transparent; overflow:hidden; min-width:0;
     }
     .bar {
-      flex:1; min-width:18px; max-width:74px; margin:auto 0 0;
+      flex:1 1 0; min-width:0; max-width:74px; margin:auto 0 0;
       background:linear-gradient(to top, var(--bar-a, #0f766e), var(--bar-b, var(--accent)) 58%, var(--bar-c, var(--accent2)));
       border-radius:8px 8px 3px 3px; position:relative; box-shadow:inset 0 -1px 0 rgba(255,255,255,.18);
     }
     .bar span {
-      position:absolute; top:-28px; left:50%; transform:translateX(-50%); color:#dcebea; font-size:11px;
-      font-weight:850; white-space:nowrap; font-variant-numeric:tabular-nums;
+      position:absolute; top:-22px; left:50%; transform:translateX(-50%); color:#dcebea; font-size:10px;
+      font-weight:850; white-space:nowrap; font-variant-numeric:tabular-nums; max-width:78px; overflow:hidden; text-overflow:ellipsis;
     }
-    .bar small { position:absolute; bottom:-24px; left:50%; transform:translateX(-50%); color:var(--muted); font-size:10px; font-weight:850; }
+    .bar small { position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); color:var(--muted); font-size:10px; font-weight:850; }
     .panel {
       padding:20px;
       background:linear-gradient(180deg, rgba(31,25,18,.96), rgba(17,24,32,.98));
@@ -560,8 +562,10 @@
       .tarjeta-installment-item { grid-template-columns:1fr; }
       .summary-grid { grid-template-columns:1fr; }
       .modal-actions button { flex:1 1 100%; }
-      .chart { gap:6px; padding-left:12px; padding-right:12px; }
+      .chart { --chart-bar-max:145; height:222px; gap:6px; padding:24px 12px 28px; }
       .bar span { display:none; }
+      .bar small { bottom:-18px; font-size:9px; }
+      .chart-title-actions { justify-content:flex-start; }
       .table-wrap { padding:12px 14px 16px; }
       table, thead, tbody, tr, th, td { display:block; width:100%; }
       thead { display:none; }
@@ -808,7 +812,8 @@
     .t-leg-item:hover { background:rgba(255,255,255,.07); }
     .t-leg-item.active { border-color:currentColor; }
     .t-leg-item.dimmed { opacity:.38; }
-    .t-scroll { overflow-x:auto; padding:0 18px 18px; }
+    .t-scroll { overflow-x:auto; overflow-y:hidden; max-width:100%; min-width:0; padding:0 18px 18px; }
+    .trend-svg { display:block; width:100%; min-width:520px; max-width:none; }
     .chart-mode-btn { font-size:11px; padding:5px 11px; border-radius:7px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--muted-strong); box-shadow:none; }
     .chart-mode-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(45,212,191,.08); }
     /* ── Diseño financiero sobrio ── */
@@ -994,7 +999,7 @@
     .result-list { gap:6px; margin-top:12px; }
     .line { padding:8px 10px; }
     .streaming-values-title, .cobros-title { letter-spacing:.06em; }
-    .chart { height:260px; }
+    .chart { height:240px; }
     .bar { border-radius:6px 6px 2px 2px; opacity:.92; }
     .app-tab {
       min-width:108px;
@@ -1020,6 +1025,9 @@
         box-shadow:none;
       }
       .automations-grid { grid-template-columns:1fr; padding-left:14px; padding-right:14px; }
+      .chart { --chart-bar-max:145; height:222px; gap:6px; padding:24px 12px 28px; }
+      .chart-title-actions { justify-content:flex-start; }
+      .trend-svg { min-width:480px; }
       tr { background:#11151a; border-radius:8px; }
       td, td:first-child, td:last-child { grid-template-columns:92px minmax(0,1fr); }
     }
@@ -1243,7 +1251,7 @@
   <section class="card chart-card">
     <div class="section-title">
       <h2>Evolución mensual</h2>
-      <div style="display:flex;align-items:center;gap:8px">
+      <div class="chart-title-actions">
         <p>Total mensual por servicios.</p>
         <button class="chart-mode-btn active" id="chartBarsBtn" onclick="setChartMode('bars')">Barras</button>
         <button class="chart-mode-btn" id="chartLinesBtn" onclick="setChartMode('lines')">Tendencia</button>
@@ -1253,7 +1261,7 @@
     <div id="tendencia-wrap" style="display:none">
       <div class="t-legend" id="t-legend"></div>
       <div class="t-scroll">
-        <svg id="tendencia-svg" style="display:block;width:100%;min-width:560px" viewBox="0 0 900 240"></svg>
+        <svg id="tendencia-svg" class="trend-svg" viewBox="0 0 900 240"></svg>
       </div>
     </div>
   </section>
@@ -2461,6 +2469,8 @@ function renderChart() {
   chart.setAttribute("role", "list");
   const totals = y.months.map(totalMonth);
   const max = Math.max(1, ...totals);
+  const chartStyles = getComputedStyle(chart);
+  const barMaxHeight = Number.parseFloat(chartStyles.getPropertyValue("--chart-bar-max")) || 158;
   y.months.forEach((m,i) => {
     const bar = document.createElement("div");
     const colors = chartPalette[i % chartPalette.length];
@@ -2470,7 +2480,7 @@ function renderChart() {
     bar.style.setProperty("--bar-a", colors[0]);
     bar.style.setProperty("--bar-b", colors[1]);
     bar.style.setProperty("--bar-c", colors[2]);
-    bar.style.height = Math.max(6, (totals[i] / max) * 210) + "px";
+    bar.style.height = Math.max(6, (totals[i] / max) * barMaxHeight) + "px";
     bar.title = `${m.mes}: ${money(totals[i])}`;
     bar.innerHTML = `<span>${money(totals[i])}</span><small>${m.mes.slice(0,3)}</small>`;
     chart.appendChild(bar);
