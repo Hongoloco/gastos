@@ -1419,6 +1419,7 @@ function applySheetStatePayload(payload, remoteUpdatedAt) {
   if (payload.bcuMonthlyRates && typeof payload.bcuMonthlyRates === "object") {
     bcuMonthlyRates = structuredClone(payload.bcuMonthlyRates);
   }
+  applyBcuRatesToState();
   if (payload.tarjetasState && typeof payload.tarjetasState === "object") {
     tarjetasState = sanitizeTarjetasState(payload.tarjetasState);
     localStorage.setItem(TARJETAS_STORE_KEY, JSON.stringify(tarjetasState));
@@ -1484,6 +1485,7 @@ async function loadStateFromSheet() {
   } finally {
     sheetsSyncReady = true;
     updateSyncTimeLabels();
+    maybeRefreshDollarRate();
   }
 }
 
@@ -1896,7 +1898,7 @@ async function updateDollarRate() {
         const mk = String(mi + 1).padStart(2, '0');
         // Si ya tiene tasa histórica BCU real, no sobreescribir
         const existing = bcuMonthlyRates[currentYear]?.[mk];
-        if (existing?.source === 'BCU' && m.usdUyu) continue;
+        if (existing?.source === 'BCU' && monthStreamingMatchesRate(currentYearState, m, existing.rate)) continue;
         const dateStr = `${currentYear}-${mk}-01`;
         const result = await fetchDollarForDate(dateStr);
         const monthRate = result?.rate || (mi === currentMonthIdx ? rate : null);
@@ -1922,18 +1924,38 @@ async function updateDollarRate() {
     renderRateStatus("error", "No pude actualizar el dólar. Podés escribir la cotización manualmente.");
   }
 }
+function getStreamingExpectation(yearData, month, rate) {
+  const usdUyu = Number(rate || 0);
+  const netflixUsd = Number(month?.netflixUsd || yearData?.streaming?.netflixUsd || 17);
+  const spotifyUsd = Number(month?.spotifyUsd || yearData?.streaming?.spotifyUsd || 15);
+  return {
+    usdUyu,
+    netflixUsd,
+    spotifyUsd,
+    netflix:roundMoneyValue(netflixUsd * usdUyu),
+    spotify:roundMoneyValue(spotifyUsd * usdUyu)
+  };
+}
+function monthStreamingMatchesRate(yearData, month, rate) {
+  if (!month || !Number(rate || 0)) return false;
+  const expected = getStreamingExpectation(yearData, month, rate);
+  return Number(month.usdUyu || 0) === expected.usdUyu
+    && Number(month.netflix || 0) === expected.netflix
+    && Number(month.spotify || 0) === expected.spotify;
+}
 function shouldRefreshDollarRate() {
-  // Actualiza automáticamente durante los primeros 3 días del mes
   const now = new Date();
-  if (now.getDate() > 3) return false;
+  const currentYear = String(now.getFullYear());
+  const currentMonthIdx = now.getMonth();
+  const currentMonthKey = String(currentMonthIdx + 1).padStart(2, '0');
+  const currentYearState = state[currentYear];
+  const currentMonth = currentYearState?.months?.[currentMonthIdx];
+  if (!currentYearState || !currentMonth) return false;
 
-  // Siempre verifica el año real actual, no el año que se está viendo
-  const currentYearState = state[String(new Date().getFullYear())];
-  const updatedAt = currentYearState?.streaming?.dollarUpdatedAt;
-  if (!updatedAt) return true;
-  const lastUpdate = new Date(updatedAt);
-  return lastUpdate.getFullYear() !== now.getFullYear()
-    || lastUpdate.getMonth() !== now.getMonth();
+  const storedRate = Number(bcuMonthlyRates[currentYear]?.[currentMonthKey]?.rate || currentMonth.usdUyu || 0);
+  if (!storedRate) return true;
+
+  return !monthStreamingMatchesRate(currentYearState, currentMonth, storedRate);
 }
 function maybeRefreshDollarRate() {
   if (shouldRefreshDollarRate()) updateDollarRate();
@@ -5032,7 +5054,6 @@ cobrosCache = {};
 renderMonths();
 renderReparto();
 renderTarjetas();
-maybeRefreshDollarRate();
 loadStateFromSheet();
 
 // ── Deuda banner ─────────────────────────────────────────────────────────────

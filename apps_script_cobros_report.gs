@@ -487,7 +487,7 @@ function jsonResponse_(payload) {
 }
 
 /**
- * Función para actualizar automáticamente el dólar el día 1 de cada mes.
+ * Función para actualizar automáticamente el dólar desde el día 1 de cada mes.
  * Debe ser llamada por un trigger de tiempo en Google Apps Script.
  * Para configurar: Apps Script → Triggers → Crear nuevo trigger
  *   - Función: autoDollarUpdate
@@ -496,11 +496,6 @@ function jsonResponse_(payload) {
 function autoDollarUpdate() {
   try {
     const now = new Date();
-    // Solo ejecutar entre el día 1-3 del mes
-    if (now.getDate() > 3) {
-      Logger.log('Actualización saltada: no es el inicio del mes');
-      return;
-    }
 
     // Obtener estado actual
     const stateData = getAppState_(DEFAULT_STATE_KEY);
@@ -539,11 +534,16 @@ function autoDollarUpdate() {
       if (month) {
         const netflixUsd = month.netflixUsd || globalNetflixUsd;
         const spotifyUsd = month.spotifyUsd || globalSpotifyUsd;
+        const expectedNetflix = roundMoneyValue_(netflixUsd * rate);
+        const expectedSpotify = roundMoneyValue_(spotifyUsd * rate);
         
-        // Solo actualizar si no estaban ya aplicados
-        if (Number(month.netflix || 0) === 0 && Number(month.spotify || 0) === 0) {
-          month.netflix = roundMoneyValue_(netflixUsd * rate);
-          month.spotify = roundMoneyValue_(spotifyUsd * rate);
+        if (
+          Number(month.usdUyu || 0) !== rate ||
+          Number(month.netflix || 0) !== expectedNetflix ||
+          Number(month.spotify || 0) !== expectedSpotify
+        ) {
+          month.netflix = expectedNetflix;
+          month.spotify = expectedSpotify;
           month.usdUyu = rate;
           month.netflixUsd = netflixUsd;
           month.spotifyUsd = spotifyUsd;
@@ -554,14 +554,24 @@ function autoDollarUpdate() {
       }
       
       // Guardar tasa BCU
-      bcuRates[currentYear][currentMonth] = {
+      const storedRate = bcuRates[currentYear][currentMonth] || {};
+      const nextRate = {
         rate: rate,
         date: bcuResult.date || dateStr,
         source: 'BCU'
       };
+      if (
+        Number(storedRate.rate || 0) !== nextRate.rate ||
+        String(storedRate.date || '') !== nextRate.date ||
+        String(storedRate.source || '') !== nextRate.source
+      ) {
+        bcuRates[currentYear][currentMonth] = nextRate;
+        changed = true;
+      }
     }
 
     if (changed) {
+      yearData.annual = calculateAnnual_(yearData);
       payload.bcuMonthlyRates = bcuRates;
       payload.updatedAt = new Date().toISOString();
       saveAppState_(payload);
@@ -614,6 +624,22 @@ function fetchBCURate_(dateStr) {
     Logger.log(`Error fetching BCU rate: ${error.message}`);
     return null;
   }
+}
+
+/**
+ * Recalcula los totales anuales usados por la app web.
+ */
+function calculateAnnual_(yearData) {
+  const keys = ['ute', 'ose', 'antel', 'netflix', 'spotify'];
+  const annual = {};
+  const months = yearData && Array.isArray(yearData.months) ? yearData.months : [];
+  keys.forEach(key => {
+    annual[key] = months.reduce((sum, month) => sum + Number(month[key] || 0), 0);
+  });
+  annual.total = months.reduce((sum, month) => {
+    return sum + keys.reduce((monthSum, key) => monthSum + Number(month[key] || 0), 0);
+  }, 0);
+  return annual;
 }
 
 /**
