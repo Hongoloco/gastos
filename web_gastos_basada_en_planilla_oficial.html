@@ -849,7 +849,7 @@
       font-size:12px;
       margin-bottom:10px;
     }
-    h1 { font-size:clamp(26px,3vw,38px); line-height:1.08; }
+    h1 { font-size:clamp(24px,2.6vw,34px); line-height:1.08; }
     .hero-copy { font-size:14px; max-width:680px; }
     .hero-stats { margin-top:16px; }
     .hero-pill { min-width:126px; padding:9px 10px; background:rgba(255,255,255,.035); }
@@ -861,6 +861,34 @@
     }
     .control-heading { color:var(--text); }
     .actions { gap:8px; }
+    .app-actions {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      align-items:stretch;
+    }
+    .app-actions > button, .more-actions-toggle { width:100%; }
+    .more-actions { position:relative; min-width:0; }
+    .more-actions-menu {
+      position:absolute;
+      right:0;
+      top:calc(100% + 8px);
+      z-index:20;
+      width:min(260px, 78vw);
+      padding:8px;
+      display:grid;
+      gap:6px;
+      border:1px solid rgba(214,221,226,.16);
+      border-radius:8px;
+      background:#11151a;
+      box-shadow:0 22px 54px rgba(0,0,0,.48);
+    }
+    .more-actions-menu[hidden] { display:none; }
+    .more-actions-menu button {
+      width:100%;
+      text-align:left;
+      min-height:34px;
+      padding:8px 10px;
+    }
     button {
       min-height:38px;
       padding:9px 12px;
@@ -911,6 +939,7 @@
       font-size:10.5px;
     }
     th.service { border-top-width:2px; }
+    th:not(:first-child) { text-align:right; }
     td {
       background:#11151a;
       padding:8px 9px;
@@ -922,7 +951,20 @@
     tbody tr.mes-futuro td:first-child { color:#b8c3ca; border-left:3px solid rgba(154,165,173,.35); }
     tbody tr.mes-cerrado td:first-child { border-left:3px solid #16a34a; }
     tbody tr.mes-cerrado td { background:#121a17; }
-    td input { background:#0d1014; border-radius:7px; }
+    td input {
+      background:#0d1014;
+      border-radius:6px;
+      border-color:rgba(214,221,226,.11);
+      font-size:14px;
+      font-variant-numeric:tabular-nums;
+    }
+    td.money {
+      background:#171b20;
+      color:#7dd3fc;
+      text-align:right;
+      border-left:1px solid rgba(214,221,226,.1);
+    }
+    tbody tr.mes-futuro td.money { color:#9aa5ad; }
     .month-cell { gap:8px !important; }
     .month-label-wrap { display:flex; align-items:center; gap:7px; flex-wrap:wrap; min-width:0; }
     .month-name { font-weight:900; white-space:nowrap; }
@@ -932,6 +974,12 @@
     .row-status.cerrado { color:#bbf7d0; border-color:rgba(22,163,74,.28); background:rgba(22,163,74,.09); }
     .service-chip { padding:5px 8px; background:rgba(255,255,255,.035); }
     .panel { border-color:rgba(217,119,6,.14); }
+    .panel h2 { font-size:17px; }
+    .panel .hint { font-size:12px; margin-top:6px; }
+    .panel .form-grid { gap:8px; margin-top:10px; }
+    .panel .form-grid > div { padding:8px; }
+    .panel label { font-size:10px; margin-bottom:4px; }
+    .panel input, .panel select { padding:8px 9px; font-size:14px; }
     .form-grid > div, .streaming-grid > div, .line, .streaming-value-item, .tarjeta-box, .tarjetas-action-item, .tarjetas-zero-item {
       background:#12161b;
       border-color:rgba(214,221,226,.1);
@@ -940,6 +988,11 @@
       background:#15191e;
       border-color:rgba(214,221,226,.12);
     }
+    .streaming-box { padding:11px; }
+    .streaming-head { margin-bottom:8px; }
+    .streaming-grid { gap:8px; }
+    .result-list { gap:6px; margin-top:12px; }
+    .line { padding:8px 10px; }
     .streaming-values-title, .cobros-title { letter-spacing:.06em; }
     .chart { height:260px; }
     .bar { border-radius:6px 6px 2px 2px; opacity:.92; }
@@ -959,6 +1012,13 @@
       h1 { font-size:26px; }
       .hero-main, .controls, .panel, .kpi { padding:14px; }
       .actions button { flex:1 1 136px; }
+      .app-actions { grid-template-columns:1fr; }
+      .more-actions-menu {
+        position:static;
+        width:100%;
+        margin-top:8px;
+        box-shadow:none;
+      }
       .automations-grid { grid-template-columns:1fr; padding-left:14px; padding-right:14px; }
       tr { background:#11151a; border-radius:8px; }
       td, td:first-child, td:last-child { grid-template-columns:92px minmax(0,1fr); }
@@ -997,8 +1057,8 @@
   <div class="hero">
     <section class="card hero-main">
       <div class="badge">Basado en “GASTOS MENSUALES OFICIAL.xlsx”</div>
-      <h1>Tus gastos claros, mes a mes</h1>
-      <p class="hero-copy">Registrá servicios, revisá tendencias y calculá el reparto familiar sin volver a pelearte con la planilla. Todo queda guardado localmente y respaldado en Google.</p>
+      <h1>Control de gastos</h1>
+      <p class="hero-copy">Servicios, reparto familiar, cobros y respaldos en una vista de trabajo.</p>
       <div class="hero-stats" aria-label="Resumen de la herramienta">
         <div class="hero-pill"><span>Historial</span><strong id="historyRange">2019–2026</strong></div>
         <div class="hero-pill"><span>Servicios</span><strong>5 categorías</strong></div>
@@ -1028,22 +1088,27 @@
           </select>
         </div>
       </div>
-      <div class="actions">
-        <button id="exportBtn">CSV año</button>
-        <button class="secondary" id="exportMonthBtn">CSV mes</button>
-        <button class="secondary" id="backupBtn">Backup JSON</button>
-        <button class="secondary" id="importBtn">Importar JSON</button>
-        <button class="secondary" id="syncSheetBtn">Sincronizar Google</button>
-        <button class="secondary" id="pdfPersonasBtn">PDF personas</button>
+      <div class="actions app-actions">
+        <button id="syncSheetBtn">Sincronizar</button>
         <button class="secondary" id="pdfCobrosBtn">PDF cobros</button>
-        <button class="secondary" id="mailCobrosBtn">Enviar mail</button>
-        <button class="secondary" id="summaryBtn">Ver resumen</button>
-        <button class="secondary" id="helpBtn">Guía rápida</button>
-        <button class="secondary" onclick="window.print()">PDF / imprimir</button>
-        <button class="secondary" id="historialBtn">Historial</button>
-        <button class="secondary" id="compararBtn">Comparar</button>
         <button class="secondary" id="btn-cerrar-mes" onclick="toggleCerrarMes()">Cerrar y respaldar</button>
-        <button class="danger" id="resetBtn">Restaurar año</button>
+        <div class="more-actions" id="moreActions">
+          <button class="secondary more-actions-toggle" id="moreActionsBtn" type="button" aria-haspopup="true" aria-expanded="false">Más acciones</button>
+          <div class="more-actions-menu" id="moreActionsMenu" hidden>
+            <button class="secondary" id="exportBtn">CSV año</button>
+            <button class="secondary" id="exportMonthBtn">CSV mes</button>
+            <button class="secondary" id="backupBtn">Backup JSON</button>
+            <button class="secondary" id="importBtn">Importar JSON</button>
+            <button class="secondary" id="pdfPersonasBtn">PDF personas</button>
+            <button class="secondary" id="mailCobrosBtn">Enviar mail</button>
+            <button class="secondary" id="summaryBtn">Ver resumen</button>
+            <button class="secondary" id="helpBtn">Guía rápida</button>
+            <button class="secondary" onclick="window.print()">PDF / imprimir</button>
+            <button class="secondary" id="historialBtn">Historial</button>
+            <button class="secondary" id="compararBtn">Comparar</button>
+            <button class="danger" id="resetBtn">Restaurar año</button>
+          </div>
+        </div>
       </div>
     </section>
   </div>
@@ -1052,14 +1117,6 @@
 <div id="deuda-banner"></div>
 
 <main>
-  <section class="card automations-card" id="automationsCard">
-    <div class="section-title">
-      <h2>Automatismos</h2>
-      <p>Estado de los procesos que mantienen la planilla al día.</p>
-    </div>
-    <div class="automations-grid" id="automationsGrid"></div>
-  </section>
-
   <section class="kpis">
     <div class="card kpi">
       <div class="kpi-head"><span>Total del año</span><div class="kpi-icon">$</div></div>
@@ -1086,6 +1143,14 @@
       <strong id="kpiProyeccion">$0</strong>
       <small id="kpiProyeccionSub" style="color:var(--muted);font-size:11px;display:block;margin-top:3px"></small>
     </div>
+  </section>
+
+  <section class="card automations-card" id="automationsCard">
+    <div class="section-title">
+      <h2>Automatismos</h2>
+      <p>Estado de los procesos que mantienen la planilla al día.</p>
+    </div>
+    <div class="automations-grid" id="automationsGrid"></div>
   </section>
 
   <section class="grid">
@@ -1570,7 +1635,7 @@ function setSheetsSyncStatus(type = "local", message = "") {
   if (label) label.textContent = labels[type] || labels.local;
   if (btn) {
     btn.disabled = type === "syncing" || type === "loading";
-    btn.textContent = type === "syncing" ? "Subiendo..." : type === "loading" ? "Cargando..." : "Sincronizar Google";
+    btn.textContent = type === "syncing" ? "Subiendo..." : type === "loading" ? "Cargando..." : "Sincronizar";
     const next = meta.pending ? ` Próxima automática: ${formatSyncDateTime(nextSyncAt(meta))}.` : "";
     btn.title = (message || "Sube los datos actuales a Google Sheets y crea el backup JSON en Drive") + next;
   }
@@ -5275,6 +5340,28 @@ document.getElementById("helpBtn").addEventListener("click", showHelpModal);
 document.getElementById("resetBtn").addEventListener("click", showResetModal);
 document.getElementById("historialBtn").addEventListener("click", showHistorialModal);
 document.getElementById("compararBtn").addEventListener("click", showCompararModal);
+const moreActionsBtn = document.getElementById("moreActionsBtn");
+const moreActionsMenu = document.getElementById("moreActionsMenu");
+function closeMoreActions() {
+  if (!moreActionsMenu || !moreActionsBtn) return;
+  moreActionsMenu.hidden = true;
+  moreActionsBtn.setAttribute("aria-expanded", "false");
+}
+moreActionsBtn?.addEventListener("click", event => {
+  event.stopPropagation();
+  const open = moreActionsMenu?.hidden === false;
+  if (moreActionsMenu) moreActionsMenu.hidden = open;
+  moreActionsBtn.setAttribute("aria-expanded", String(!open));
+});
+moreActionsMenu?.addEventListener("click", event => {
+  if (event.target?.closest?.("button")) closeMoreActions();
+});
+document.addEventListener("click", event => {
+  if (!event.target?.closest?.("#moreActions")) closeMoreActions();
+});
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeMoreActions();
+});
 document.getElementById("appTabGastos")?.addEventListener("click", () => setAppTab("gastos"));
 document.getElementById("appTabTarjetas")?.addEventListener("click", () => setAppTab("tarjetas"));
 document.getElementById("tarjetasYearSelect")?.addEventListener("change", e => {
