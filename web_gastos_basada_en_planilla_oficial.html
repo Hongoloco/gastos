@@ -544,6 +544,7 @@
       .tarjetas-card-switcher { grid-template-columns:1fr; }
       .tarjetas-installment-form button { grid-column:1/-1; }
       .tarjeta-installment-item { grid-template-columns:1fr 1fr; }
+      .automations-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
     }
     @media (max-width: 620px) {
       header, main, footer { padding-left:14px; padding-right:14px; }
@@ -553,6 +554,7 @@
       .control-grid { grid-template-columns:1fr; }
       .form-grid { grid-template-columns:1fr; }
       .streaming-grid { grid-template-columns:1fr; }
+      .automations-grid { grid-template-columns:1fr; padding-left:16px; padding-right:16px; }
       .ute-diff-grid { grid-template-columns:1fr; }
       .tarjetas-toolbar, .tarjeta-form-grid, .tarjetas-installment-form, .tarjetas-review-grid, .tarjetas-scenario { grid-template-columns:1fr; }
       .tarjeta-installment-item { grid-template-columns:1fr; }
@@ -613,6 +615,19 @@
     .streaming-value-name { display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; }
     .streaming-value-icon { width:20px; height:20px; }
     .streaming-value-amount { font-size:16px; font-weight:900; font-variant-numeric:tabular-nums; color:var(--accent); }
+    .automations-card { margin-bottom:22px; border-color:rgba(45,212,191,.2); }
+    .automations-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; padding:0 20px 20px; }
+    .automation-item { min-width:0; padding:12px 14px; border:1px solid var(--line-soft); border-radius:8px; background:rgba(255,255,255,.035); display:grid; gap:7px; }
+    .automation-item strong { color:var(--text); font-size:14px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .automation-item span { color:var(--muted); font-size:12px; line-height:1.35; }
+    .automation-state { width:max-content; max-width:100%; padding:3px 9px; border-radius:999px; border:1px solid rgba(255,255,255,.12); color:var(--muted-strong); font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .automation-item.ok { border-color:rgba(34,197,94,.28); background:rgba(34,197,94,.055); }
+    .automation-item.ok .automation-state { color:#86efac; border-color:rgba(34,197,94,.35); background:rgba(34,197,94,.12); }
+    .automation-item.warn { border-color:rgba(251,191,36,.3); background:rgba(251,191,36,.07); }
+    .automation-item.warn .automation-state { color:#fde68a; border-color:rgba(251,191,36,.38); background:rgba(251,191,36,.12); }
+    .automation-item.error { border-color:rgba(251,113,133,.35); background:rgba(251,113,133,.08); }
+    .automation-item.error .automation-state { color:#fecdd3; border-color:rgba(251,113,133,.42); background:rgba(251,113,133,.12); }
+    .automation-item.idle .automation-state { color:#93c5fd; border-color:rgba(147,197,253,.32); background:rgba(147,197,253,.1); }
     .cobros-box { margin-top:20px; border-top:1px solid var(--line-soft); padding-top:18px; }
     .cobros-title { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:850; margin-bottom:12px; }
     .cobros-list { display:grid; gap:8px; }
@@ -885,6 +900,14 @@
 <div id="deuda-banner"></div>
 
 <main>
+  <section class="card automations-card" id="automationsCard">
+    <div class="section-title">
+      <h2>Automatismos</h2>
+      <p>Estado de los procesos que mantienen la planilla al día.</p>
+    </div>
+    <div class="automations-grid" id="automationsGrid"></div>
+  </section>
+
   <section class="kpis">
     <div class="card kpi">
       <div class="kpi-head"><span>Total del año</span><div class="kpi-icon">$</div></div>
@@ -1271,6 +1294,8 @@ let sheetsSyncReady = false;
 let sheetsSyncTimer = null;
 let sheetsSyncInFlight = false;
 let sheetsSyncAgain = false;
+let sheetsSyncStatusType = "local";
+let sheetsSyncStatusMessage = "";
 
 const yearSelect = document.getElementById("yearSelect");
 const monthSelect = document.getElementById("monthSelect");
@@ -1323,6 +1348,7 @@ function setSheetsSyncMeta(nextMeta) {
   const meta = { ...getSheetsSyncMeta(), ...nextMeta };
   localStorage.setItem(SHEETS_SYNC_META_KEY, JSON.stringify(meta));
   updateSyncTimeLabels(meta);
+  renderAutomatismos();
   return meta;
 }
 
@@ -1375,6 +1401,8 @@ function buildSheetsSyncPayload(updatedAt = new Date().toISOString()) {
 }
 
 function setSheetsSyncStatus(type = "local", message = "") {
+  sheetsSyncStatusType = type;
+  sheetsSyncStatusMessage = message;
   const label = document.getElementById("syncStateLabel");
   const btn = document.getElementById("syncSheetBtn");
   const meta = getSheetsSyncMeta();
@@ -1395,6 +1423,7 @@ function setSheetsSyncStatus(type = "local", message = "") {
     btn.title = (message || "Sube los datos actuales a Google Sheets y crea el backup JSON en Drive") + next;
   }
   updateSyncTimeLabels(meta);
+  renderAutomatismos();
 }
 
 function markSheetsSyncPending() {
@@ -1515,10 +1544,21 @@ async function syncStateToSheet(options = {}) {
     });
     const driveBackup = data.driveBackup;
     if (driveBackup?.ok) {
+      setSheetsSyncMeta({
+        lastDriveBackupOk:true,
+        lastDriveBackupAt:syncedAt,
+        lastDriveBackupName:driveBackup.dailyFileName || driveBackup.currentFileName || "",
+        lastDriveBackupError:""
+      });
       const folderText = driveBackup.dateFolderName ? ` Carpeta: ${driveBackup.dateFolderName}.` : "";
       setSheetsSyncStatus("ok", `Sincronizado con Sheets y Drive el ${formatSyncDateTime(syncedAt)}. Backup: ${driveBackup.currentFileName} / ${driveBackup.dailyFileName}.${folderText}`);
     } else {
       const driveError = driveBackup?.error ? ` Error Drive: ${driveBackup.error}` : "";
+      setSheetsSyncMeta({
+        lastDriveBackupOk:false,
+        lastDriveBackupAt:syncedAt,
+        lastDriveBackupError:driveBackup?.error || "Sin confirmación de Drive"
+      });
       setSheetsSyncStatus("sheetsOnly", `Sincronizado con Sheets el ${formatSyncDateTime(syncedAt)}, pero sin confirmar backup en Drive.${driveError}`);
     }
   } catch (error) {
@@ -1972,6 +2012,109 @@ function shouldRefreshDollarRate() {
 function maybeRefreshDollarRate() {
   if (shouldRefreshDollarRate()) updateDollarRate();
 }
+function automationItemHtml(item) {
+  return `
+    <div class="automation-item ${item.type || "idle"}">
+      <div class="automation-state">${escapeHtml(item.state || "")}</div>
+      <strong>${escapeHtml(item.title || "")}</strong>
+      <span>${escapeHtml(item.detail || "")}</span>
+    </div>
+  `;
+}
+function currentMonthContext() {
+  const now = new Date();
+  const year = String(now.getFullYear());
+  const monthIdx = now.getMonth();
+  return {
+    year,
+    monthIdx,
+    monthKey:String(monthIdx + 1).padStart(2, "0"),
+    yearData:state[year],
+    month:state[year]?.months?.[monthIdx]
+  };
+}
+function currentStreamingAutomation() {
+  const ctx = currentMonthContext();
+  if (!ctx.yearData || !ctx.month) {
+    return { type:"warn", state:"Pendiente", title:"Dólar mensual", detail:`No hay datos para ${ctx.year}.` };
+  }
+  const stored = bcuMonthlyRates[ctx.year]?.[ctx.monthKey] || {};
+  const rate = Number(stored.rate || ctx.month.usdUyu || 0);
+  if (!rate) {
+    return { type:"warn", state:"Pendiente", title:"Dólar mensual", detail:`Falta cotización para ${ctx.month.mes} ${ctx.year}.` };
+  }
+  const matches = monthStreamingMatchesRate(ctx.yearData, ctx.month, rate);
+  const source = stored.source || "manual";
+  return matches
+    ? { type:"ok", state:"OK", title:"Dólar mensual", detail:`${ctx.month.mes}: $${rate.toFixed(2)} (${source}) aplicado a streaming.` }
+    : { type:"warn", state:"Revisar", title:"Dólar mensual", detail:`${ctx.month.mes}: la tasa existe, pero Netflix/Spotify no coinciden.` };
+}
+function futureStreamingAutomation() {
+  const ctx = currentMonthContext();
+  const months = ctx.yearData?.months || [];
+  const future = months.slice(ctx.monthIdx + 1);
+  if (!future.length) {
+    return { type:"ok", state:"OK", title:"Streaming futuro", detail:"No quedan meses futuros en el año." };
+  }
+  const missing = future.filter(m => Number(m?.netflix || 0) <= 0 || Number(m?.spotify || 0) <= 0);
+  const rate = latestKnownStreamingRate(ctx.yearData, ctx.monthIdx);
+  if (missing.length) {
+    return { type:"warn", state:"Revisar", title:"Streaming futuro", detail:`${missing.length} mes(es) futuro(s) siguen en cero.` };
+  }
+  return { type:"ok", state:"Estimado", title:"Streaming futuro", detail:`${future.length} mes(es) cargados con dólar ${rate ? `$${rate.toFixed(2)}` : "estimado"}.` };
+}
+function sheetsAutomation() {
+  const meta = getSheetsSyncMeta();
+  if (sheetsSyncInFlight || sheetsSyncStatusType === "syncing" || sheetsSyncStatusType === "loading") {
+    return { type:"idle", state:"Activo", title:"Google Sheets", detail:sheetsSyncStatusMessage || "Sincronización en curso." };
+  }
+  if (sheetsSyncStatusType === "error") {
+    return { type:"error", state:"Error", title:"Google Sheets", detail:sheetsSyncStatusMessage || "No se pudo sincronizar." };
+  }
+  if (meta.pending) {
+    return { type:"warn", state:"Pendiente", title:"Google Sheets", detail:`Próxima subida: ${formatSyncDateTime(nextSyncAt(meta))}.` };
+  }
+  const lastSync = meta.lastSyncedAt || meta.remoteUpdatedAt || "";
+  return lastSync
+    ? { type:"ok", state:"OK", title:"Google Sheets", detail:`Última sync: ${formatSyncDateTime(lastSync)}.` }
+    : { type:"idle", state:"Local", title:"Google Sheets", detail:"Sin sincronización confirmada todavía." };
+}
+function driveBackupAutomation() {
+  const meta = getSheetsSyncMeta();
+  if (meta.lastDriveBackupOk === true) {
+    return {
+      type:"ok",
+      state:"OK",
+      title:"Backup Drive",
+      detail:`Último backup: ${formatSyncDateTime(meta.lastDriveBackupAt)}${meta.lastDriveBackupName ? ` · ${meta.lastDriveBackupName}` : ""}.`
+    };
+  }
+  if (meta.lastDriveBackupOk === false) {
+    return { type:"warn", state:"Revisar", title:"Backup Drive", detail:meta.lastDriveBackupError || "Drive no confirmó el último backup." };
+  }
+  return { type:"idle", state:"Sin dato", title:"Backup Drive", detail:"Se confirma después de sincronizar con Google." };
+}
+function monthCloseAutomation() {
+  if (!yearSelect || !monthSelect) return { type:"idle", state:"Sin mes", title:"Cierre mensual", detail:"Elegí un mes para ver el cierre." };
+  const year = yearSelect.value;
+  const monthIdx = Number(monthSelect.value || 0);
+  const monthName = state[year]?.months?.[monthIdx]?.mes || "Mes";
+  const snapshot = getMesesCerradosSnapshots()[mesesCerradosKey(year, monthIdx)];
+  return isMesCerrado()
+    ? { type:"ok", state:"Cerrado", title:"Cierre mensual", detail:`${monthName} ${year}${snapshot?.closedAt ? ` cerrado el ${formatDateTime(snapshot.closedAt)}` : " cerrado"}.` }
+    : { type:"idle", state:"Abierto", title:"Cierre mensual", detail:`${monthName} ${year} todavía editable.` };
+}
+function renderAutomatismos() {
+  const grid = document.getElementById("automationsGrid");
+  if (!grid) return;
+  grid.innerHTML = [
+    currentStreamingAutomation(),
+    futureStreamingAutomation(),
+    sheetsAutomation(),
+    driveBackupAutomation(),
+    monthCloseAutomation()
+  ].map(automationItemHtml).join("");
+}
 function recalcYear() {
   getYear().months.forEach(m => m.total = totalMonth(m));
   save();
@@ -2202,6 +2345,7 @@ function renderReparto() {
   renderSpotifyAcum();
   renderDeudaBanner();
   actualizarBtnCerrarMes();
+  renderAutomatismos();
 }
 
 function renderStreamingValues() {
@@ -5310,6 +5454,7 @@ function actualizarBtnCerrarMes() {
       existing.remove();
     }
   }
+  renderAutomatismos();
 }
 // Proteger edición de mes cerrado
 function checkMesCerrado() {
