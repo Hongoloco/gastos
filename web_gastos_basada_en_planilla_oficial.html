@@ -1752,14 +1752,19 @@ function applyBcuRatesToState() {
       if (year === realYear && idx > realMonthIdx) continue;
       const m = y.months[idx];
       if (!m) continue;
-      changed = applyStreamingRateToMonth(y, m, data.rate, { storeRate:true }) || changed;
+      changed = applyStreamingRateToMonth(y, m, data.rate) || changed;
     }
     if (year === realYear) {
-      const forecastRate = latestKnownStreamingRate(y, realMonthIdx);
       for (let idx = realMonthIdx + 1; idx < y.months.length; idx++) {
         const m = y.months[idx];
         if (!m) continue;
-        changed = applyStreamingRateToMonth(y, m, forecastRate, { storeRate:false }) || changed;
+        if (Number(m.netflix || 0) || Number(m.spotify || 0) || Number(m.usdUyu || 0)) {
+          m.netflix = 0;
+          m.spotify = 0;
+          m.usdUyu = 0;
+          m.total = totalMonth(m);
+          changed = true;
+        }
       }
     }
   }
@@ -1933,10 +1938,6 @@ async function updateDollarRate() {
         if (!bcuMonthlyRates[currentYear]) bcuMonthlyRates[currentYear] = {};
         bcuMonthlyRates[currentYear][mk] = { rate: monthRate, date: result?.date || dateStr, source: result?.source || 'BROU' };
       }
-      const forecastRate = latestKnownStreamingRate(currentYearState, currentMonthIdx);
-      for (let mi = currentMonthIdx + 1; mi < currentYearState.months.length; mi++) {
-        applyStreamingRateToMonth(currentYearState, currentYearState.months[mi], forecastRate, { storeRate:false });
-      }
     }
     save();
     renderMonths();
@@ -1966,20 +1967,11 @@ function monthStreamingMatchesRate(yearData, month, rate) {
     && Number(month.netflix || 0) === expected.netflix
     && Number(month.spotify || 0) === expected.spotify;
 }
-function latestKnownStreamingRate(yearData, limitIdx) {
-  const months = Array.isArray(yearData?.months) ? yearData.months : [];
-  for (let idx = Math.min(Number(limitIdx || 0), months.length - 1); idx >= 0; idx--) {
-    const rate = Number(months[idx]?.usdUyu || 0);
-    if (rate) return rate;
-  }
-  return Number(yearData?.streaming?.usdUyu || 0);
-}
-function applyStreamingRateToMonth(yearData, month, rate, options = {}) {
+function applyStreamingRateToMonth(yearData, month, rate) {
   if (!month || !Number(rate || 0)) return false;
   const expected = getStreamingExpectation(yearData, month, rate);
-  const expectedUsdUyu = options.storeRate === false ? 0 : expected.usdUyu;
   if (
-    Number(month.usdUyu || 0) === expectedUsdUyu &&
+    Number(month.usdUyu || 0) === expected.usdUyu &&
     Number(month.netflix || 0) === expected.netflix &&
     Number(month.spotify || 0) === expected.spotify &&
     Number(month.netflixUsd || 0) === expected.netflixUsd &&
@@ -1987,7 +1979,7 @@ function applyStreamingRateToMonth(yearData, month, rate, options = {}) {
   ) {
     return false;
   }
-  month.usdUyu = expectedUsdUyu;
+  month.usdUyu = expected.usdUyu;
   month.netflixUsd = expected.netflixUsd;
   month.spotifyUsd = expected.spotifyUsd;
   month.netflix = expected.netflix;
@@ -2056,12 +2048,11 @@ function futureStreamingAutomation() {
   if (!future.length) {
     return { type:"ok", state:"OK", title:"Streaming futuro", detail:"No quedan meses futuros en el año." };
   }
-  const missing = future.filter(m => Number(m?.netflix || 0) <= 0 || Number(m?.spotify || 0) <= 0);
-  const rate = latestKnownStreamingRate(ctx.yearData, ctx.monthIdx);
-  if (missing.length) {
-    return { type:"warn", state:"Revisar", title:"Streaming futuro", detail:`${missing.length} mes(es) futuro(s) siguen en cero.` };
+  const loaded = future.filter(m => Number(m?.netflix || 0) || Number(m?.spotify || 0) || Number(m?.usdUyu || 0));
+  if (loaded.length) {
+    return { type:"warn", state:"Revisar", title:"Streaming futuro", detail:`${loaded.length} mes(es) futuro(s) tienen streaming cargado antes del día 1.` };
   }
-  return { type:"ok", state:"Estimado", title:"Streaming futuro", detail:`${future.length} mes(es) cargados con dólar ${rate ? `$${rate.toFixed(2)}` : "estimado"}.` };
+  return { type:"ok", state:"En 0", title:"Streaming futuro", detail:`${future.length} mes(es) futuro(s) quedan en cero hasta que arranquen.` };
 }
 function sheetsAutomation() {
   const meta = getSheetsSyncMeta();
