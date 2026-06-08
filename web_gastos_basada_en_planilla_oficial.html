@@ -811,6 +811,158 @@
     .t-scroll { overflow-x:auto; padding:0 18px 18px; }
     .chart-mode-btn { font-size:11px; padding:5px 11px; border-radius:7px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--muted-strong); box-shadow:none; }
     .chart-mode-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(45,212,191,.08); }
+    /* ── Diseño financiero sobrio ── */
+    :root {
+      --bg:#0b0d10; --surface:#14171b; --surface-soft:#1b2026; --surface-raised:#222830;
+      --text:#f4f7f8; --muted:#9aa5ad; --muted-strong:#d6dde2;
+      --accent:#14b8a6; --accent-strong:#5eead4; --accent2:#d97706; --danger:#e11d48; --warn:#f59e0b;
+      --ute:#ea580c; --ose:#0284c7; --antel:#7c3aed; --netflix:#dc2626; --spotify:#16a34a; --total:#eab308;
+      --line:rgba(214,221,226,.16); --line-soft:rgba(214,221,226,.09); --shadow:0 18px 44px rgba(0,0,0,.34);
+    }
+    body {
+      background:
+        linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.012) 1px, transparent 1px),
+        linear-gradient(180deg, #0b0d10 0%, #101318 44%, #0c0f12 100%);
+      background-size:56px 56px, 56px 56px, 100% 100%;
+    }
+    header { padding-top:22px; padding-bottom:16px; }
+    .app-tabs { padding-top:14px; }
+    .card {
+      background:linear-gradient(180deg, rgba(22,25,30,.98), rgba(15,18,22,.98));
+      border-color:var(--line-soft);
+      border-radius:8px;
+      box-shadow:var(--shadow);
+    }
+    .hero { grid-template-columns:minmax(0,1fr) minmax(340px,.56fr); gap:14px; }
+    .hero-main {
+      padding:22px 24px;
+      background:linear-gradient(180deg, rgba(24,28,33,.99), rgba(17,20,24,.99));
+      border-color:rgba(94,234,212,.18);
+    }
+    .hero-main:after { height:2px; background:linear-gradient(90deg, var(--accent), rgba(217,119,6,.8), rgba(124,58,237,.75)); }
+    .badge {
+      padding:5px 9px;
+      background:rgba(94,234,212,.08);
+      color:#a7f3d0;
+      border-color:rgba(94,234,212,.22);
+      font-size:12px;
+      margin-bottom:10px;
+    }
+    h1 { font-size:clamp(26px,3vw,38px); line-height:1.08; }
+    .hero-copy { font-size:14px; max-width:680px; }
+    .hero-stats { margin-top:16px; }
+    .hero-pill { min-width:126px; padding:9px 10px; background:rgba(255,255,255,.035); }
+    .hero-pill strong { font-size:15px; }
+    .controls {
+      padding:18px;
+      background:linear-gradient(180deg, rgba(24,28,33,.99), rgba(17,20,24,.99));
+      border-color:rgba(217,119,6,.18);
+    }
+    .control-heading { color:var(--text); }
+    .actions { gap:8px; }
+    button {
+      min-height:38px;
+      padding:9px 12px;
+      border-radius:7px;
+      background:linear-gradient(180deg, #2dd4bf, #0f766e);
+      color:#041312;
+      box-shadow:none;
+    }
+    button:hover { box-shadow:0 10px 22px rgba(20,184,166,.14); }
+    button.secondary {
+      background:#1a1f25;
+      color:var(--muted-strong);
+      border-color:rgba(214,221,226,.14);
+    }
+    button.secondary:hover { background:#232931; color:var(--text); }
+    button.danger { background:rgba(225,29,72,.12); color:#fecdd3; border-color:rgba(225,29,72,.28); }
+    select, input {
+      background:#0f1216;
+      border-color:rgba(214,221,226,.14);
+      border-radius:7px;
+    }
+    .kpis { gap:12px; grid-template-columns:repeat(auto-fill, minmax(170px,1fr)); }
+    .kpi { padding:15px; background:#15191e; }
+    .kpi:before { height:2px; opacity:.85; }
+    .kpi strong { font-size:clamp(20px,2vw,26px); }
+    .kpi-icon { font-size:12px; letter-spacing:0; }
+    .grid { gap:16px; grid-template-columns:minmax(0,1.42fr) minmax(350px,.58fr); }
+    .section-title { padding:16px 18px 0; }
+    .section-title h2 { font-size:18px; }
+    .section-title p { font-size:12px; }
+    .automations-card {
+      margin-bottom:0;
+      border-color:rgba(94,234,212,.15);
+      background:linear-gradient(180deg, rgba(20,23,28,.98), rgba(15,18,22,.98));
+    }
+    .automations-grid { grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:8px; padding:0 18px 16px; }
+    .automation-item { padding:10px 11px; border-radius:7px; gap:5px; background:#12161b; }
+    .automation-item strong { font-size:13px; }
+    .automation-item span { font-size:11.5px; }
+    .automation-state { padding:2px 7px; font-size:9.5px; }
+    .table-card, .chart-card, .panel { background:linear-gradient(180deg, rgba(20,23,28,.99), rgba(13,16,20,.99)); }
+    .table-wrap { padding:16px 18px 0; }
+    table { border-spacing:0; }
+    th {
+      background:#1b2026;
+      color:#cbd5dc;
+      padding:10px 9px;
+      font-size:10.5px;
+    }
+    th.service { border-top-width:2px; }
+    td {
+      background:#11151a;
+      padding:8px 9px;
+    }
+    tbody tr:hover td { background:#171d23; }
+    tbody tr.mes-activo td { background:#13211f !important; }
+    tbody tr.mes-actual td:first-child { border-left-color:var(--accent); }
+    tbody tr.mes-futuro td { opacity:.72; }
+    tbody tr.mes-futuro td:first-child { color:#b8c3ca; border-left:3px solid rgba(154,165,173,.35); }
+    tbody tr.mes-cerrado td:first-child { border-left:3px solid #16a34a; }
+    tbody tr.mes-cerrado td { background:#121a17; }
+    td input { background:#0d1014; border-radius:7px; }
+    .month-cell { gap:8px !important; }
+    .month-label-wrap { display:flex; align-items:center; gap:7px; flex-wrap:wrap; min-width:0; }
+    .month-name { font-weight:900; white-space:nowrap; }
+    .row-status { display:inline-flex; align-items:center; padding:2px 7px; border-radius:999px; border:1px solid rgba(214,221,226,.14); color:var(--muted); font-size:9.5px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; line-height:1.25; }
+    .row-status.actual { color:#99f6e4; border-color:rgba(20,184,166,.3); background:rgba(20,184,166,.09); }
+    .row-status.futuro { color:#cbd5dc; border-color:rgba(154,165,173,.22); background:rgba(154,165,173,.08); }
+    .row-status.cerrado { color:#bbf7d0; border-color:rgba(22,163,74,.28); background:rgba(22,163,74,.09); }
+    .service-chip { padding:5px 8px; background:rgba(255,255,255,.035); }
+    .panel { border-color:rgba(217,119,6,.14); }
+    .form-grid > div, .streaming-grid > div, .line, .streaming-value-item, .tarjeta-box, .tarjetas-action-item, .tarjetas-zero-item {
+      background:#12161b;
+      border-color:rgba(214,221,226,.1);
+    }
+    .streaming-box, .ute-diff-card {
+      background:#15191e;
+      border-color:rgba(214,221,226,.12);
+    }
+    .streaming-values-title, .cobros-title { letter-spacing:.06em; }
+    .chart { height:260px; }
+    .bar { border-radius:6px 6px 2px 2px; opacity:.92; }
+    .app-tab {
+      min-width:108px;
+      border-radius:7px;
+      background:#181d23;
+    }
+    .app-tab.active { background:linear-gradient(180deg, #2dd4bf, #0f766e); box-shadow:none; }
+    .deuda-banner-inner { border-radius:8px; background:#15191e; }
+    .persona-card { border-radius:8px; background:#12161b; }
+    @media (max-width: 940px) {
+      .hero, .grid { grid-template-columns:1fr; }
+      .automations-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width: 620px) {
+      h1 { font-size:26px; }
+      .hero-main, .controls, .panel, .kpi { padding:14px; }
+      .actions button { flex:1 1 136px; }
+      .automations-grid { grid-template-columns:1fr; padding-left:14px; padding-right:14px; }
+      tr { background:#11151a; border-radius:8px; }
+      td, td:first-child, td:last-child { grid-template-columns:92px minmax(0,1fr); }
+    }
   </style>
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async></script>
@@ -820,10 +972,10 @@
 <!-- ── Login overlay ── -->
 <div id="loginOverlay">
   <div class="login-box">
-    <div class="login-icon-wrap">📊</div>
+    <div class="login-icon-wrap">$</div>
     <h2>Control de Gastos</h2>
     <p class="login-subtitle">Tu planilla familiar de servicios e internet.<br>Iniciá sesión para acceder.</p>
-    <div class="login-badge">🔒 Acceso privado</div>
+    <div class="login-badge">Acceso privado</div>
     <div id="googleSignInBtn"></div>
     <div class="login-footer">
       <span class="dot"></span>
@@ -844,7 +996,7 @@
 <header>
   <div class="hero">
     <section class="card hero-main">
-      <div class="badge">📊 Basado en “GASTOS MENSUALES OFICIAL.xlsx”</div>
+      <div class="badge">Basado en “GASTOS MENSUALES OFICIAL.xlsx”</div>
       <h1>Tus gastos claros, mes a mes</h1>
       <p class="hero-copy">Registrá servicios, revisá tendencias y calculá el reparto familiar sin volver a pelearte con la planilla. Todo queda guardado localmente y respaldado en Google.</p>
       <div class="hero-stats" aria-label="Resumen de la herramienta">
@@ -888,9 +1040,9 @@
         <button class="secondary" id="summaryBtn">Ver resumen</button>
         <button class="secondary" id="helpBtn">Guía rápida</button>
         <button class="secondary" onclick="window.print()">PDF / imprimir</button>
-        <button class="secondary" id="historialBtn">📅 Historial</button>
-        <button class="secondary" id="compararBtn">⚖️ Comparar</button>
-        <button class="secondary" id="btn-cerrar-mes" onclick="toggleCerrarMes()">🔒 Cerrar y respaldar</button>
+        <button class="secondary" id="historialBtn">Historial</button>
+        <button class="secondary" id="compararBtn">Comparar</button>
+        <button class="secondary" id="btn-cerrar-mes" onclick="toggleCerrarMes()">Cerrar y respaldar</button>
         <button class="danger" id="resetBtn">Restaurar año</button>
       </div>
     </section>
@@ -918,19 +1070,19 @@
       <strong id="kpiAvg">$0</strong>
     </div>
     <div class="card kpi">
-      <div class="kpi-head"><span>Mes más caro</span><div class="kpi-icon">↑</div></div>
+      <div class="kpi-head"><span>Mes más caro</span><div class="kpi-icon">Max</div></div>
       <strong id="kpiHigh">-</strong>
     </div>
     <div class="card kpi">
-      <div class="kpi-head"><span>Base UTE del año</span><div class="kpi-icon">⚡</div></div>
+      <div class="kpi-head"><span>Base UTE del año</span><div class="kpi-icon">UTE</div></div>
       <strong id="kpiBase">$0</strong>
     </div>
     <div class="card kpi">
-      <div class="kpi-head"><span>Hoy</span><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:#86efac;border-color:rgba(34,197,94,.24)">📅</div></div>
+      <div class="kpi-head"><span>Hoy</span><div class="kpi-icon" style="background:rgba(34,197,94,.1);color:#86efac;border-color:rgba(34,197,94,.24)">Hoy</div></div>
       <strong id="kpiHoy" style="font-size:clamp(13px,1.4vw,17px);line-height:1.3;">-</strong>
     </div>
     <div class="card kpi" style="border-color:rgba(139,92,246,.28)">
-      <div class="kpi-head"><span>Proyección anual</span><div class="kpi-icon" style="background:rgba(139,92,246,.1);color:#ddd6fe;border-color:rgba(139,92,246,.24)">📈</div></div>
+      <div class="kpi-head"><span>Proyección anual</span><div class="kpi-icon" style="background:rgba(139,92,246,.1);color:#ddd6fe;border-color:rgba(139,92,246,.24)">12</div></div>
       <strong id="kpiProyeccion">$0</strong>
       <small id="kpiProyeccionSub" style="color:var(--muted);font-size:11px;display:block;margin-top:3px"></small>
     </div>
@@ -1005,11 +1157,11 @@
       <div class="ute-diff-card" id="uteDiffSummary"></div>
       <div class="result-list" id="reparto"></div>
       <div class="streaming-values-box" id="streaming-values-box">
-        <div class="streaming-values-title">💵 Valor en pesos (dólar del 1° del mes)</div>
+        <div class="streaming-values-title">Valor en pesos (dólar del 1° del mes)</div>
         <div class="streaming-values-grid" id="streaming-values-grid"></div>
       </div>
       <div class="cobros-box" id="cobros-box">
-        <div class="cobros-title">💸 Te tienen que pagar a vos</div>
+        <div class="cobros-title">Te tienen que pagar a vos</div>
         <div class="cobros-list" id="cobros-list"></div>
       </div>
     </aside>
@@ -1017,7 +1169,7 @@
 
   <section class="card spotify-acum-card">
     <div class="section-title">
-      <h2>🎵 Acumulado Spotify — Mauro, Nico &amp; Fausto</h2>
+      <h2>Acumulado Spotify — Mauro, Nico &amp; Fausto</h2>
       <p id="spotify-acum-subtitle">Acumulación mes a mes. Pagan en junio y diciembre.</p>
     </div>
     <div class="spotify-acum-semestre" id="spotify-acum-grid"></div>
@@ -2125,11 +2277,26 @@ function renderMonths() {
   y.months.forEach((m, idx) => {
     const opt = document.createElement("option"); opt.value = idx; opt.textContent = m.mes; monthSelect.appendChild(opt);
   });
+  const realNow = new Date();
+  const realYear = String(realNow.getFullYear());
+  const activeYear = String(yearSelect.value);
+  const closedMap = getMesesCerrados();
   visibleMonths.forEach(({ m, idx }) => {
     const tr = document.createElement("tr");
     tr.dataset.idx = idx;
+    const isCurrentMonth = activeYear === realYear && idx === realNow.getMonth();
+    const isFutureMonth = activeYear === realYear && idx > realNow.getMonth();
+    const isClosedMonth = Boolean(closedMap[mesesCerradosKey(activeYear, idx)]);
     if (idx === selectedIdx) tr.classList.add("mes-activo");
-    tr.innerHTML = `<td class="month-cell" data-label="Mes">${m.mes}</td>` + serviceKeys.map(k =>
+    if (isCurrentMonth) tr.classList.add("mes-actual");
+    if (isFutureMonth) tr.classList.add("mes-futuro");
+    if (isClosedMonth) tr.classList.add("mes-cerrado");
+    const monthBadges = [
+      isCurrentMonth ? '<span class="row-status actual">Actual</span>' : '',
+      isFutureMonth ? '<span class="row-status futuro">Futuro</span>' : '',
+      isClosedMonth ? '<span class="row-status cerrado">Cerrado</span>' : ''
+    ].filter(Boolean).join("");
+    tr.innerHTML = `<td class="month-cell" data-label="Mes"><span class="month-label-wrap"><span class="month-name">${m.mes}</span>${monthBadges}</span></td>` + serviceKeys.map(k =>
       `<td data-label="${serviceLabels[k]}" data-service="${k}"><input type="number" value="${Number(m[k]||0)}" data-row="${idx}" data-key="${k}" aria-label="${m.mes} ${serviceLabels[k]}"></td>`
     ).join("") + `<td data-label="Total" class="money" id="total-${idx}">${money(totalMonth(m))}</td>`;
     tr.addEventListener("click", e => {
@@ -2360,7 +2527,7 @@ function renderStreamingValues() {
   
   grid.innerHTML = `
     <div class="streaming-value-item" style="grid-column:1/-1;justify-content:flex-start;gap:6px;opacity:.65;font-size:11px;padding:6px 14px;background:none;border:none;">
-      <span>💵 USD 1 = ${rateLabel}</span>
+      <span>USD 1 = ${rateLabel}</span>
     </div>
     <div class="streaming-value-item">
       <div class="streaming-value-name">
@@ -5430,7 +5597,7 @@ function actualizarBtnCerrarMes() {
   const year = yearSelect.value;
   const monthIdx = Number(document.getElementById('monthSelect').value || 0);
   const snapshot = getMesesCerradosSnapshots()[mesesCerradosKey(year, monthIdx)];
-  btn.textContent = cerrado ? '🔓 Reabrir mes' : '🔒 Cerrar y respaldar';
+  btn.textContent = cerrado ? 'Reabrir mes' : 'Cerrar y respaldar';
   btn.title = cerrado && snapshot?.closedAt
     ? `Cerrado el ${formatDateTime(snapshot.closedAt)}. Click para reabrir.`
     : 'Cierra el mes, guarda una foto y fuerza backup en Google.';
@@ -5440,7 +5607,7 @@ function actualizarBtnCerrarMes() {
   if (label) {
     const existing = label.querySelector('.mes-cerrado-badge');
     if (cerrado && !existing) {
-      label.insertAdjacentHTML('beforeend', '<span class="mes-cerrado-badge">🔒 Cerrado</span>');
+      label.insertAdjacentHTML('beforeend', '<span class="mes-cerrado-badge">Cerrado</span>');
     } else if (!cerrado && existing) {
       existing.remove();
     }
@@ -5452,7 +5619,7 @@ function checkMesCerrado() {
   if (isMesCerrado()) {
     const m = document.getElementById('monthSelect');
     const mes = m?.options[m.value]?.text || 'este mes';
-    alert(`⚠️ ${mes} está marcado como cerrado. Abrilo con el botón 🔓 para editar.`);
+    alert(`${mes} está marcado como cerrado. Abrilo con el botón Reabrir mes para editar.`);
     return true;
   }
   return false;
@@ -5591,7 +5758,7 @@ function showHistorialModal() {
     <td style="color:${clrs.total};font-weight:900">${money(y.months.reduce((a,m)=>a+totalMonth(m),0))}</td>
   </tr>`;
 
-  openModal(`📅 Historial ${yr}`, `
+  openModal(`Historial ${yr}`, `
     <div style="overflow-x:auto">
       <table class="heat-table"><thead>${thead}</thead><tbody>${trows}${sumRow}</tbody></table>
     </div>
@@ -5611,7 +5778,7 @@ function showCompararModal() {
   const mOpts = (yr, def) => (state[yr]?.months || []).map((m, i) =>
     `<option value="${i}"${i===def?' selected':''}>${m.mes}</option>`).join('');
 
-  openModal('⚖️ Comparar meses', `
+  openModal('Comparar meses', `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
       <div>
         <label>Año A</label>
@@ -5758,7 +5925,7 @@ function initGoogleAuth() {
     // Sin Client ID configurado: mostrar aviso y abrir igual la app
     document.getElementById('loginOverlay').innerHTML = `
       <div class="login-box">
-        <div class="login-logo">⚙️</div>
+        <div class="login-logo">ID</div>
         <h2>Configuración pendiente</h2>
         <p style="color:#fb7185;margin-bottom:24px;">Necesitás configurar un <strong>Google Client ID</strong> para activar el login.<br><br>
         Editá el archivo HTML y reemplazá <code style="color:#7cf4e2">YOUR_GOOGLE_CLIENT_ID</code> con tu Client ID de <a href="https://console.cloud.google.com" target="_blank" style="color:var(--accent)">Google Cloud Console</a>.</p>
