@@ -3025,8 +3025,8 @@ function renderPersonasChart(m, personas) {
   const wrap = document.getElementById("personas-chart-wrap");
   if (!wrap) return;
 
-  const serviceColors = { ute:"#f97316", ose:"#38bdf8", antel:"#a78bfa", netflix:"#ef4444", spotify:"#22c55e" };
-  const serviceNames  = { ute:"UTE", ose:"OSE", antel:"ANTEL", netflix:"Netflix", spotify:"Spotify" };
+  const serviceColors = { ute:"#f97316", ose:"#38bdf8", antel:"#a78bfa", netflix:"#ef4444", spotify:"#22c55e", regalo:"#ec4899" };
+  const serviceNames  = { ute:"UTE", ose:"OSE", antel:"ANTEL", netflix:"Netflix", spotify:"Spotify", regalo:"Regalo" };
   const serviceIcons2 = {
     ute:"https://www.ute.com.uy/themes/ute/ute_favicon.ico",
     ose:"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22%230284c7%22%20d%3D%22M12%202C10%205%204%2011%204%2016a8%208%200%200%200%2016%200C20%2011%2014%205%2012%202Z%22%2F%3E%3Cpath%20d%3D%22M8%2015c0%203%202%205%204%205%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E",
@@ -3034,8 +3034,9 @@ function renderPersonasChart(m, personas) {
     netflix:"https://assets.nflxext.com/us/ffe/siteui/common/icons/nficon2016.png",
     spotify:"https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png"
   };
-  const keys = ["ute","ose","antel","netflix","spotify"];
-  const values = keys.map(k => Math.round(Number(m[k]||0)));
+  const regalo = (personas || []).reduce((sum, p) => sum + Number(p.cuotaExtra || 0), 0);
+  const keys = ["ute","ose","antel","netflix","spotify","regalo"];
+  const values = keys.map(k => Math.round(k === "regalo" ? regalo : Number(m[k]||0)));
   const total = values.reduce((a,b)=>a+b,0);
   if (!total) { wrap.innerHTML = ""; return; }
 
@@ -3081,12 +3082,12 @@ function renderPersonasChart(m, personas) {
       </svg>
     </div>
     <div style="display:flex;flex-direction:column;gap:0;min-width:0">
-      <p style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 6px">Por servicio</p>
+      <p style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 6px">Por concepto</p>
       <div class="chart-legend" id="donut-legend">
         ${segments.map((s,i)=>`
           <div class="chart-legend-item" id="donut-leg-${i}" style="--item-color:${s.color}"
             onclick="donutClick(${i})" onmouseenter="donutHover(${i})" onmouseleave="donutLeave()">
-            <img src="${serviceIcons2[s.k]}" style="width:16px;height:16px;object-fit:contain;border-radius:3px;flex:0 0 auto" alt="">
+            ${s.k === "regalo" ? '<span aria-hidden="true" style="width:16px;flex:0 0 auto">🎁</span>' : `<img src="${serviceIcons2[s.k]}" style="width:16px;height:16px;object-fit:contain;border-radius:3px;flex:0 0 auto" alt="">`}
             <span class="chart-legend-name">${serviceNames[s.k]}</span>
             <span class="chart-legend-pct">${(s.pct*100).toFixed(1)}%</span>
             <span class="chart-legend-monto" style="color:${s.color}">${money(s.value)}</span>
