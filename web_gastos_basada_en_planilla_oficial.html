@@ -1984,8 +1984,8 @@ function sanitizeMonthRecord(month) {
   return month;
 }
 
-function getExcedentePercentages(yearData) {
-  const stored = yearData?.excedenteUte || {};
+function getExcedentePercentages(yearData, monthIdx) {
+  const stored = yearData?.months?.[monthIdx]?.excedenteUte || yearData?.excedenteUte || {};
   const percent = value => value === undefined || value === null || value === "" || !Number.isFinite(Number(value))
     ? 50 : Math.min(100, Math.max(0, Number(value)));
   return { pctMiCasa:percent(stored.pctMiCasa), pctPaola:percent(stored.pctPaola) };
@@ -2617,14 +2617,14 @@ function recalcYear() {
 }
 function renderMonths() {
   const y = getYear();
-  const percentages = getExcedentePercentages(y);
-  document.getElementById("pctMiCasa").value = percentages.pctMiCasa;
-  document.getElementById("pctPaola").value = percentages.pctPaola;
   // Si el select está vacío (primera carga), usar el mes actual como valor por defecto
   const isFirstLoad = monthSelect.options.length === 0;
   const selectedIdx = isFirstLoad
     ? new Date().getMonth()
     : Math.min(Math.max(Number(monthSelect.value || 0), 0), y.months.length - 1);
+  const percentages = getExcedentePercentages(y, selectedIdx);
+  document.getElementById("pctMiCasa").value = percentages.pctMiCasa;
+  document.getElementById("pctPaola").value = percentages.pctPaola;
   const visibleMonths = viewModeSelect.value === "month"
     ? y.months.map((m, idx) => ({ m, idx })).filter(item => item.idx === selectedIdx)
     : y.months.map((m, idx) => ({ m, idx }));
@@ -2777,8 +2777,8 @@ function renderReparto() {
   const base = Number(document.getElementById("baseUte").value || y.baseUte || 0);
   const fixMama = Number(document.getElementById("fixMama").value || 0);
   const fixRaquel = Number(document.getElementById("fixRaquel").value || 0);
-  const pctMi = getExcedentePercentages(y).pctMiCasa / 100;
-  const pctPaola = getExcedentePercentages(y).pctPaola / 100;
+  const pctMi = getExcedentePercentages(y, Number(monthSelect.value || 0)).pctMiCasa / 100;
+  const pctPaola = getExcedentePercentages(y, Number(monthSelect.value || 0)).pctPaola / 100;
   const div = Math.max(1, Number(document.getElementById("divServicios").value || 4));
   const numMiCasa = Math.max(1, Number(document.getElementById("numMiCasa").value || 2));
   const ute = Number(m.ute || 0);
@@ -2918,8 +2918,8 @@ function calculatePersonasForMonth(y, monthIdx) {
   const base = Number(document.getElementById("baseUte").value || y.baseUte || 0);
   const fixMama = Number(document.getElementById("fixMama").value || 0);
   const fixRaquel = Number(document.getElementById("fixRaquel").value || 0);
-  const pctMi = getExcedentePercentages(y).pctMiCasa / 100;
-  const pctPaola = getExcedentePercentages(y).pctPaola / 100;
+  const pctMi = getExcedentePercentages(y, monthIdx).pctMiCasa / 100;
+  const pctPaola = getExcedentePercentages(y, monthIdx).pctPaola / 100;
   const div = Math.max(1, Number(document.getElementById("divServicios").value || 4));
   const numMiCasa = Math.max(1, Number(document.getElementById("numMiCasa").value || 2));
   const ute = Number(m.ute || 0);
@@ -3382,8 +3382,8 @@ function buildRepartoSnapshot(y, m, monthIdx) {
   const base = Number(y.baseUte || 0);
   const fixMama = Number(document.getElementById("fixMama")?.value || 0);
   const fixRaquel = Number(document.getElementById("fixRaquel")?.value || 0);
-  const pctMi = getExcedentePercentages(y).pctMiCasa / 100;
-  const pctPaola = getExcedentePercentages(y).pctPaola / 100;
+  const pctMi = getExcedentePercentages(y, monthIdx).pctMiCasa / 100;
+  const pctPaola = getExcedentePercentages(y, monthIdx).pctPaola / 100;
   const div = Math.max(1, Number(document.getElementById("divServicios")?.value || 4));
   const ute = Number(m?.ute || 0);
   const basePart = Math.min(ute, base);
@@ -5635,7 +5635,10 @@ viewModeSelect.addEventListener("change", () => {
 });
 inputsCfg.forEach(inp => inp.addEventListener("input", () => {
   const y = getYear();
-  y.excedenteUte = getExcedentePercentages({ excedenteUte:{
+  const monthIdx = Number(monthSelect.value || 0);
+  const month = y.months[monthIdx];
+  if (!month) return;
+  month.excedenteUte = getExcedentePercentages({ excedenteUte:{
     pctMiCasa:document.getElementById("pctMiCasa").value,
     pctPaola:document.getElementById("pctPaola").value
   } });
