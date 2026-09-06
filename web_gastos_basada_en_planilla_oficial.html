@@ -748,14 +748,16 @@
       padding:20px 18px; border-radius:12px;
       border:1px solid color-mix(in srgb, var(--persona-color, var(--accent)), transparent 55%);
       background:color-mix(in srgb, var(--persona-color, var(--accent)), transparent 92%);
-      display:grid; gap:10px;
+      display:flex; flex-direction:column; align-items:stretch; gap:10px;
     }
-    .persona-header { display:flex; align-items:center; gap:8px; }
+    .persona-header { display:flex; align-items:center; gap:8px; min-height:24px; flex:0 0 auto; }
     .persona-nombre { font-weight:900; font-size:15px; color:var(--text); }
     .persona-icon { font-size:22px; line-height:1; }
-    .persona-total { font-size:clamp(20px,2vw,26px); color:var(--persona-color, var(--accent)); font-weight:900; font-variant-numeric:tabular-nums; line-height:1.1; }
+    .persona-total { display:block; min-height:29px; font-size:clamp(20px,2vw,26px); color:var(--persona-color, var(--accent)); font-weight:900; font-variant-numeric:tabular-nums; line-height:1.1; }
     .persona-breakdown { display:grid; gap:5px; font-size:12.5px; color:var(--muted); margin-top:2px; }
-    .persona-breakdown span { white-space:nowrap; display:flex; align-items:center; justify-content:space-between; gap:6px; }
+    .persona-breakdown > span { white-space:nowrap; display:grid; grid-template-columns:13px minmax(0,1fr) auto; align-items:center; column-gap:7px; min-height:16px; }
+    .persona-service-label { min-width:0; }
+    .persona-service-icon { width:13px; text-align:center; line-height:1; }
     .persona-breakdown span b { color:var(--muted-strong); font-variant-numeric:tabular-nums; }
     .brand-icon-sm { width:13px; height:13px; object-fit:contain; border-radius:2px; flex-shrink:0; vertical-align:middle; }
     .form-grid > div:nth-child(7) { border-left-color:#f472b6; }
@@ -3076,12 +3078,12 @@ function renderPersonas() {
         </div>
         <strong class="persona-total${editing && previous.has(p.nombre) && previous.get(p.nombre) !== money(p.total) ? " amount-updated" : ""}">${money(p.total)}</strong>
         <div class="persona-breakdown">
-          <span><img class="brand-icon-sm" src="https://www.ute.com.uy/themes/ute/ute_favicon.ico" alt=""> UTE <b>${money(p.ute)}</b></span>
-          <span><img class="brand-icon-sm" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22%230284c7%22%20d%3D%22M12%202C10%205%204%2011%204%2016a8%208%200%200%200%2016%200C20%2011%2014%205%2012%202Z%22%2F%3E%3Cpath%20d%3D%22M8%2015c0%203%202%205%204%205%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E" alt=""> OSE <b>${money(p.ose)}</b></span>
-          <span><img class="brand-icon-sm" src="https://www.antel.com.uy/o/antel-theme/images/favicon.ico" alt=""> ANTEL <b>${money(p.antel)}</b></span>
-          <span><img class="brand-icon-sm" src="https://assets.nflxext.com/us/ffe/siteui/common/icons/nficon2016.png" alt=""> Netflix <b>${money(p.netflix)}</b></span>
-          <span><img class="brand-icon-sm" src="https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png" alt=""> Spotify <b>${money(p.spotify)}</b></span>
-          ${p.cuotaExtra ? `<span>🎁 Regalo (${p.cuotaExtraNumero}/12) <b>${money(p.cuotaExtra)}</b></span>` : ""}
+          <span><img class="brand-icon-sm" src="https://www.ute.com.uy/themes/ute/ute_favicon.ico" alt=""><span class="persona-service-label">UTE</span><b>${money(p.ute)}</b></span>
+          <span><img class="brand-icon-sm" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22%230284c7%22%20d%3D%22M12%202C10%205%204%2011%204%2016a8%208%200%200%200%2016%200C20%2011%2014%205%2012%202Z%22%2F%3E%3Cpath%20d%3D%22M8%2015c0%203%202%205%204%205%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E" alt=""><span class="persona-service-label">OSE</span><b>${money(p.ose)}</b></span>
+          <span><img class="brand-icon-sm" src="https://www.antel.com.uy/o/antel-theme/images/favicon.ico" alt=""><span class="persona-service-label">ANTEL</span><b>${money(p.antel)}</b></span>
+          <span><img class="brand-icon-sm" src="https://assets.nflxext.com/us/ffe/siteui/common/icons/nficon2016.png" alt=""><span class="persona-service-label">Netflix</span><b>${money(p.netflix)}</b></span>
+          <span><img class="brand-icon-sm" src="https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png" alt=""><span class="persona-service-label">Spotify</span><b>${money(p.spotify)}</b></span>
+          ${p.cuotaExtra ? `<span><span class="persona-service-icon">🎁</span><span class="persona-service-label">Regalo (${p.cuotaExtraNumero}/12)</span><b>${money(p.cuotaExtra)}</b></span>` : ""}
         </div>
         ${giftProgressHtml(p)}
       </div>
