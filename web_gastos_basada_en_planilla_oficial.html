@@ -2893,6 +2893,14 @@ function renderStreamingValues() {
   `;
 }
 
+// Primera cuota abonada en agosto de 2026; solo se cobran las 11 restantes.
+function mamaExtraForMonth(year, monthIdx) {
+  const offset = Number(year) * 12 + Number(monthIdx) - (2026 * 12 + 8);
+  return Number.isInteger(offset) && offset >= 0 && offset < 11
+    ? { amount:188, installment:offset + 2, totalInstallments:12 }
+    : { amount:0, installment:0, totalInstallments:12 };
+}
+
 function calculatePersonasForMonth(y, monthIdx) {
   const m = y.months[monthIdx] || y.months[0];
   const base = Number(document.getElementById("baseUte").value || y.baseUte || 0);
@@ -2942,7 +2950,16 @@ function calculatePersonasForMonth(y, monthIdx) {
     );
   }
 
-  return personas.map(p => ({ ...p, total: p.ute + p.ose + p.antel + p.netflix + p.spotify }));
+  const year = Object.keys(state).find(key => state[key] === y);
+  const extra = mamaExtraForMonth(year, monthIdx);
+  return personas.map(p => {
+    const cuotaExtra = p.nombre === "Mamá" ? extra.amount : 0;
+    return {
+      ...p, cuotaExtra,
+      cuotaExtraNumero:cuotaExtra ? extra.installment : 0,
+      total:p.ute + p.ose + p.antel + p.netflix + p.spotify + cuotaExtra
+    };
+  });
 }
 
 function aggregatePersonasForYear(y) {
@@ -2958,6 +2975,7 @@ function aggregatePersonasForYear(y) {
       byName[persona.nombre].antel += persona.antel;
       byName[persona.nombre].netflix += persona.netflix;
       byName[persona.nombre].spotify += persona.spotify;
+      byName[persona.nombre].cuotaExtra += persona.cuotaExtra;
       byName[persona.nombre].total += persona.total;
     });
   });
@@ -2987,6 +3005,7 @@ function renderPersonas() {
           <span><img class="brand-icon-sm" src="https://www.antel.com.uy/o/antel-theme/images/favicon.ico" alt=""> ANTEL <b>${money(p.antel)}</b></span>
           <span><img class="brand-icon-sm" src="https://assets.nflxext.com/us/ffe/siteui/common/icons/nficon2016.png" alt=""> Netflix <b>${money(p.netflix)}</b></span>
           <span><img class="brand-icon-sm" src="https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png" alt=""> Spotify <b>${money(p.spotify)}</b></span>
+          ${p.cuotaExtra ? `<span>Cuota extra (${p.cuotaExtraNumero}/12) <b>${money(p.cuotaExtra)}</b></span>` : ""}
         </div>
       </div>
     `;
@@ -3022,7 +3041,7 @@ function renderPersonasChart(m, personas) {
 
   // Ranking de personas (barras horizontales)
   const personasValidas = (personas || [])
-    .map(p => ({ ...p, total: Math.round(p.ute+p.ose+p.antel+p.netflix+p.spotify) }))
+    .map(p => ({ ...p, total: Math.round(p.total) }))
     .filter(p => p.total > 0)
     .sort((a,b) => b.total - a.total);
   const maxPersona = personasValidas[0]?.total || 1;
@@ -3801,6 +3820,7 @@ function buildPersonasPdfHtml(report) {
       <td>${money(row.antel)}</td>
       <td>${money(row.netflix)}</td>
       <td>${money(row.spotify)}</td>
+      <td>${money(row.cuotaExtra || 0)}</td>
       <td>${money(row.total)}</td>
     </tr>
   `).join('');
@@ -3834,11 +3854,11 @@ function buildPersonasPdfHtml(report) {
   </div>
   <table>
     <thead>
-      <tr><th>Persona</th><th>UTE</th><th>OSE</th><th>ANTEL</th><th>Netflix</th><th>Spotify</th><th>Total</th></tr>
+      <tr><th>Persona</th><th>UTE</th><th>OSE</th><th>ANTEL</th><th>Netflix</th><th>Spotify</th><th>Cuota extra</th><th>Total</th></tr>
     </thead>
     <tbody>${rowsHtml}</tbody>
     <tfoot>
-      <tr><td>Total general</td><td colspan="5"></td><td>${money(report.total)}</td></tr>
+      <tr><td>Total general</td><td colspan="6"></td><td>${money(report.total)}</td></tr>
     </tfoot>
   </table>
   <script>window.addEventListener('load', () => setTimeout(() => window.print(), 320));<\/script>
