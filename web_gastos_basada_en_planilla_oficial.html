@@ -1090,6 +1090,20 @@
       tr { background:#11151a; border-radius:8px; }
       td, td:first-child, td:last-child { grid-template-columns:92px minmax(0,1fr); }
     }
+
+    .field-save-note{display:block;min-height:1.2em;margin-top:4px;color:var(--accent);font-size:11px;font-weight:600;line-height:1.3}
+    .field-saved{outline:2px solid var(--accent);outline-offset:2px}
+    .amount-updated{animation:amount-saved 1.2s ease-out}
+    @keyframes amount-saved{0%,25%{background:rgba(45,212,191,.24);box-shadow:0 0 0 5px rgba(45,212,191,.12)}100%{background:transparent;box-shadow:none}}
+    .gift-progress{margin-top:14px;padding:12px;border:1px solid rgba(236,72,153,.3);border-radius:12px;background:rgba(236,72,153,.06)}
+    .gift-progress-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:700}
+    .gift-progress progress{display:block;width:100%;height:8px;margin:10px 0;border:0;border-radius:99px;overflow:hidden;accent-color:#ec4899;background:var(--line)}
+    .gift-progress progress::-webkit-progress-bar{background:var(--line);border-radius:99px}
+    .gift-progress progress::-webkit-progress-value{background:#ec4899;border-radius:99px}
+    .gift-progress progress::-moz-progress-bar{background:#ec4899;border-radius:99px}
+    .gift-progress p{margin:4px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
+    @media(prefers-reduced-motion:reduce){.amount-updated{animation:none;outline:2px solid var(--accent)}}
+
   </style>
   <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async></script>
@@ -1954,9 +1968,43 @@ async function syncStateToSheet(options = {}) {
 ensureFutureYears();
 refreshYearOptions(String(new Date().getFullYear()));
 
+
+function showFieldSavedFeedback() {
+  const field = document.activeElement;
+  if (!field || !field.matches('input, select, textarea') || field.getAttribute("aria-invalid") === "true") return;
+  let note = field.nextElementSibling;
+  if (!note?.classList.contains("field-save-note")) {
+    note = document.createElement("small");
+    note.className = "field-save-note";
+    note.setAttribute("role", "status");
+    field.insertAdjacentElement("afterend", note);
+  }
+  note.textContent = "✓ Guardado en este dispositivo";
+  field.classList.add("field-saved");
+  clearTimeout(field._saveFeedbackTimer);
+  field._saveFeedbackTimer = setTimeout(() => {
+    field.classList.remove("field-saved");
+    note.textContent = "";
+  }, 3000);
+}
+
+function giftProgressHtml(persona) {
+  if (!persona.cuotaExtra) return "";
+  const installment = persona.cuotaExtraNumero;
+  const remaining = 13 - installment;
+  return `<div class="gift-progress">
+    <div class="gift-progress-head"><span>🎁 Regalo</span><span>Cuota ${installment} de 12</span></div>
+    <progress max="12" value="${installment}" aria-label="Avance del calendario de cuotas: ${installment} de 12"></progress>
+    <p><b>${remaining} ${remaining === 1 ? "cuota" : "cuotas"} desde este mes · ${money(remaining * persona.cuotaExtra)}</b></p>
+    <p>Incluye la cuota de este mes. Finaliza en julio de 2027.</p>
+    <p>El avance indica el calendario del plan; los pagos se registran en Cobros.</p>
+  </div>`;
+}
+
 function save(options = {}) {
   state = sanitizeState(state);
   localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  showFieldSavedFeedback();
   if (!options.skipSheetSync) markSheetsSyncPending();
 }
 
@@ -3001,6 +3049,10 @@ function renderPersonas() {
   const personas = calculatePersonasForMonth(y, monthIdx);
 
   const grid = document.getElementById("personas-grid");
+  const previous = new Map([...grid.querySelectorAll(".persona-card")].map(card => [
+    card.querySelector(".persona-nombre")?.textContent, card.querySelector(".persona-total")?.textContent
+  ]));
+  const editing = document.activeElement?.matches("input");
   try {
     personas.sort((a, b) => b.total - a.total);
     grid.innerHTML = personas.map(p => {
@@ -3010,7 +3062,7 @@ function renderPersonas() {
           <span class="persona-icon">${p.icon}</span>
           <span class="persona-nombre">${p.nombre}</span>
         </div>
-        <strong class="persona-total">${money(p.total)}</strong>
+        <strong class="persona-total${editing && previous.has(p.nombre) && previous.get(p.nombre) !== money(p.total) ? " amount-updated" : ""}">${money(p.total)}</strong>
         <div class="persona-breakdown">
           <span><img class="brand-icon-sm" src="https://www.ute.com.uy/themes/ute/ute_favicon.ico" alt=""> UTE <b>${money(p.ute)}</b></span>
           <span><img class="brand-icon-sm" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22%230284c7%22%20d%3D%22M12%202C10%205%204%2011%204%2016a8%208%200%200%200%2016%200C20%2011%2014%205%2012%202Z%22%2F%3E%3Cpath%20d%3D%22M8%2015c0%203%202%205%204%205%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E" alt=""> OSE <b>${money(p.ose)}</b></span>
@@ -3019,6 +3071,7 @@ function renderPersonas() {
           <span><img class="brand-icon-sm" src="https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png" alt=""> Spotify <b>${money(p.spotify)}</b></span>
           ${p.cuotaExtra ? `<span>🎁 Regalo (${p.cuotaExtraNumero}/12) <b>${money(p.cuotaExtra)}</b></span>` : ""}
         </div>
+        ${giftProgressHtml(p)}
       </div>
     `;
   }).join("");
@@ -4169,6 +4222,7 @@ function sanitizeInstallment(item) {
 
 function saveTarjetasState() {
   localStorage.setItem(TARJETAS_STORE_KEY, JSON.stringify(tarjetasState));
+  showFieldSavedFeedback();
   markSheetsSyncPending();
 }
 
