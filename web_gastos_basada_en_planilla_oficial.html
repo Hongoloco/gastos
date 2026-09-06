@@ -1095,7 +1095,11 @@
     .field-saved{outline:2px solid var(--accent);outline-offset:2px}
     .amount-updated{animation:amount-saved 1.2s ease-out}
     @keyframes amount-saved{0%,25%{background:rgba(45,212,191,.24);box-shadow:0 0 0 5px rgba(45,212,191,.12)}100%{background:transparent;box-shadow:none}}
-    .gift-progress{margin-top:14px;padding:12px;border:1px solid rgba(236,72,153,.3);border-radius:12px;background:rgba(236,72,153,.06)}
+    .gift-progress{margin-top:10px;font-size:12px}
+    .gift-progress summary{cursor:pointer;padding:6px 0;color:var(--muted);font-weight:700}
+    .gift-progress summary:hover{color:var(--text)}
+    .gift-progress summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+    .gift-progress-body{margin-top:8px;padding:12px;border:1px solid rgba(236,72,153,.3);border-radius:12px;background:rgba(236,72,153,.06)}
     .gift-progress-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:700}
     .gift-progress progress{display:block;width:100%;height:8px;margin:10px 0;border:0;border-radius:99px;overflow:hidden;accent-color:#ec4899;background:var(--line)}
     .gift-progress progress::-webkit-progress-bar{background:var(--line);border-radius:99px}
@@ -1992,13 +1996,16 @@ function giftProgressHtml(persona) {
   if (!persona.cuotaExtra) return "";
   const installment = persona.cuotaExtraNumero;
   const remaining = 13 - installment;
-  return `<div class="gift-progress">
+  return `<details class="gift-progress">
+    <summary>🎁 Ver detalle de cuotas</summary>
+    <div class="gift-progress-body">
     <div class="gift-progress-head"><span>🎁 Regalo</span><span>Cuota ${installment} de 12</span></div>
     <progress max="12" value="${installment}" aria-label="Avance del calendario de cuotas: ${installment} de 12"></progress>
     <p><b>${remaining} ${remaining === 1 ? "cuota" : "cuotas"} desde este mes · ${money(remaining * persona.cuotaExtra)}</b></p>
     <p>Incluye la cuota de este mes. Finaliza en julio de 2027.</p>
     <p>El avance indica el calendario del plan; los pagos se registran en Cobros.</p>
-  </div>`;
+    </div>
+  </details>`;
 }
 
 function save(options = {}) {
