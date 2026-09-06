@@ -3005,7 +3005,7 @@ function renderPersonas() {
           <span><img class="brand-icon-sm" src="https://www.antel.com.uy/o/antel-theme/images/favicon.ico" alt=""> ANTEL <b>${money(p.antel)}</b></span>
           <span><img class="brand-icon-sm" src="https://assets.nflxext.com/us/ffe/siteui/common/icons/nficon2016.png" alt=""> Netflix <b>${money(p.netflix)}</b></span>
           <span><img class="brand-icon-sm" src="https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png" alt=""> Spotify <b>${money(p.spotify)}</b></span>
-          ${p.cuotaExtra ? `<span>Cuota extra (${p.cuotaExtraNumero}/12) <b>${money(p.cuotaExtra)}</b></span>` : ""}
+          ${p.cuotaExtra ? `<span>🎁 Regalo (${p.cuotaExtraNumero}/12) <b>${money(p.cuotaExtra)}</b></span>` : ""}
         </div>
       </div>
     `;
@@ -3854,7 +3854,7 @@ function buildPersonasPdfHtml(report) {
   </div>
   <table>
     <thead>
-      <tr><th>Persona</th><th>UTE</th><th>OSE</th><th>ANTEL</th><th>Netflix</th><th>Spotify</th><th>Cuota extra</th><th>Total</th></tr>
+      <tr><th>Persona</th><th>UTE</th><th>OSE</th><th>ANTEL</th><th>Netflix</th><th>Spotify</th><th>🎁 Regalo</th><th>Total</th></tr>
     </thead>
     <tbody>${rowsHtml}</tbody>
     <tfoot>
